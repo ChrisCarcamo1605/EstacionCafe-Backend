@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
-import { User } from "../../domain/entities/User";
-import { UserType } from "../../domain/entities/UserType";
-import { IService } from "../../domain/interfaces/IService";
+import { User } from "../../core/entities/User";
+import { UserType } from "../../core/entities/UserType";
+import { IService } from "../../core/interfaces/IService";
 import { SaveUserDTO } from "../DTOs/UserDTO";
 import * as bcrypt from "bcrypt";
 

@@ -43,7 +43,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
-const User_1 = require("../../domain/entities/User");
+const User_1 = require("../../core/entities/User");
 const bcrypt = __importStar(require("bcrypt"));
 class UserService {
     constructor(userRepo) {

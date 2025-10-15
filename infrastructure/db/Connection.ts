@@ -1,9 +1,11 @@
 import { DataSource } from "typeorm";
-import { Bill } from "../../domain/entities/Bill";
-import { Product } from "../../domain/entities/Producto";
-import {BillDetails} from "../../domain/entities/BillDetails"
-import { User } from "../../domain/entities/User";
-import { UserType } from "../../domain/entities/UserType";
+import { Bill } from "../../core/entities/Bill";
+import { Product } from "../../core/entities/Producto";
+import {BillDetails} from "../../core/entities/BillDetails"
+import { User } from "../../core/entities/User";
+import { UserType } from "../../core/entities/UserType";
+import { Consumable } from "../../core/entities/Consumable";
+import { ConsumableType } from "../../core/entities/ConsumableType";
 
 export const getDataSource = ()=>{
     return  new DataSource({
@@ -15,7 +17,7 @@ export const getDataSource = ()=>{
     database: "estacioncafedb",
     synchronize: true,
     logging: false,
-    entities: [Bill,Product,BillDetails,User,UserType],
+    entities: [Bill,Product,BillDetails,User,UserType,Consumable,ConsumableType],
     migrations: [],
     subscribers: [],
   });

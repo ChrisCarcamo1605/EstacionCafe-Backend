@@ -1,6 +1,6 @@
 import { ca } from "zod/v4/locales";
 import { BillDetailsSchema } from "../application/validations/BillDetailsValidations";
-import { IService } from "../domain/interfaces/IService";
+import { IService } from "../core/interfaces/IService";
 
 let service: IService;
 export const setService = (detailsService: IService) => {

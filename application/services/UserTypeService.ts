@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
-import { IService } from "../../domain/interfaces/IService";
-import { UserType } from "../../domain/entities/UserType";
+import { IService } from "../../core/interfaces/IService";
+import { UserType } from "../../core/entities/UserType";
 
 export class UserTypeService implements IService {
   private typeRepo: Repository<UserType>;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CashRegister } from "../../domain/entities/CashRegister";
+import { CashRegister } from "../../core/entities/CashRegister";
 
 const billDetailsSchema = z.object({
   producId: z

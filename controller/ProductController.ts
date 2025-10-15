@@ -1,4 +1,4 @@
-import { IService } from "../domain/interfaces/IService";
+import { IService } from "../core/interfaces/IService";
 import { productSchema } from "../application/validations/ProductValidations";
 import { ProductItemDTO, SaveProductDTO } from "../application/DTOs/ProductDTO";
 let service: IService;

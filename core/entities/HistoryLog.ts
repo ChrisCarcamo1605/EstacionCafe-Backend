@@ -1,4 +1,4 @@
-import { Process } from "../Enums/Process";
+import { Process } from "../enums/Process";
 
 export class historyLog {
   logId: bigint;
