@@ -33,9 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.consumableTypeRouter = void 0;
+exports.ingredientRouter = void 0;
+const IngredientController = __importStar(require("../../controller/IngredientController"));
 const express_1 = require("express");
-const ConsumableTypeController = __importStar(require("../../controller/ConsumableTypeController"));
-exports.consumableTypeRouter = (0, express_1.Router)();
-exports.consumableTypeRouter.post("/consumable-type", ConsumableTypeController.saveConsumableType);
-exports.consumableTypeRouter.get("/consumable-type", ConsumableTypeController.getConsumableTypes);
+exports.ingredientRouter = (0, express_1.Router)();
+exports.ingredientRouter.post("/ingredient", IngredientController.saveIngredient);
+exports.ingredientRouter.get("/ingredient", IngredientController.getIngredients);
