@@ -1,5 +1,5 @@
 import { ca, tr } from "zod/v4/locales";
-import { IService } from "../domain/interfaces/IService";
+import { IService } from "../core/interfaces/IService";
 import { userSchema } from "../application/validations/UserValidations";
 
 let service: IService;

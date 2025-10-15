@@ -1,9 +1,9 @@
 import { Repository } from "typeorm";
-import { IService } from "../../domain/interfaces/IService";
-import { BillDetails } from "../../domain/entities/BillDetails";
+import { IService } from "../../core/interfaces/IService";
+import { BillDetails } from "../../core/entities/BillDetails";
 import { BillDetailsSchema } from "../validations/BillDetailsValidations";
 import { SaveBillDetailDTO } from "../DTOs/BillsDTO";
-import { Bill } from "../../domain/entities/Bill";
+import { Bill } from "../../core/entities/Bill";
 
 export class BillDetailsService implements IService {
   constructor(

@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
-import { Product } from "../../domain/entities/Producto";
-import { IService } from "../../domain/interfaces/IService";
+import { Product } from "../../core/entities/Producto";
+import { IService } from "../../core/interfaces/IService";
 
 export class ProductService implements IService {
   constructor(private productRepository: Repository<Product>) {

@@ -1,5 +1,5 @@
-import { Bill } from "../domain/entities/Bill";
-import { IService } from "../domain/interfaces/IService";
+import { Bill } from "../core/entities/Bill";
+import { IService } from "../core/interfaces/IService";
 import { billSchema } from "../application/validations/BillValidations";
 import { SaveBillDTO, BillItemDTO } from "../application/DTOs/BillsDTO";
 

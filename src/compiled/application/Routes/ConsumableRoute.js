@@ -35,7 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.consumableRouter = void 0;
 const express_1 = require("express");
-const ConsumableController = __importStar(require("../../controller/Consumable"));
+const ConsumableController = __importStar(require("../../controller/ConsumableController"));
 exports.consumableRouter = (0, express_1.Router)();
+console.log("dentro del cons router");
 exports.consumableRouter.post("/consumable", ConsumableController.saveConsumable);
 exports.consumableRouter.get("/consumable", ConsumableController.getConsumables);

@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
-import { IService } from "../../domain/interfaces/IService";
-import { Bill } from "../../domain/entities/Bill";
+import { IService } from "../../core/interfaces/IService";
+import { Bill } from "../../core/entities/Bill";
 import { SaveBillDTO } from "../DTOs/BillsDTO";
 import { billSchema } from "../validations/BillValidations";
 export class BillService implements IService {

@@ -2,7 +2,7 @@
 //Cargamos dependencias
 const express = require("express");
 const cors = require("cors");
-const routes = require("./infrastructure/Routes/routes").default;
+const routes = require("./application/Routes/routes").default;
 //Creamos el servidor
 const app = express();
 const port = 3484;

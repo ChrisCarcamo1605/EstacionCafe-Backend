@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserTypeService = void 0;
-const UserType_1 = require("../../domain/entities/UserType");
+const UserType_1 = require("../../core/entities/UserType");
 class UserTypeService {
     constructor(typeRepository) {
         this.typeRepo = typeRepository;
