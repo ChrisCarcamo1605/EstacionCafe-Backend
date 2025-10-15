@@ -1,21 +1,19 @@
-export class Supplier {
-  supplierId: bigint;
-  name: string;
-  phone: string;
-  email: string;
-  active: boolean;
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
-  constructor(
-    supplierId: bigint,
-    name: string,
-    phone: string,
-    email: string,
-    active: boolean
-  ) {
-    this.supplierId = supplierId;
-    this.name = name;
-    this.email = email;
-    this.phone = phone;
-    this.active = active;
-  }
+@Entity("suppliers")
+export class Supplier {
+    @PrimaryGeneratedColumn("increment", { name: "supplier_id" })
+    supplierId?: number = undefined;
+
+    @Column({ length: 100 })
+    name: string = "";
+
+    @Column({ length: 20 })
+    phone: string = "";
+
+    @Column({ length: 100 })
+    email: string = "";
+
+    @Column({ default: true })
+    active: boolean = true;
 }

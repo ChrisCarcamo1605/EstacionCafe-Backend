@@ -9,6 +9,7 @@ const User_1 = require("../core/entities/User");
 const UserType_1 = require("../core/entities/UserType");
 const Consumable_1 = require("../core/entities/Consumable");
 const ConsumableType_1 = require("../core/entities/ConsumableType");
+const Supplier_1 = require("../core/entities/Supplier");
 const Connection_1 = require("../infrastructure/db/Connection");
 //SetServices Methods
 const BillController_1 = require("../controller/BillController");
@@ -18,6 +19,7 @@ const UserController_1 = require("../controller/UserController");
 const UserTypeController_1 = require("../controller/UserTypeController");
 const ConsumableController_1 = require("../controller/ConsumableController");
 const ConsumableTypeController_1 = require("../controller/ConsumableTypeController");
+const SupplierController_1 = require("../controller/SupplierController");
 //Services
 const BillService_1 = require("./services/BillService");
 const ProductService_1 = require("./services/ProductService");
@@ -26,6 +28,7 @@ const UserService_1 = require("./services/UserService");
 const UserTypeService_1 = require("./services/UserTypeService");
 const ConsumableService_1 = require("./services/ConsumableService");
 const ConsumableTypeService_1 = require("./services/ConsumableTypeService");
+const SupplierService_1 = require("./services/SupplierService");
 const initializeDependencies = () => {
     const AppDataSource = (0, Connection_1.getDataSource)();
     AppDataSource.initialize();
@@ -38,6 +41,7 @@ const initializeDependencies = () => {
     const userTypeRepository = AppDataSource.getRepository(UserType_1.UserType);
     const consumableRepository = AppDataSource.getRepository(Consumable_1.Consumable);
     const consumableTypeRepository = AppDataSource.getRepository(ConsumableType_1.ConsumableType);
+    const supplierRepository = AppDataSource.getRepository(Supplier_1.Supplier);
     //Services
     const billService = new BillService_1.BillService(billRepository);
     const productService = new ProductService_1.ProductService(productRepository);
@@ -46,6 +50,8 @@ const initializeDependencies = () => {
     const userTypeService = new UserTypeService_1.UserTypeService(userTypeRepository);
     const consumableService = new ConsumableService_1.ConsumableService(consumableRepository);
     const consumableTypeService = new ConsumableTypeService_1.ConsumableTypeService(consumableTypeRepository);
+    const supplierService = new SupplierService_1.SupplierService(supplierRepository);
+    //Set Services to Controllers
     (0, BillController_1.setService)(billService);
     (0, ProductController_1.setService)(productService);
     (0, BillDetailsController_1.setService)(billDetailsService);
@@ -53,6 +59,9 @@ const initializeDependencies = () => {
     (0, UserTypeController_1.setService)(userTypeService);
     (0, ConsumableController_1.setService)(consumableService);
     (0, ConsumableTypeController_1.setService)(consumableTypeService);
+    (0, SupplierController_1.setService)(supplierService);
+    console.log("✅ Todos los servicios han sido inicializados correctamente");
+    console.log("✅ Supplier service configurado:", !!supplierService);
 };
 exports.initializeDependencies = initializeDependencies;
 module.exports = { initializeDependencies: exports.initializeDependencies };
