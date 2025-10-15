@@ -20,19 +20,21 @@ const saveProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const data = req.body;
         const validatedData = ProductValidations_1.productSchema.parse(data);
-        yield service.save(validatedData);
+        const result = yield service.save(validatedData);
+        console.log("Producto guardado correctamente");
         return res.status(201).send({
             status: "success",
             message: "El producto se guardo correctamente",
-            data: validatedData,
+            data: result,
         });
     }
     catch (error) {
         if (error.name === "ZodError") {
             return res.status(400).send({
                 status: "error",
-                message: "Datos inválidos",
-                errors: error.issues || error.errors,
+                message: "Datos inválidos: " + error.issues[0].message,
+                campo: error.issues[0].path,
+                error: error.issues[0].code,
             });
         }
         console.log(error.message);
@@ -47,6 +49,7 @@ exports.saveProduct = saveProduct;
 const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield service.getAll();
+        console.log("Productos obtenidos correctamente");
         const productDTOs = products.map((product) => ({
             productId: product.productId,
             name: product.name,
@@ -60,6 +63,14 @@ const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
+        if (error.name === "ZodError") {
+            return res.status(400).send({
+                status: "error",
+                message: "Datos inválidos: " + error.issues[0].message,
+                campo: error.issues[0].path,
+                error: error.issues[0].code,
+            });
+        }
         return res.status(500).send({
             status: "error",
             message: "Error al obtener los productos",

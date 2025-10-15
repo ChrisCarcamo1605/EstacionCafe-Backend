@@ -7,9 +7,13 @@ const express_1 = __importDefault(require("express"));
 const BillRoute_1 = require("./BillRoute");
 const ProductRoute_1 = require("./ProductRoute");
 const BillDetailsRoute_1 = require("../../infrastructure/Routes/BillDetailsRoute");
+const UserRoutes_1 = require("./UserRoutes");
+const UserTypesRoute_1 = require("./UserTypesRoute");
 const mainRouter = express_1.default.Router();
 // Usar las rutas de facturas
 mainRouter.use('/', BillRoute_1.billRouter);
 mainRouter.use('/', ProductRoute_1.productRouter);
 mainRouter.use('/', BillDetailsRoute_1.billDetailsRouter);
+mainRouter.use('/', UserRoutes_1.userRoute);
+mainRouter.use('/', UserTypesRoute_1.userTypeRoute);
 exports.default = mainRouter;

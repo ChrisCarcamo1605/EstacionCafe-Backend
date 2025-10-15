@@ -11,18 +11,20 @@ export const saveProduct = async (req: any, res: any) => {
     const data = req.body;
     const validatedData = productSchema.parse(data);
 
-    await service.save(validatedData);
+    const result = await service.save(validatedData);
+    console.log("Producto guardado correctamente");
     return res.status(201).send({
       status: "success",
       message: "El producto se guardo correctamente",
-      data: validatedData,
+      data: result,
     });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
         status: "error",
-        message: "Datos inválidos",
-        errors: error.issues || error.errors,
+        message: "Datos inválidos: " + error.issues[0].message,
+        campo: error.issues[0].path,
+        error: error.issues[0].code,
       });
     }
 
@@ -39,6 +41,7 @@ export const saveProduct = async (req: any, res: any) => {
 export const getProducts = async (req: any, res: any) => {
   try {
     const products = await service.getAll();
+    console.log("Productos obtenidos correctamente");
 
     const productDTOs: ProductItemDTO[] = products.map((product) => ({
       productId: product.productId,
@@ -53,6 +56,15 @@ export const getProducts = async (req: any, res: any) => {
       data: productDTOs,
     });
   } catch (error: any) {
+    if (error.name === "ZodError") {
+      return res.status(400).send({
+        status: "error",
+        message: "Datos inválidos: " + error.issues[0].message,
+        campo: error.issues[0].path,
+        error: error.issues[0].code,
+      });
+    }
+
     return res.status(500).send({
       status: "error",
       message: "Error al obtener los productos",

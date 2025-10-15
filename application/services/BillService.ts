@@ -2,8 +2,7 @@ import { Repository } from "typeorm";
 import { IService } from "../../domain/interfaces/IService";
 import { Bill } from "../../domain/entities/Bill";
 import { SaveBillDTO } from "../DTOs/BillsDTO";
-import { da } from "zod/v4/locales";
-
+import { billSchema } from "../validations/BillValidations";
 export class BillService implements IService {
   public constructor(private billRepository: Repository<Bill>) {
     this.billRepository = billRepository;
@@ -12,14 +11,14 @@ export class BillService implements IService {
     throw new Error("Method not implemented.");
   }
 
-  async save(body: any): Promise<any> {
-    console.log(`Entrando al metodo createBill`);
+  async save(body: SaveBillDTO): Promise<any> {
     const data: SaveBillDTO = body;
     const bill: Bill = new Bill();
+    bill.cashRegister =   data.cashRegister;
     bill.total = data.total;
     bill.customer = data.customer;
     bill.date =  data.date;
-
+    console.log("Guardando factura...");
     return await this.billRepository.save(bill);
   }
 
@@ -30,7 +29,7 @@ export class BillService implements IService {
     throw new Error("Method not implemented.");
   }
   getAll(): Promise<any[]> {
-    console.log(`Obteniendo bills...`);
+    console.log(`Obteniendo facturas...`);
     return this.billRepository.find();
   }
 }

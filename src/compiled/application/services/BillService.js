@@ -21,12 +21,13 @@ class BillService {
     }
     save(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(`Entrando al metodo createBill`);
             const data = body;
             const bill = new Bill_1.Bill();
+            bill.cashRegister = data.cashRegister;
             bill.total = data.total;
             bill.customer = data.customer;
             bill.date = data.date;
+            console.log("Guardando factura...");
             return yield this.billRepository.save(bill);
         });
     }
@@ -37,7 +38,7 @@ class BillService {
         throw new Error("Method not implemented.");
     }
     getAll() {
-        console.log(`Obteniendo bills...`);
+        console.log(`Obteniendo facturas...`);
         return this.billRepository.find();
     }
 }

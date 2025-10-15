@@ -7,22 +7,24 @@ export const setService = (detailsService: IService) => {
   service = detailsService;
 };
 
-export const saveDetails =async (req: any, res: any) => {
+export const saveDetails = async (req: any, res: any) => {
   try {
     const data = req.body;
-   await  service.saveAll(data);
+    const result = await service.saveAll(data);
 
+    console.log("Factura y detalles guardados correctamente");
     return res.status(201).send({
       status: "success",
-      message: "El detalle fue agregado correctamente",
-      data: data
+      message: "Factura y detalles guardados correctamente",
+      data: result,
     });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
         status: "error",
-        message: "Datos inválidos",
-        errors: error.issues || error.errors,
+        message: "Datos inválidos: " + error.issues[0].message,
+        campo: error.issues[0].path,
+        error: error.issues[0].code,
       });
     }
 
@@ -30,28 +32,37 @@ export const saveDetails =async (req: any, res: any) => {
     return res.status(500).send({
       status: "error",
       message: "Hubo en error en el servidor al guardar el detalle",
-      errors: error
+      errors: error,
     });
   }
 };
 
-export const getDetails = async (req:any,res:any)=>{
-  try{
+export const getDetails = async (req: any, res: any) => {
+  try {
     const data = await service.getAll();
-    console.log(data);
-    
+    console.log("Detalles obtenidos corretamente");
+
     return res.status(200).send({
       status: "success",
       message: "Detalles obtenidos corretamente",
-      data: data
-    })
-
-  }catch(error:any){
+      data: data,
+    });
+  } catch (error: any) {
     console.log(error);
+
+    if (error.name === "ZodError") {
+      return res.status(400).send({
+        status: "error",
+        message: "Datos inválidos: " + error.issues[0].message,
+        campo: error.issues[0].path,
+        error: error.issues[0].code,
+      });
+    }
+
     return res.status(500).send({
-      status:"error",
+      status: "error",
       message: "Hubo un error en el servidor",
-      errors: error.error
-    })
+      errors: error.error,
+    });
   }
-}
+};

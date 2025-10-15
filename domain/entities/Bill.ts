@@ -1,17 +1,20 @@
-import {Entity,PrimaryGeneratedColumn,Column} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { BillDetails } from "./BillDetails";
 
 @Entity("bills")
-export class Bill{
-    @PrimaryGeneratedColumn({name:"bill_id"})
-    billId:number = 1;
+export class Bill {
+  @PrimaryGeneratedColumn("increment",{ name: "bill_id" })
+  billId?: number = undefined;
 
-    @Column()
-    cashRegister: number= 1;
-    @Column()
-    customer:string ="";
-    @Column()
-    date:Date = new Date;
-    @Column()
-    total: number= 0;
+  @Column({name:"cash_register"})
+  cashRegister?: number = undefined;
+  @Column()
+  customer: string = "";
+  @Column()
+  date: Date = new Date();
+  @Column("decimal", { name: "total", precision: 10, scale: 2 })
+  total: number = 0;
 
+  @OneToMany(() => BillDetails, (billDet:BillDetails) => billDet.bill)
+  billDetails!: BillDetails[];
 }

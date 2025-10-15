@@ -11,22 +11,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bill = void 0;
 const typeorm_1 = require("typeorm");
+const BillDetails_1 = require("./BillDetails");
 let Bill = class Bill {
     constructor() {
-        this.billId = 1;
-        this.cashRegister = 1;
+        this.billId = undefined;
+        this.cashRegister = undefined;
         this.customer = "";
-        this.date = new Date;
+        this.date = new Date();
         this.total = 0;
     }
 };
 exports.Bill = Bill;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)({ name: "bill_id" }),
+    (0, typeorm_1.PrimaryGeneratedColumn)("increment", { name: "bill_id" }),
     __metadata("design:type", Number)
 ], Bill.prototype, "billId", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: "cash_register" }),
     __metadata("design:type", Number)
 ], Bill.prototype, "cashRegister", void 0);
 __decorate([
@@ -38,9 +39,13 @@ __decorate([
     __metadata("design:type", Date)
 ], Bill.prototype, "date", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)("decimal", { name: "total", precision: 10, scale: 2 }),
     __metadata("design:type", Number)
 ], Bill.prototype, "total", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => BillDetails_1.BillDetails, (billDet) => billDet.bill),
+    __metadata("design:type", Array)
+], Bill.prototype, "billDetails", void 0);
 exports.Bill = Bill = __decorate([
     (0, typeorm_1.Entity)("bills")
 ], Bill);

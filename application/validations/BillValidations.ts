@@ -2,28 +2,25 @@ import { z } from 'zod';
 
 // 📝 Esquema para validar facturas (compatible con form-urlencoded)
 export const billSchema = z.object({
-    billId: z.string()
-        .transform((val) => parseInt(val, 10))
-        .refine((val) => !isNaN(val) && val > 0, "El ID debe ser un número positivo"),
-    
     cashRegister: z.string()
-        .transform((val) => parseInt(val, 10))
-        .refine((val) => !isNaN(val) && val > 0, "La caja registradora debe ser un número positivo"),
+      .transform((val) => parseInt(val, 10))
+      .refine((val) => !isNaN(val) && val > 0, "La caja registradora debe ser un número positivo"),
     
     customer: z.string()
-        .min(1, "El nombre del cliente no puede estar vacío")
-        .max(100, "El nombre del cliente es muy largo")
-        .trim(), 
+      .min(1, "El nombre del cliente no puede estar vacío")
+      .max(100, "El nombre del cliente es muy largo")
+      .trim(), 
     
     total: z.string()
-        .transform((val) => parseFloat(val))
-        .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
+      .transform((val) => parseFloat(val))
+      .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
     
     date: z.string()
-        .min(1, "La fecha es requerida")
-        .refine(
-            (date) => !isNaN(Date.parse(date)) 
-        )
+      .min(1, "La fecha es requerida")
+      .refine(
+        (date) => !isNaN(Date.parse(date)) 
+      )
+      .transform((date) => new Date(date))
 });
 
 // 📝 Esquema para validar proveedores  

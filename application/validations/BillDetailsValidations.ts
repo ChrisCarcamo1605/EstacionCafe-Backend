@@ -1,28 +1,44 @@
 import { z } from "zod";
+import { CashRegister } from "../../domain/entities/CashRegister";
 
-export const BillDetailsSchema = z.object({
-  billId: z
-    .string()
-    .transform((val) => parseInt(val))
-    .refine(
-      (val) => !isNaN(val) && val > 0,
-      "El ID debe ser un número positivo"
-    ),
+const billDetailsSchema = z.object({
   producId: z
     .string()
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "El ID debe ser un número positivo"
+      "El ID del producto debe ser un número positivo"
     ),
-    quantity: z
+  quantity: z
     .string()
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
       "El ID debe ser un número positivo"
     ),
-    subTotal: z.string()
-        .transform((val) => parseFloat(val))
-        .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0")
+  subTotal: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
+});
+
+export const BillDetailsSchema = z.object({
+  cashRegister: z
+    .string()
+    .transform((val) => parseInt(val))
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "Ingrese un ID de cajero valido o existente"
+    ),
+  customer: z
+    .string()
+    .max(25, "El nombre del cliente no puede ser mayor a 25 caracteres")
+    .trim(),
+
+  date: z
+    .string()
+    .min(1, "La fecha es requerida")
+    .refine((date) => !isNaN(Date.parse(date))),
+
+  billDetails: z.array(billDetailsSchema).nonempty(),
 });

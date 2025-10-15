@@ -18,6 +18,7 @@ class ProductService {
         prod.description = data.description;
         prod.price = data.price;
         prod.cost = data.cost;
+        console.log("Guardando producto...");
         return this.productRepository.save(prod);
     }
     delete(id) {
@@ -27,6 +28,7 @@ class ProductService {
         throw new Error("Method not implemented.");
     }
     getAll() {
+        console.log(`Obteniendo productos...`);
         return this.productRepository.find();
     }
 }

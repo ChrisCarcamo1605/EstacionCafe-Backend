@@ -1,7 +1,7 @@
 export interface SaveBillDTO {
   billId: number;
   customer: string;
-  cashRegister: string;
+  cashRegister: number;
   total: number;
   date: Date;
 }
@@ -12,4 +12,11 @@ export interface BillItemDTO {
   cashRegister?: string;
   total: number;
   date?: Date;
+}
+
+export interface SaveBillDetailDTO{
+  customer: string;
+  cashRegister: number;
+  date: Date;
+  billDetails:any[]
 }

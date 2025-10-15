@@ -1,16 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeDependencies = void 0;
+//Entitys
 const Bill_1 = require("../domain/entities/Bill");
-const BillService_1 = require("./services/BillService");
+const BillDetails_1 = require("../domain/entities/BillDetails");
+const Producto_1 = require("../domain/entities/Producto");
+const User_1 = require("../domain/entities/User");
+const UserType_1 = require("../domain/entities/UserType");
+const Connection_1 = require("../infrastructure/db/Connection");
+//SetServices Methods
 const BillController_1 = require("../controller/BillController");
 const ProductController_1 = require("../controller/ProductController");
 const BillDetailsController_1 = require("../controller/BillDetailsController");
-const Connection_1 = require("../infrastructure/db/Connection");
-const Producto_1 = require("../domain/entities/Producto");
+const UserController_1 = require("../controller/UserController");
+const UserTypeController_1 = require("../controller/UserTypeController");
+//Services
+const BillService_1 = require("./services/BillService");
 const ProductService_1 = require("./services/ProductService");
 const BillDetailsService_1 = require("./services/BillDetailsService");
-const BillDetails_1 = require("../domain/entities/BillDetails");
+const UserService_1 = require("./services/UserService");
+const UserTypeService_1 = require("./services/UserTypeService");
 const initializeDependencies = () => {
     const AppDataSource = (0, Connection_1.getDataSource)();
     AppDataSource.initialize();
@@ -19,13 +28,19 @@ const initializeDependencies = () => {
     const billRepository = AppDataSource.getRepository(Bill_1.Bill);
     const productRepository = AppDataSource.getRepository(Producto_1.Product);
     const billDetailsRepository = AppDataSource.getRepository(BillDetails_1.BillDetails);
-    //Services'
+    const userRepositoy = AppDataSource.getRepository(User_1.User);
+    const userTypeRepository = AppDataSource.getRepository(UserType_1.UserType);
+    //Services
     const billService = new BillService_1.BillService(billRepository);
     const productService = new ProductService_1.ProductService(productRepository);
-    const billDetailsService = new BillDetailsService_1.BillDetailsService(billDetailsRepository);
+    const billDetailsService = new BillDetailsService_1.BillDetailsService(billDetailsRepository, billService);
+    const userService = new UserService_1.UserService(userRepositoy);
+    const userTypeService = new UserTypeService_1.UserTypeService(userTypeRepository);
     (0, BillController_1.setService)(billService);
     (0, ProductController_1.setService)(productService);
     (0, BillDetailsController_1.setService)(billDetailsService);
+    (0, UserController_1.setService)(userService);
+    (0, UserTypeController_1.setService)(userTypeService);
 };
 exports.initializeDependencies = initializeDependencies;
 module.exports = { initializeDependencies: exports.initializeDependencies };

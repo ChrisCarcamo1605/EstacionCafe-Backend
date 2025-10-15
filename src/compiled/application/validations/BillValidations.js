@@ -4,9 +4,6 @@ exports.suppliersSchema = exports.billSchema = void 0;
 const zod_1 = require("zod");
 // 📝 Esquema para validar facturas (compatible con form-urlencoded)
 exports.billSchema = zod_1.z.object({
-    billId: zod_1.z.string()
-        .transform((val) => parseInt(val, 10))
-        .refine((val) => !isNaN(val) && val > 0, "El ID debe ser un número positivo"),
     cashRegister: zod_1.z.string()
         .transform((val) => parseInt(val, 10))
         .refine((val) => !isNaN(val) && val > 0, "La caja registradora debe ser un número positivo"),
@@ -20,6 +17,7 @@ exports.billSchema = zod_1.z.object({
     date: zod_1.z.string()
         .min(1, "La fecha es requerida")
         .refine((date) => !isNaN(Date.parse(date)))
+        .transform((date) => new Date(date))
 });
 // 📝 Esquema para validar proveedores  
 exports.suppliersSchema = zod_1.z.object({

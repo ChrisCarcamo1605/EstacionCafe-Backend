@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BillDetails = void 0;
 const typeorm_1 = require("typeorm");
 const Producto_1 = require("./Producto");
+const Bill_1 = require("./Bill");
 let BillDetails = class BillDetails {
     constructor() {
         this.billDetailId = 0;
@@ -43,10 +44,15 @@ __decorate([
     __metadata("design:type", Number)
 ], BillDetails.prototype, "subTotal", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => Producto_1.Product, product => product.billDetails),
+    (0, typeorm_1.ManyToOne)(() => Producto_1.Product, (product) => product.billDetails),
     (0, typeorm_1.JoinColumn)({ name: "product_id" }),
     __metadata("design:type", Producto_1.Product)
 ], BillDetails.prototype, "product", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Bill_1.Bill, (bill) => bill.billDetails),
+    (0, typeorm_1.JoinColumn)({ name: "bill_id" }),
+    __metadata("design:type", Bill_1.Bill)
+], BillDetails.prototype, "bill", void 0);
 exports.BillDetails = BillDetails = __decorate([
     (0, typeorm_1.Entity)("bill_details"),
     __metadata("design:paramtypes", [])

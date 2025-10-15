@@ -2,6 +2,8 @@ import { DataSource } from "typeorm";
 import { Bill } from "../../domain/entities/Bill";
 import { Product } from "../../domain/entities/Producto";
 import {BillDetails} from "../../domain/entities/BillDetails"
+import { User } from "../../domain/entities/User";
+import { UserType } from "../../domain/entities/UserType";
 
 export const getDataSource = ()=>{
     return  new DataSource({
@@ -13,7 +15,7 @@ export const getDataSource = ()=>{
     database: "estacioncafedb",
     synchronize: true,
     logging: false,
-    entities: [Bill,Product,BillDetails],
+    entities: [Bill,Product,BillDetails,User,UserType],
     migrations: [],
     subscribers: [],
   });
