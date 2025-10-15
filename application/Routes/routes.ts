@@ -6,6 +6,8 @@ import { userRoute } from "./UserRoutes";
 import { userTypeRoute } from "./UserTypesRoute";
 import { consumableRouter } from "./ConsumableRoute";
 import { consumableTypeRouter } from "./ConsumableTypeRoute";
+import { supplierRouter } from "./SupplierRoute";
+
 
 const mainRouter = express.Router();
 console.log("dentro del  router")
@@ -18,5 +20,6 @@ mainRouter.use("/", userRoute);
 mainRouter.use("/", userTypeRoute);
 mainRouter.use("/", consumableRouter);
 mainRouter.use("/", consumableTypeRouter);
+mainRouter.use("/", supplierRouter);
 
 export default mainRouter;
