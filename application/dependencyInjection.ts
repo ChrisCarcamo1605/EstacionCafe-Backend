@@ -7,6 +7,7 @@ import { UserType } from "../core/entities/UserType";
 import { Consumable } from "../core/entities/Consumable";
 import { ConsumableType } from "../core/entities/ConsumableType";
 import { Supplier } from "../core/entities/Supplier";
+import { Purchase } from "../core/entities/Purchase";
 
 //Utilitys
 import { IService } from "../core/interfaces/IService";
@@ -21,6 +22,7 @@ import { setService as setUserTypeService } from "../controller/UserTypeControll
 import { setService as setConsumableService } from "../controller/ConsumableController";
 import { setService as setConsumableTypeService } from "../controller/ConsumableTypeController";
 import { setService as setSupplierService } from "../controller/SupplierController";
+import { setService as setPurchaseService } from "../controller/PurchaseController";
 
 //Services
 import { BillService } from "./services/BillService";
@@ -31,6 +33,7 @@ import { UserTypeService } from "./services/UserTypeService";
 import { ConsumableService } from "./services/ConsumableService";
 import { ConsumableTypeService } from "./services/ConsumableTypeService";
 import { SupplierService } from "./services/SupplierService";
+import { PurchaseService } from "./services/PurchaseService";
 
 export const initializeDependencies = () => {
     const AppDataSource = getDataSource();
@@ -46,6 +49,7 @@ export const initializeDependencies = () => {
     const consumableRepository = AppDataSource.getRepository(Consumable);
     const consumableTypeRepository = AppDataSource.getRepository(ConsumableType);
     const supplierRepository = AppDataSource.getRepository(Supplier);
+    const purchaseRepository = AppDataSource.getRepository(Purchase)
 
     //Services
     const billService: IService = new BillService(billRepository);
@@ -63,6 +67,8 @@ export const initializeDependencies = () => {
         consumableTypeRepository
     );
     const supplierService: IService = new SupplierService(supplierRepository);
+    const purchaseService: IService = new PurchaseService(purchaseRepository);
+
     //Set Services to Controllers
     setBillService(billService);
     setProductService(productService);
@@ -72,9 +78,10 @@ export const initializeDependencies = () => {
     setConsumableService(consumableService);
     setConsumableTypeService(consumableTypeService);
     setSupplierService(supplierService);
+    setPurchaseService(purchaseService);
 
-    console.log("✅ Todos los servicios han sido inicializados correctamente");
-    console.log("✅ Supplier service configurado:", !!supplierService);
+    console.log("Todos los servicios han sido inicializados correctamente");
+    console.log("Supplier service configurado:", !!supplierService);
 };
 
 module.exports = { initializeDependencies };

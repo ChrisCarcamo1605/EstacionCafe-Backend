@@ -12,6 +12,7 @@ const UserTypesRoute_1 = require("./UserTypesRoute");
 const ConsumableRoute_1 = require("./ConsumableRoute");
 const ConsumableTypeRoute_1 = require("./ConsumableTypeRoute");
 const SupplierRoute_1 = require("./SupplierRoute");
+const PurchaseRoute_1 = require("./PurchaseRoute");
 const mainRouter = express_1.default.Router();
 console.log("dentro del  router");
 // Usar las rutas de facturas
@@ -23,4 +24,5 @@ mainRouter.use("/", UserTypesRoute_1.userTypeRoute);
 mainRouter.use("/", ConsumableRoute_1.consumableRouter);
 mainRouter.use("/", ConsumableTypeRoute_1.consumableTypeRouter);
 mainRouter.use("/", SupplierRoute_1.supplierRouter);
+mainRouter.use("/", PurchaseRoute_1.purchaseRouter);
 exports.default = mainRouter;
