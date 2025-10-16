@@ -20,10 +20,19 @@ app.use('/api', routes);
 
 //Inyectamos dependencias
 const {initializeDependencies} = require('./application/dependencyInjection');
-initializeDependencies();
 
 
-//Poner a escuchar el servidor (que se mantenga activo y no cierre la app)
-app.listen(port, () => {
-  console.log("Corriendo API...");
-});
+
+initializeDependencies()
+  .then(() => {
+    console.log("Iniciando servidor...");
+
+    //Poner a escuchar el servidor solo después de que las dependencias estén listas
+    app.listen(port, () => {
+      console.log(`Servidor corriendo en puerto ${port}`);
+    });
+  })
+  .catch((error: any) => {
+    console.error("Error al inicializar la aplicación:", error);
+    process.exit(1);
+  }); 
