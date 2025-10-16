@@ -7,14 +7,17 @@ export const IngredientSchema = z.object({
     .max(255, "El nombre no puede exceder 255 caracteres")
     .trim(),
 
-  quantity: z.number().nonnegative("La cantidad no puede ser negativa"),
+  quantity: z
+    .string()
+    .transform((val) => parseInt(val))
+    .refine((val) => !isNaN(val) && val >= 0),
 
   productId: z
-    .number()
-    .int("El ID del producto debe ser un número entero")
-    .nonnegative("El ID del producto no puede ser negativo"),
+    .string()
+    .transform((val) => parseInt(val))
+    .refine((val) => !isNaN(val) && val >= 0),
   consumableId: z
-    .number()
-    .int("El ID del consumible debe ser un número entero")
-    .nonnegative("El ID del consumible no puede ser negativo"),
+    .string()
+    .transform((val) => parseInt(val))
+    .refine((val) => !isNaN(val) && val >= 0),
 });

@@ -7,10 +7,11 @@ import { userTypeRoute } from "./UserTypesRoute";
 import { consumableRouter } from "./ConsumableRoute";
 import { consumableTypeRouter } from "./ConsumableTypeRoute";
 import { supplierRouter } from "./SupplierRoute";
+import { ingredientRouter } from "./IngredientRoute";
 import { purchaseRouter } from "./PurchaseRoute";
 
+
 const mainRouter = express.Router();
-console.log("dentro del  router")
 
 // Usar las rutas de facturas
 mainRouter.use("/", billRouter);
@@ -21,6 +22,12 @@ mainRouter.use("/", userTypeRoute);
 mainRouter.use("/", consumableRouter);
 mainRouter.use("/", consumableTypeRouter);
 mainRouter.use("/", supplierRouter);
+mainRouter.use("/",ingredientRouter);
 mainRouter.use("/", purchaseRouter);
 
 export default mainRouter;
+
+
+
+
+
