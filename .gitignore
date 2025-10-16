@@ -1,1 +1,20 @@
+# Archivos compilados
 src/compiled/
+dist/
+build/
+*.js.map
+
+# Dependencias
+node_modules/
+
+# Archivos de configuración local
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.tmp/

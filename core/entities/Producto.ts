@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { BillDetails } from "./BillDetails";
+import { Ingredient } from "./Ingredient";
 
 @Entity("products")
 export class Product {
@@ -19,6 +20,7 @@ export class Product {
 
   @OneToMany(() => BillDetails, (billDetail: BillDetails) => billDetail.product)
   billDetails!: BillDetails[];
+  @OneToMany(() => Ingredient, (ingredient) => ingredient.product)
+  ingredients!: Ingredient[];
   constructor() {}
 }
- 
