@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { ConsumableType } from "./ConsumableType";
 import { UnitMeasurement } from "../enums/UnitMeasurement";
+import { Ingredient } from "./Ingredient";
 
 @Entity("Consumable")
 export class Consumable {
@@ -29,6 +30,9 @@ export class Consumable {
   unitMeasurement!: UnitMeasurement;
   @Column("numeric", { precision: 10, scale: 2 })
   cost: number = 0;
+
+  @OneToMany(() => Ingredient, (ingredient) => ingredient.consumable)
+  ingredients!: Ingredient[];
 
   constructor() {}
 }
