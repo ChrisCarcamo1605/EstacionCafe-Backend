@@ -11,6 +11,8 @@ import { setService as setUserTypeService } from "../controller/UserTypeControll
 import { setService as setConsumableService } from "../controller/ConsumableController";
 import { setService as setConsumableTypeService } from "../controller/ConsumableTypeController";
 import { setService as setIngredientService } from "../controller/IngredientController";
+import { setService as setSupplierService } from "../controller/SupplierController";
+import { setService as setPurchaseService } from "../controller/PurchaseController";
 
 //Services
 import { BillService } from "./services/BillService";
@@ -20,7 +22,9 @@ import { UserService } from "./services/UserService";
 import { UserTypeService } from "./services/UserTypeService";
 import { ConsumableService } from "./services/ConsumableService";
 import { ConsumableTypeService } from "./services/ConsumableTypeService";
+import { SupplierService } from "./services/SupplierService";
 import { IngredientService } from "./services/IngredientService";
+import { PurchaseService } from "./services/PurchaseService";
 
 //Entitys
 import { Bill } from "../core/entities/Bill";
@@ -46,9 +50,10 @@ export const initializeDependencies = async () => {
     const userRepositoy = AppDataSource.getRepository(User);
     const userTypeRepository = AppDataSource.getRepository(UserType);
     const consumableRepository = AppDataSource.getRepository(Consumable);
-    const consumableTypeRepository =
-      AppDataSource.getRepository(ConsumableType);
-    const ingredientRepository = AppDataSource.getRepository(Ingredient);
+    const consumableTypeRepository = AppDataSource.getRepository(ConsumableType);
+    const supplierRepository = AppDataSource.getRepository(Supplier);
+    const purchaseRepository = AppDataSource.getRepository(Purchase);
+  
 
     //Services
     const billService: IService = new BillService(billRepository);
@@ -65,10 +70,13 @@ export const initializeDependencies = async () => {
     const consumableTypeService: IService = new ConsumableTypeService(
       consumableTypeRepository
     );
-    const ingredientService: IService = new IngredientService(
+    const supplierService: IService = new SupplierService(supplierRepository);
+    const purchaseService: IService = new PurchaseService(purchaseRepository);
+   const ingredientService: IService = new IngredientService(
       ingredientRepository
     );
 
+    //Set Services to Controllers
     setBillService(billService);
     setProductService(productService);
     setBillDetailsService(billDetailsService);
@@ -77,7 +85,9 @@ export const initializeDependencies = async () => {
     setConsumableService(consumableService);
     setConsumableTypeService(consumableTypeService);
     setIngredientService(ingredientService);
-
+    setSupplierService(supplierService);
+    setPurchaseService(purchaseService);
+    
     console.log("Dependencias inicializadas correctamente");
   } catch (error: any) {
     console.error("Error al inicializar la base de datos:", error.message);
