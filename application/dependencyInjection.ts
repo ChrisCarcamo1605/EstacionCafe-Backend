@@ -56,7 +56,6 @@ export const initializeDependencies = async () => {
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
-  
 
     //Services
     const billService: IService = new BillService(billRepository);
