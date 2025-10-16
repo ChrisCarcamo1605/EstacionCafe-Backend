@@ -35,6 +35,8 @@ import { UserType } from "../core/entities/UserType";
 import { Consumable } from "../core/entities/Consumable";
 import { ConsumableType } from "../core/entities/ConsumableType";
 import { Ingredient } from "../core/entities/Ingredient";
+import {Supplier} from "../core/entities/Supplier";
+import {Purchase} from "../core/entities/Purchase";
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -52,6 +54,7 @@ export const initializeDependencies = async () => {
     const consumableRepository = AppDataSource.getRepository(Consumable);
     const consumableTypeRepository = AppDataSource.getRepository(ConsumableType);
     const supplierRepository = AppDataSource.getRepository(Supplier);
+    const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
   
 
