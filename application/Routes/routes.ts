@@ -9,6 +9,7 @@ import { consumableTypeRouter } from "./ConsumableTypeRoute";
 import { supplierRouter } from "./SupplierRoute";
 import { ingredientRouter } from "./IngredientRoute";
 import { purchaseRouter } from "./PurchaseRoute";
+import { cashRegisterRouter } from "./CashRegisterRoutes";
 
 
 const mainRouter = express.Router();
@@ -24,6 +25,8 @@ mainRouter.use("/", consumableTypeRouter);
 mainRouter.use("/", supplierRouter);
 mainRouter.use("/",ingredientRouter);
 mainRouter.use("/", purchaseRouter);
+mainRouter.use("/", cashRegisterRouter);
+
 
 export default mainRouter;
 

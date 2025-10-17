@@ -13,6 +13,7 @@ import { setService as setConsumableTypeService } from "../controller/Consumable
 import { setService as setIngredientService } from "../controller/IngredientController";
 import { setService as setSupplierService } from "../controller/SupplierController";
 import { setService as setPurchaseService } from "../controller/PurchaseController";
+import { setService as setCashRegisterService } from "../controller/CashRegisterController";
 
 //Services
 import { BillService } from "./services/BillService";
@@ -25,6 +26,7 @@ import { ConsumableTypeService } from "./services/ConsumableTypeService";
 import { SupplierService } from "./services/SupplierService";
 import { IngredientService } from "./services/IngredientService";
 import { PurchaseService } from "./services/PurchaseService";
+import { CashRegisterService } from "./services/CashRegisterService";
 
 //Entitys
 import { Bill } from "../core/entities/Bill";
@@ -37,6 +39,7 @@ import { ConsumableType } from "../core/entities/ConsumableType";
 import { Ingredient } from "../core/entities/Ingredient";
 import {Supplier} from "../core/entities/Supplier";
 import {Purchase} from "../core/entities/Purchase";
+import { CashRegister } from "../core/entities/CashRegister";
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -56,8 +59,10 @@ export const initializeDependencies = async () => {
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
+    const cashRegisterRepository = AppDataSource.getRepository(CashRegister);
 
-    //Services
+
+      //Services
     const billService: IService = new BillService(billRepository);
     const productService: IService = new ProductService(productRepository);
     const billDetailsService: IService = new BillDetailsService(
@@ -77,6 +82,7 @@ export const initializeDependencies = async () => {
    const ingredientService: IService = new IngredientService(
       ingredientRepository
     );
+      const cashRegisterService: IService = new CashRegisterService(cashRegisterRepository);
 
     //Set Services to Controllers
     setBillService(billService);
@@ -89,7 +95,8 @@ export const initializeDependencies = async () => {
     setIngredientService(ingredientService);
     setSupplierService(supplierService);
     setPurchaseService(purchaseService);
-    
+    setCashRegisterService(cashRegisterService)
+
     console.log("Dependencias inicializadas correctamente");
   } catch (error: any) {
     console.error("Error al inicializar la base de datos:", error.message);
