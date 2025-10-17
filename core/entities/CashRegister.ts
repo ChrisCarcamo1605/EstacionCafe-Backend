@@ -1,11 +1,13 @@
-export class CashRegister{
-    cashRegisterId: bigint;
-    number: string;
-    active:boolean;
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
-    constructor(cashRegister:bigint, number:string, active: boolean){
-        this.cashRegisterId = cashRegister;
-        this.number = number;
-        this.active = active;
-    }
+@Entity("cash_registers")
+export class CashRegister {
+    @PrimaryGeneratedColumn("increment", { name: "cash_register_id" })
+    cashRegisterId?: number = undefined;
+
+    @Column({ length: 50 })
+    number: string = "";
+
+    @Column({ default: true })
+    active: boolean = true;
 }
