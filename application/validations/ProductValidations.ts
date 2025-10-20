@@ -1,27 +1,108 @@
 import { z } from "zod";
 
-export const productSchema = z.object({
-  name: z
-    .string()
-    .min(1, "El nombre no puede estar vacio")
-    .max(50, "El nombre no puede ser mayor a 50 caracteres")
-    .trim(),
+export const createProductSchema = z.object({
+    name: z
+        .string()
+        .min(1, "El nombre no puede estar vacío")
+        .max(50, "El nombre no puede ser mayor a 50 caracteres")
+        .trim(),
 
-  description: z
-    .string()
-    .min(1, "El nombre del cliente no puede estar vacío")
-    .max(100, "El nombre del cliente es muy largo")
-    .trim(),
+    description: z
+        .string()
+        .min(1, "La descripción no puede estar vacía")
+        .max(100, "La descripción no puede ser mayor a 100 caracteres")
+        .trim(),
 
-  price: z
-    .string()
-    .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El precio debe ser mayor a 0"),
+    price: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val > 0, "El precio debe ser mayor a 0")
+        .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El precio debe tener máximo 2 decimales"),
 
-  cost: z
-    .string()
-    .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El costo debe ser mayor a 0"),
+    cost: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val > 0, "El costo debe ser mayor a 0")
+        .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El costo debe tener máximo 2 decimales"),
+
+    active: z.boolean().optional().default(true)
+}).refine(
+    (data) => data.price > data.cost,
+    {
+        message: "El precio debe ser mayor al costo",
+        path: ["price"]
+    }
+);
+
+export const updateProductSchema = z.object({
+    name: z
+        .string()
+        .min(1, "El nombre no puede estar vacío")
+        .max(50, "El nombre no puede ser mayor a 50 caracteres")
+        .trim()
+        .optional(),
+
+    description: z
+        .string()
+        .min(1, "La descripción no puede estar vacía")
+        .max(100, "La descripción no puede ser mayor a 100 caracteres")
+        .trim()
+        .optional(),
+
+    price: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val > 0, "El precio debe ser mayor a 0")
+        .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El precio debe tener máximo 2 decimales")
+        .optional(),
+
+    cost: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val > 0, "El costo debe ser mayor a 0")
+        .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El costo debe tener máximo 2 decimales")
+        .optional(),
+
+    active: z.boolean().optional()
 });
 
-module.exports = { productSchema };
+export const productIdSchema = z.object({
+    id: z.union([
+        z.string().transform((val) => parseInt(val, 10)),
+        z.number().int("El ID debe ser un número entero")
+    ])
+        .refine((val) => !isNaN(val) && val > 0, "El ID debe ser un número positivo")
+});
+
+export const productPriceRangeSchema = z.object({
+    minPrice: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val >= 0, "El precio mínimo debe ser mayor o igual a 0"),
+
+    maxPrice: z
+        .union([
+            z.string().transform((val) => parseFloat(val)),
+            z.number()
+        ])
+        .refine((val) => !isNaN(val) && val >= 0, "El precio máximo debe ser mayor o igual a 0")
+}).refine(
+    (data) => data.maxPrice >= data.minPrice,
+    {
+        message: "El precio máximo debe ser mayor o igual al precio mínimo",
+        path: ["maxPrice"]
+    }
+);
+
+// Mantener compatibilidad
+export const productSchema = createProductSchema;

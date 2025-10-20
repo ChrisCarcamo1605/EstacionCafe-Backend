@@ -22,7 +22,7 @@ export class BillDetailsService implements IService {
     const data: SaveBillDetailDTO = body;
 
     const bill: Bill = new Bill();
-    bill.cashRegister = data.cashRegister;
+    bill.cashRegisterId = data.cashRegister;
     bill.customer = data.customer;
     bill.date = data.date;
     bill.total = data.billDetails.reduce((acc, val) => acc + val.subTotal, 0);

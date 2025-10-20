@@ -1,8 +1,18 @@
 import { Router } from "express";
-import * as ConsumableController from "../../controller/ConsumableController";
+import {
+    getConsumables,
+    getConsumableById,
+    saveConsumable,
+    updateConsumable,
+    deleteConsumable,
+    getConsumablesBySupplier
+} from "../../controller/ConsumableController";
 
+export const consumableRouter = Router();
 
-export const consumableRouter =  Router();
-
-consumableRouter.post("/consumable",ConsumableController.saveConsumable);
-consumableRouter.get("/consumable", ConsumableController.getConsumables);
+consumableRouter.get("/consumable", getConsumables);
+consumableRouter.get("/consumable/supplier/:supplierId", getConsumablesBySupplier);
+consumableRouter.get("/consumable/:id", getConsumableById);
+consumableRouter.post("/consumable", saveConsumable);
+consumableRouter.put("/consumable/:id", updateConsumable);
+consumableRouter.delete("/consumable/:id", deleteConsumable);

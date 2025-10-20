@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import { Consumable } from "../../core/entities/Consumable";
 import { IService } from "../../core/interfaces/IService";
-import { SaveConsumableDTO } from "../DTOs/ConsumableDTO";
+import { SaveConsumableDTO, UpdateConsumableDTO } from "../DTOs/ConsumableDTO";
 
 export class ConsumableService implements IService {
   constructor(private consumableRepository: Repository<Consumable>) {
@@ -35,42 +35,82 @@ export class ConsumableService implements IService {
     return await this.consumableRepository.save(consumableEntities);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<any> {
     const result = await this.consumableRepository.delete(id);
     if (result.affected === 0) {
       throw new Error(`Consumible con ID ${id} no encontrado`);
     }
+    return { message: "Consumible eliminado correctamente", id };
   }
 
-  async update(body:Partial<SaveConsumableDTO>): Promise<Consumable> {
+  async update(body: UpdateConsumableDTO): Promise<Consumable> {
+    const { consumableId, ...updateData } = body;
+
+    if (!consumableId) {
+      throw new Error("consumableId es requerido para actualizar");
+    }
+
     const consumable = await this.consumableRepository.findOne({ 
-      where: { consumableId: body.TypeId } 
+      where: { consumableId } 
     });
     
     if (!consumable) {
-      throw new Error(`Consumible con ID ${body.TypeId} no encontrado`);
+      throw new Error(`Consumible con ID ${consumableId} no encontrado`);
     }
 
-    if (body.supplier !== undefined) consumable.supplierId = body.supplier;
-    if (body.name !== undefined) consumable.name = body.name;
-    if (body.TypeId !== undefined) consumable.cosumableTypeId = body.TypeId;
-    if (body.cost !== undefined) consumable.cost = body.cost;
-    if (body.quantity !== undefined) consumable.quantity = body.quantity;
-    if (body.unitMeasurement !== undefined) consumable.unitMeasurement = body.unitMeasurement;
+    if (updateData.supplier !== undefined) consumable.supplierId = updateData.supplier;
+    if (updateData.name !== undefined) consumable.name = updateData.name;
+    if (updateData.TypeId !== undefined) consumable.cosumableTypeId = updateData.TypeId;
+    if (updateData.cost !== undefined) consumable.cost = updateData.cost;
+    if (updateData.quantity !== undefined) consumable.quantity = updateData.quantity;
+    if (updateData.unitMeasurement !== undefined) consumable.unitMeasurement = updateData.unitMeasurement;
 
     return await this.consumableRepository.save(consumable);
   }
 
   async getAll(): Promise<Consumable[]> {
     return await this.consumableRepository.find({
-      relations: ['consumableType']
+      relations: ['consumableType', 'supplier'],
+      order: { name: "ASC" }
     });
   }
 
-  async getById(id: number): Promise<Consumable | null> {
-    return await this.consumableRepository.findOne({
+  async getById(id: number): Promise<Consumable> {
+    const consumable = await this.consumableRepository.findOne({
       where: { consumableId: id },
-      relations: ['consumableType']
+      relations: ['consumableType', 'supplier']
     });
+
+    if (!consumable) {
+      throw new Error(`Consumible con ID ${id} no encontrado`);
+    }
+
+    return consumable;
+  }
+
+  async getBySupplier(supplierId: number): Promise<Consumable[]> {
+    return await this.consumableRepository.find({
+      where: { supplierId },
+      relations: ['consumableType', 'supplier'],
+      order: { name: "ASC" }
+    });
+  }
+
+  async getByConsumableType(consumableTypeId: number): Promise<Consumable[]> {
+    return await this.consumableRepository.find({
+      where: { cosumableTypeId: consumableTypeId },
+      relations: ['consumableType', 'supplier'],
+      order: { name: "ASC" }
+    });
+  }
+
+  async getLowStockConsumables(threshold: number = 10): Promise<Consumable[]> {
+    return await this.consumableRepository
+      .createQueryBuilder("consumable")
+      .leftJoinAndSelect("consumable.consumableType", "consumableType")
+      .leftJoinAndSelect("consumable.supplier", "supplier")
+      .where("consumable.quantity <= :threshold", { threshold })
+      .orderBy("consumable.quantity", "ASC")
+      .getMany();
   }
 }

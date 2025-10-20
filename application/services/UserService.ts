@@ -11,8 +11,17 @@ export class UserService implements IService {
     this.userRepository = userRepo;
   }
 
-  saveAll(body: any[]): Promise<any[]> {
-    throw new Error("Method not implemented.");
+  async saveAll(body: SaveUserDTO[]): Promise<User[]> {
+    const users = await Promise.all(body.map(async (userData) => {
+      const user = new User();
+      user.username = userData.username;
+      user.password = await this.encryptPassword(userData.password);
+      user.userTypeId = userData.typeId;
+      user.email = userData.email;
+      return user;
+    }));
+
+    return await this.userRepository.save(users);
   }
 
   async save(body: SaveUserDTO): Promise<any> {
@@ -27,15 +36,67 @@ export class UserService implements IService {
     return await this.userRepository.save(user);
   }
 
-  delete(id: number): Promise<any> {
-    throw new Error("Method not implemented.");
+  async delete(id: number): Promise<any> {
+    const result = await this.userRepository.delete(id);
+    if (result.affected === 0) {
+      throw new Error(`Usuario con ID ${id} no encontrado`);
+    }
+    return { message: "Usuario eliminado correctamente", id };
   }
-  update(body: any): Promise<any> {
-    throw new Error("Method not implemented.");
+
+  async update(body: any): Promise<any> {
+    const { userId, ...updateData } = body;
+
+    if (!userId) {
+      throw new Error("userId es requerido para actualizar");
+    }
+
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      throw new Error(`Usuario con ID ${userId} no encontrado`);
+    }
+
+    // Si se está actualizando la contraseña, encriptarla
+    if (updateData.password) {
+      updateData.password = await this.encryptPassword(updateData.password);
+    }
+
+    Object.assign(user, updateData);
+    return await this.userRepository.save(user);
   }
-  getAll(): Promise<any[]> {
+
+  async getAll(): Promise<any[]> {
     console.log(`Obteniendo usuarios...`);
-    return this.userRepository.find({ relations: ["userType"] });
+    return this.userRepository.find({ 
+      relations: ["userType"],
+      order: { username: "ASC" }
+    });
+  }
+
+  async getById(id: number): Promise<any> {
+    const user = await this.userRepository.findOne({ 
+      where: { userId: id },
+      relations: ["userType"]
+    });
+    if (!user) {
+      throw new Error(`Usuario con ID ${id} no encontrado`);
+    }
+    return user;
+  }
+
+  async getUsersByType(typeId: number): Promise<User[]> {
+    return await this.userRepository.find({
+      where: { userTypeId: typeId },
+      relations: ["userType"],
+      order: { username: "ASC" }
+    });
+  }
+
+  async getUserByUsername(username: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { username },
+      relations: ["userType"]
+    });
   }
 
   private async encryptPassword(password: string): Promise<string> {

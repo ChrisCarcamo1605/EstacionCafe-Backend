@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany,OneToMany } from "typeorm";
+import { Bill } from "./Bill";
 
 @Entity("cash_registers")
 export class CashRegister {
@@ -10,4 +11,8 @@ export class CashRegister {
 
     @Column({ default: true })
     active: boolean = true;
+
+
+    @OneToMany(()=> Bill, (bill:Bill)=> bill.cashRegister)
+    bill!:Bill;
 }

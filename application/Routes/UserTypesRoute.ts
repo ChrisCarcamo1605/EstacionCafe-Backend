@@ -1,7 +1,16 @@
-import { Router } from "express";
-import * as UserTypeController from "../../controller/UserTypeController"
+import { Router } from 'express';
+import {
+    getUserTypes,
+    getUserTypeById,
+    saveUserType,
+    updateUserType,
+    deleteUserType
+} from '../../controller/UserTypeController';
 
-export const userTypeRoute = Router();
+export const userTypeRouter = Router();
 
-userTypeRoute.get("/users/type",UserTypeController.getTypes);
-userTypeRoute.post("/users/type",UserTypeController.saveType);
+userTypeRouter.get('/user-types', getUserTypes);
+userTypeRouter.get('/user-types/:id', getUserTypeById);
+userTypeRouter.post('/user-types', saveUserType);
+userTypeRouter.put('/user-types/:id', updateUserType);
+userTypeRouter.delete('/user-types/:id', deleteUserType);

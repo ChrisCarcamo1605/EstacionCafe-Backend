@@ -1,49 +1,70 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-// 📝 Esquema para validar facturas (compatible con form-urlencoded)
-export const billSchema = z.object({
-    cashRegister: z.string()
-      .transform((val) => parseInt(val, 10))
-      .refine((val) => !isNaN(val) && val > 0, "La caja registradora debe ser un número positivo"),
-    
-    customer: z.string()
-      .min(1, "El nombre del cliente no puede estar vacío")
-      .max(100, "El nombre del cliente es muy largo")
-      .trim(), 
-    
-    total: z.string()
-      .transform((val) => parseFloat(val))
-      .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
-    
-    date: z.string()
-      .min(1, "La fecha es requerida")
-      .refine(
-        (date) => !isNaN(Date.parse(date)) 
-      )
-      .transform((date) => new Date(date))
+export const createBillSchema = z.object({
+  cashRegister: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "La caja registradora debe ser un número positivo"
+    ),
+
+  total: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
+
+  customer: z
+    .string()
+    .min(1, "El nombre del cliente es requerido")
+    .max(100, "El nombre del cliente es muy largo")
+    .trim(),
+
+  date: z
+    .string()
+    .min(1, "La fecha es requerida")
+    .transform((str) => new Date(str))
+    .refine((date) => !isNaN(date.getTime()), "La fecha debe ser válida")
+    .refine((date) => date <= new Date(), "La fecha no puede ser futura"),
 });
 
-// 📝 Esquema para validar proveedores  
-export const suppliersSchema = z.object({
-    name: z.string()
-        .min(1, "El nombre no puede estar vacío")
-        .max(50, "El nombre es muy largo")
-        .trim(),
-    
-    phone: z.string()
-        .min(1, "El teléfono es requerido")
-        .regex(/^(\+503)?[2-9]\d{3}-?\d{4}$/, "El teléfono debe tener formato válido (+503 XXXX-XXXX)")
-        .transform((val) => val.replace(/\s|-/g, "")),  
-    
-    email: z.string()
-        .min(1, "El email es requerido")
-        .email("Debe ser un email válido")
-        .toLowerCase(),
-    
-    address: z.string()
-        .min(1, "La dirección no puede estar vacía")
-        .max(200, "La dirección es muy larga")
-        .trim()
+export const updateBillSchema = z.object({
+  cashRegisterId: z
+    .number()
+    .int("La caja registradora debe ser un número entero")
+    .positive("La caja registradora debe ser un número positivo")
+    .optional(),
+
+  total: z
+    .number()
+    .positive("El total debe ser mayor a 0")
+    .refine(
+      (val) => Number((val % 0.01).toFixed(2)) === 0,
+      "El total debe tener máximo 2 decimales"
+    )
+    .optional(),
+
+  customer: z
+    .string()
+    .min(1, "El nombre del cliente es requerido")
+    .max(100, "El nombre del cliente es muy largo")
+    .trim()
+    .optional(),
+
+  date: z
+    .date()
+    .or(z.string().transform((str) => new Date(str)))
+    .optional(),
 });
 
-module.exports ={billSchema, suppliersSchema}
+export const billIdSchema = z.object({
+  id: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El ID debe ser un número positivo"
+    ),
+});
+
+export const billSchema = createBillSchema;

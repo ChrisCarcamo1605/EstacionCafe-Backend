@@ -10,7 +10,8 @@ export class CashRegisterService implements IService {
 
     async save(body: SaveCashRegisterDTO): Promise<any> {
         const data: SaveCashRegisterDTO = body;
-        const cashRegister: CashRegister = new CashRegister();
+
+        const cashRegister: CashRegister = new CashRegister();  
         cashRegister.number = data.number;
         cashRegister.active = data.active !== undefined ? data.active : true;
 

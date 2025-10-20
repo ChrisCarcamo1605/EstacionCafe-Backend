@@ -1,7 +1,16 @@
 import { Router } from "express";
-import * as ConsumableTypeController from "../../controller/ConsumableTypeController";
+import {
+    getConsumableTypes,
+    getConsumableTypeById,
+    saveConsumableType,
+    updateConsumableType,
+    deleteConsumableType
+} from "../../controller/ConsumableTypeController";
 
 export const consumableTypeRouter = Router();
 
-consumableTypeRouter.post("/consumable-type", ConsumableTypeController.saveConsumableType);
-consumableTypeRouter.get("/consumable-type", ConsumableTypeController.getConsumableTypes);
+consumableTypeRouter.get("/consumable-type", getConsumableTypes);
+consumableTypeRouter.get("/consumable-type/:id", getConsumableTypeById);
+consumableTypeRouter.post("/consumable-type", saveConsumableType);
+consumableTypeRouter.put("/consumable-type/:id", updateConsumableType);
+consumableTypeRouter.delete("/consumable-type/:id", deleteConsumableType);
