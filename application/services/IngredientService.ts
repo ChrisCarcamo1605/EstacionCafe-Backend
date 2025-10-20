@@ -29,6 +29,7 @@ export class IngredientService implements IService {
     ingredient.consumableId = body.consumableId;
     
     console.log("Guardando ingrediente...");
+    console.log(ingredient)
     return await this.ingredientRepo.save(ingredient);
   }
 
@@ -110,4 +111,6 @@ export class IngredientService implements IService {
       order: { name: "ASC" }
     });
   }
+
+
 }

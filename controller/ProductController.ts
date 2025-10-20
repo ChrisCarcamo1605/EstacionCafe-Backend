@@ -107,7 +107,7 @@ export const saveProduct = async (req: any, res: any) => {
 export const updateProduct = async (req: any, res: any) => {
     try {
         const { id } = productIdSchema.parse(req.params);
-        const updateData = updateProductSchema.parse(req.body);
+        const updateData:UpdateProductDTO = updateProductSchema.parse(req.body);
 
         const productService = getService() as any;
         const result = await productService.update({

@@ -3,11 +3,12 @@ import { UnitMeasurement } from "../../core/enums/UnitMeasurement";
 
 export const ConsumableSchema = z.object({
   supplierId: z
-    .union([
-      z.string().transform((val) => parseInt(val, 10)),
-      z.number().int("El ID del proveedor debe ser un número entero")
-    ])
-    .refine((val) => !isNaN(val) && val > 0, "El ID del proveedor debe ser un número positivo"),
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El ID del proveedor debe ser un número positivo"
+    ),
 
   name: z
     .string()
@@ -16,28 +17,26 @@ export const ConsumableSchema = z.object({
     .trim(),
 
   cosumableTypeId: z
-    .union([
-      z.string().transform((val) => parseInt(val, 10)),
-      z.number().int("El ID del tipo de consumible debe ser un número entero")
-    ])
-    .refine((val) => !isNaN(val) && val >= 0, "El ID del tipo de consumible no puede ser negativo"),
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => !isNaN(val) && val >= 0,
+      "El ID del tipo de consumible no puede ser negativo"
+    ),
 
   quantity: z
-    .union([
-      z.string().transform((val) => parseFloat(val)),
-      z.number()
-    ])
-    .refine((val) => !isNaN(val) && val >= 0, "La cantidad no puede ser negativa"),
+    .union([z.string().transform((val) => parseFloat(val)), z.number()])
+    .refine(
+      (val) => !isNaN(val) && val >= 0,
+      "La cantidad no puede ser negativa"
+    ),
 
   unitMeasurement: z.nativeEnum(UnitMeasurement),
 
   cost: z
-    .union([
-      z.string().transform((val) => parseFloat(val)),
-      z.number()
-    ])
-    .refine((val) => !isNaN(val) && val >= 0, "El costo no puede ser negativo")
-    .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El costo debe tener máximo 2 decimales"),
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((val) => !isNaN(val) && val >= 0, "El costo no puede ser negativo"),
 });
 
 export const createConsumableSchema = ConsumableSchema;
@@ -46,9 +45,12 @@ export const updateConsumableSchema = z.object({
   supplierId: z
     .union([
       z.string().transform((val) => parseInt(val, 10)),
-      z.number().int("El ID del proveedor debe ser un número entero")
+      z.number().int("El ID del proveedor debe ser un número entero"),
     ])
-    .refine((val) => !isNaN(val) && val > 0, "El ID del proveedor debe ser un número positivo")
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El ID del proveedor debe ser un número positivo"
+    )
     .optional(),
 
   name: z
@@ -61,37 +63,44 @@ export const updateConsumableSchema = z.object({
   cosumableTypeId: z
     .union([
       z.string().transform((val) => parseInt(val, 10)),
-      z.number().int("El ID del tipo de consumible debe ser un número entero")
+      z.number().int("El ID del tipo de consumible debe ser un número entero"),
     ])
-    .refine((val) => !isNaN(val) && val >= 0, "El ID del tipo de consumible no puede ser negativo")
+    .refine(
+      (val) => !isNaN(val) && val >= 0,
+      "El ID del tipo de consumible no puede ser negativo"
+    )
     .optional(),
 
   quantity: z
-    .union([
-      z.string().transform((val) => parseFloat(val)),
-      z.number()
-    ])
-    .refine((val) => !isNaN(val) && val >= 0, "La cantidad no puede ser negativa")
+    .union([z.string().transform((val) => parseFloat(val)), z.number()])
+    .refine(
+      (val) => !isNaN(val) && val >= 0,
+      "La cantidad no puede ser negativa"
+    )
     .optional(),
 
   unitMeasurement: z.nativeEnum(UnitMeasurement).optional(),
 
   cost: z
-    .union([
-      z.string().transform((val) => parseFloat(val)),
-      z.number()
-    ])
+    .union([z.string().transform((val) => parseFloat(val)), z.number()])
     .refine((val) => !isNaN(val) && val >= 0, "El costo no puede ser negativo")
-    .refine((val) => Number((val % 0.01).toFixed(2)) === 0, "El costo debe tener máximo 2 decimales")
+    .refine(
+      (val) => Number((val % 0.01).toFixed(2)) === 0,
+      "El costo debe tener máximo 2 decimales"
+    )
     .optional(),
 });
 
 export const consumableIdSchema = z.object({
-  id: z.union([
-    z.string().transform((val) => parseInt(val, 10)),
-    z.number().int("El ID debe ser un número entero")
-  ])
-    .refine((val) => !isNaN(val) && val > 0, "El ID debe ser un número positivo")
+  id: z
+    .union([
+      z.string().transform((val) => parseInt(val, 10)),
+      z.number().int("El ID debe ser un número entero"),
+    ])
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El ID debe ser un número positivo"
+    ),
 });
 
 export const ConsumableTypeSchema = z.object({

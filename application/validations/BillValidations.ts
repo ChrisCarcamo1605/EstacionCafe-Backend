@@ -6,7 +6,7 @@ export const createBillSchema = z.object({
     .transform((val) => parseInt(val, 10))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "La caja registradora debe ser un número positivo"
+      "La caja registradora debe ser un número positivo0"
     ),
 
   total: z

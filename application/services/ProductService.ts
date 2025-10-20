@@ -9,7 +9,7 @@ export class ProductService implements IService {
   }
 
   async saveAll(body: SaveProductDTO[]): Promise<Product[]> {
-    const products = body.map(data => {
+    const products = body.map((data) => {
       const product = new Product();
       product.name = data.name;
       product.description = data.description;
@@ -36,11 +36,11 @@ export class ProductService implements IService {
   }
 
   async delete(id: number): Promise<any> {
-    const result = await this.productRepository.delete(id);
-    if (result.affected === 0) {
-      throw new Error(`Producto con ID ${id} no encontrado`);
-    }
-    return { message: "Producto eliminado correctamente", id };
+    const product = await this.getById(id);
+    product.active = false;
+    const result = await this.productRepository.save(product);
+
+    return { message: "Producto desactivado correctamente", id };
   }
 
   async update(body: UpdateProductDTO): Promise<Product> {
@@ -50,19 +50,19 @@ export class ProductService implements IService {
       throw new Error("productId es requerido para actualizar");
     }
 
-    const product = await this.productRepository.findOne({ 
-      where: { productId } 
+    const product = await this.productRepository.findOne({
+      where: { productId },
     });
-    
+
     if (!product) {
       throw new Error(`Producto con ID ${productId} no encontrado`);
     }
 
     if (updateData.name !== undefined) product.name = updateData.name;
-    if (updateData.description !== undefined) product.description = updateData.description;
+    if (updateData.description !== undefined)
+      product.description = updateData.description;
     if (updateData.price !== undefined) product.price = updateData.price;
     if (updateData.cost !== undefined) product.cost = updateData.cost;
-    if (updateData.active !== undefined) product.active = updateData.active;
 
     return await this.productRepository.save(product);
   }
@@ -70,30 +70,33 @@ export class ProductService implements IService {
   async getAll(): Promise<Product[]> {
     console.log(`Obteniendo productos...`);
     return await this.productRepository.find({
-      order: { name: "ASC" }
+      order: { name: "ASC" },
     });
   }
 
   async getById(id: number): Promise<Product> {
-    const product = await this.productRepository.findOne({ 
-      where: { productId: id } 
+    const product = await this.productRepository.findOne({
+      where: { productId: id },
     });
-    
+
     if (!product) {
       throw new Error(`Producto con ID ${id} no encontrado`);
     }
-    
+
     return product;
   }
 
   async getActiveProducts(): Promise<Product[]> {
     return await this.productRepository.find({
       where: { active: true },
-      order: { name: "ASC" }
+      order: { name: "ASC" },
     });
   }
 
-  async getProductsByPriceRange(minPrice: number, maxPrice: number): Promise<Product[]> {
+  async getProductsByPriceRange(
+    minPrice: number,
+    maxPrice: number
+  ): Promise<Product[]> {
     return await this.productRepository
       .createQueryBuilder("product")
       .where("product.price >= :minPrice", { minPrice })

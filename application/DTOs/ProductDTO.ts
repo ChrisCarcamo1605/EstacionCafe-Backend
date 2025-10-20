@@ -21,7 +21,6 @@ export interface UpdateProductDTO {
     description?: string;
     price?: number;
     cost?: number;
-    active?: boolean;
 }
 
 export interface ProductWithIngredientsCostDTO {

@@ -1,6 +1,7 @@
 import { ca } from "zod/v4/locales";
 import { BillDetailsSchema } from "../application/validations/BillDetailsValidations";
 import { IService } from "../core/interfaces/IService";
+import { UpdateProductDTO } from "../application/DTOs/ProductDTO";
 
 let service: IService;
 export const setService = (detailsService: IService) => {
@@ -50,19 +51,41 @@ export const getDetails = async (req: any, res: any) => {
   } catch (error: any) {
     console.log(error);
 
+    return res.status(500).send({
+      status: "error",
+      message: "Hubo un error en el servidor",
+      errors: error.error,
+    });
+  }
+};
+
+export const deleteDetail = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const result = await service.delete(id);
+    console.log("Detalle eliminado correctamente");
+    return res.status(202).send({
+      status: "sucess",
+      message: "Detalle eliminado correctamente",
+    });
+  } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
         status: "error",
-        message: "Datos inválidos: " + error.issues[0].message,
-        campo: error.issues[0].path,
-        error: error.issues[0].code,
+        message: "ID inválido: " + error.issues[0].message,
+      });
+    }
+
+    if (error.message.includes("no encontrada")) {
+      return res.status(404).send({
+        status: "error",
+        message: error.message,
       });
     }
 
     return res.status(500).send({
       status: "error",
-      message: "Hubo un error en el servidor",
-      errors: error.error,
+      message: `Error interno del servidor: ${error.message}`,
     });
   }
 };

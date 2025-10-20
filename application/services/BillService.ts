@@ -32,6 +32,7 @@ export class BillService implements IService {
     bill.customer = data.customer;
     bill.date = data.date;
     console.log("Guardando factura...");
+    console.log(bill)
     return await this.billRepository.save(bill);
   }
 

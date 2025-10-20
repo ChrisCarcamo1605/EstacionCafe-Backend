@@ -12,15 +12,9 @@ export const createUserSchema = z.object({
     .min(6, "La contraseña debe tener al menos 6 caracteres")
     .max(100, "La contraseña es muy larga"),
 
-  email: z
-    .string()
-    .email("Debe ser un email válido")
-    .toLowerCase(),
+  email: z.string().email("Debe ser un email válido").toLowerCase(),
 
-  typeId: z
-    .number()
-    .int("El tipo de usuario debe ser un número entero")
-    .positive("El tipo de usuario debe ser un número positivo")
+  typeId: z.string().transform((x) => parseInt(x)),
 });
 
 export const updateUserSchema = z.object({
@@ -37,22 +31,17 @@ export const updateUserSchema = z.object({
     .max(100, "La contraseña es muy larga")
     .optional(),
 
-  email: z
-    .string()
-    .email("Debe ser un email válido")
-    .toLowerCase()
-    .optional(),
+  email: z.string().email("Debe ser un email válido").toLowerCase().optional(),
 
-  typeId: z
-    .number()
-    .int("El tipo de usuario debe ser un número entero")
-    .positive("El tipo de usuario debe ser un número positivo")
-    .optional()
+  typeId: z.string().transform((x) => parseInt(x)),
 });
 
 export const userIdSchema = z.object({
   id: z
     .string()
     .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val) && val > 0, "El ID debe ser un número positivo")
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El ID debe ser un número positivo"
+    ),
 });

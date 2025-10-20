@@ -28,3 +28,4 @@ export interface SaveBillDetailDTO {
   date: Date;
   billDetails: any[];
 }
+
