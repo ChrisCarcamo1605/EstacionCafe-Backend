@@ -7,11 +7,8 @@ export class ProductService implements IService {
   constructor(private productRepository: Repository<Product>) {
     this.productRepository = productRepository;
   }
-  async getById(id: number): Promise<any | null> {
-    console.log(`Obteniendo factura con ID: ${id}`);
-    return await this.productRepository.findOne({ where: { productId: id } });
-  }
- async saveAll(body: SaveProductDTO[]): Promise<Product[]> {
+
+  async saveAll(body: SaveProductDTO[]): Promise<Product[]> {
     const products = body.map((data) => {
       const product = new Product();
       product.name = data.name;
@@ -22,7 +19,7 @@ export class ProductService implements IService {
       return product;
     });
 
-    return await this.productRepository.save(products);}
+    return await this.productRepository.save(products);
   }
 
   async save(body: SaveProductDTO): Promise<Product> {

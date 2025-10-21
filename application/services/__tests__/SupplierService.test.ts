@@ -13,7 +13,6 @@ describe("SupplierService", () => {
       save: jest.fn(),
       find: jest.fn(),
       findOne: jest.fn(),
-      delete: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     } as any;
@@ -27,6 +26,7 @@ describe("SupplierService", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe("save", () => {
@@ -191,42 +191,64 @@ describe("SupplierService", () => {
   });
 
   describe("delete", () => {
-    it("debería eliminar un proveedor exitosamente", async () => {
+    it("debería desactivar un proveedor exitosamente (soft delete)", async () => {
       const supplierId = 1;
-      const deleteResult = { affected: 1 };
+      const existingSupplier = {
+        supplierId: 1,
+        name: "Proveedor Test",
+        phone: "+50312345678",
+        email: "test@proveedor.com",
+        active: true,
+      } as Supplier;
 
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
+      const deactivatedSupplier = {
+        ...existingSupplier,
+        active: false,
+      } as Supplier;
+
+      // Mock the findOne call that getById uses
+      mockRepository.findOne.mockResolvedValue(existingSupplier);
+      mockRepository.save.mockResolvedValue(deactivatedSupplier);
 
       const result = await supplierService.delete(supplierId);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(supplierId);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { supplierId },
+      });
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        active: false,
+      }));
       expect(result).toEqual({
-        message: "Proveedor eliminado correctamente",
+        message: "Proveedor desactivado correctamente",
         id: supplierId,
       });
-      expect(console.log).toHaveBeenCalledWith(`Eliminando proveedor con ID: ${supplierId}`);
+      expect(console.log).toHaveBeenCalledWith(`Desactivando proveedor con ID: ${supplierId}`);
+      expect(console.log).toHaveBeenCalledWith(`Obteniendo proveedor con ID: ${supplierId}`);
     });
 
     it("debería lanzar error cuando el proveedor no existe", async () => {
       const supplierId = 999;
-      const deleteResult = { affected: 0 };
-
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
+      mockRepository.findOne.mockResolvedValue(null);
 
       await expect(supplierService.delete(supplierId)).rejects.toThrow(
         `Proveedor con ID ${supplierId} no encontrado`
       );
-      expect(mockRepository.delete).toHaveBeenCalledWith(supplierId);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { supplierId },
+      });
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
     it("debería manejar errores del repositorio", async () => {
       const supplierId = 1;
-      const repositoryError = new Error("Error de eliminación");
+      const repositoryError = new Error("Error de consulta");
+      mockRepository.findOne.mockRejectedValue(repositoryError);
 
-      mockRepository.delete.mockRejectedValue(repositoryError);
-
-      await expect(supplierService.delete(supplierId)).rejects.toThrow("Error de eliminación");
-      expect(mockRepository.delete).toHaveBeenCalledWith(supplierId);
+      await expect(supplierService.delete(supplierId)).rejects.toThrow("Error de consulta");
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { supplierId },
+      });
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
   });
 
@@ -538,10 +560,11 @@ describe("SupplierService", () => {
       const updateResult = await supplierService.update(updateData);
       expect(updateResult).toEqual(updatedSupplier);
 
-      // 4. Eliminar
-      mockRepository.delete.mockResolvedValueOnce({ affected: 1 } as any);
+      // 4. Desactivar (soft delete)
+      mockRepository.findOne.mockResolvedValueOnce(updatedSupplier);
+      mockRepository.save.mockResolvedValueOnce({ ...updatedSupplier, active: false });
       const deleteResult = await supplierService.delete(1);
-      expect(deleteResult.message).toBe("Proveedor eliminado correctamente");
+      expect(deleteResult.message).toBe("Proveedor desactivado correctamente");
     });
 
     it("debería filtrar correctamente proveedores activos vs todos", async () => {
