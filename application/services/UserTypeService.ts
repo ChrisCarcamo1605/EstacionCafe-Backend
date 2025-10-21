@@ -7,6 +7,10 @@ export class UserTypeService implements IService {
   constructor(typeRepository: Repository<UserType>) {
     this.typeRepo = typeRepository;
   }
+  async getById(id: number): Promise<any | null> {
+    console.log(`Obteniendo factura con ID: ${id}`);
+    return await this.typeRepo.findOne({ where: { userTypeId: id } });
+  }
 
   async save(body: any): Promise<any> {
     const type = new UserType();

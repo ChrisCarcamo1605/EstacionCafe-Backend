@@ -29,11 +29,25 @@ export class IngredientService implements IService {
     ingredient.consumableId = body.consumableId;
     
     console.log("Guardando ingrediente...");
-    console.log(ingredient)
     return await this.ingredientRepo.save(ingredient);
   }
 
+  async saveAll(ingredients: SaveIngredientDTO[]): Promise<Ingredient[]> {
+    console.log("Guardando múltiples ingredientes...");
+    const ingredientEntities = ingredients.map(body => {
+      const ingredient = new Ingredient();
+      ingredient.name = body.name;
+      ingredient.quantity = body.quantity;
+      ingredient.productId = body.productId;
+      ingredient.consumableId = body.consumableId;
+      return ingredient;
+    });
+    
+    return await this.ingredientRepo.save(ingredientEntities);
+  }
+
   async delete(id: number): Promise<any> {
+    console.log(`Eliminando ingrediente con ID: ${id}`);
     const result = await this.ingredientRepo.delete(id);
     if (result.affected === 0) {
       throw new Error(`Ingrediente con ID ${id} no encontrado`);
@@ -41,12 +55,9 @@ export class IngredientService implements IService {
     return { message: "Ingrediente eliminado correctamente", id };
   }
 
-  async update(body: UpdateIngredientDTO): Promise<Ingredient> {
+  async update(body: any): Promise<Ingredient> {
     const { ingredientId, ...updateData } = body;
-
-    if (!ingredientId) {
-      throw new Error("ingredientId es requerido para actualizar");
-    }
+    console.log(`Actualizando ingrediente con ID: ${ingredientId}`);
 
     const ingredient = await this.ingredientRepo.findOne({ 
       where: { ingredientId } 
@@ -72,17 +83,30 @@ export class IngredientService implements IService {
     });
   }
 
-  async getById(id: number): Promise<Ingredient> {
-    const ingredient = await this.ingredientRepo.findOne({ 
+  async getById(id: number): Promise<Ingredient | null> {
+    console.log(`Obteniendo ingrediente con ID: ${id}`);
+    return await this.ingredientRepo.findOne({
       where: { ingredientId: id },
       relations: ["product", "consumable"]
     });
-    
-    if (!ingredient) {
-      throw new Error(`Ingrediente con ID ${id} no encontrado`);
-    }
-    
-    return ingredient;
+  }
+
+  async getIngredientsByProduct(productId: number): Promise<Ingredient[]> {
+    console.log(`Obteniendo ingredientes del producto con ID: ${productId}`);
+    return await this.ingredientRepo.find({
+      where: { productId },
+      relations: ["product", "consumable"],
+      order: { name: "ASC" }
+    });
+  }
+
+  async getIngredientsByConsumable(consumableId: number): Promise<Ingredient[]> {
+    console.log(`Obteniendo ingredientes del consumible con ID: ${consumableId}`);
+    return await this.ingredientRepo.find({
+      where: { consumableId },
+      relations: ["product", "consumable"],
+      order: { name: "ASC" }
+    });
   }
 
   async getByProduct(productId: number): Promise<Ingredient[]> {

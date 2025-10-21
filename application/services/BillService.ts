@@ -10,8 +10,11 @@ export class BillService implements IService {
   public constructor(private billRepository: Repository<Bill>) {
     this.billRepository = billRepository;
   }
-
-  async saveAll(body: SaveBillDTO[]): Promise<Bill[]> {
+  async getById(id: number): Promise<any> {
+    console.log(`Obteniendo factura con ID: ${id}`);
+    return await this.billRepository.findOne({ where: { billId:id } });
+  }
+   async saveAll(body: SaveBillDTO[]): Promise<Bill[]> {
     const bills = body.map((data) => {
       const bill = new Bill();
       bill.cashRegisterId = data.cashRegister;
@@ -20,9 +23,9 @@ export class BillService implements IService {
       bill.date = data.date;
       return bill;
     });
-
     return await this.billRepository.save(bills);
   }
+  
 
   async save(body: SaveBillDTO): Promise<any> {
     const data: SaveBillDTO = body;
