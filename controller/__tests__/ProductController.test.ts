@@ -1,778 +1,757 @@
-import * as productController from "../ProductController";
-import { IService } from "../../core/interfaces/IService";
-import { productSchema } from "../../application/validations/ProductValidations";
+import {
+    getProducts,
+    getProductById,
+    saveProduct,
+    updateProduct,
+    deleteProduct,
+    getActiveProducts,
+    setService
+} from '../ProductController';
+import { IService } from '../../core/interfaces/IService';
+import { createProductSchema, updateProductSchema, productIdSchema } from '../../application/validations/ProductValidations';
 
-jest.mock("../../application/validations/ProductValidations");
-const mockedProductSchema = productSchema as jest.Mocked<typeof productSchema>;
+// Mock the validation schemas
+jest.mock('../../application/validations/ProductValidations', () => ({
+    createProductSchema: {
+        parse: jest.fn()
+    },
+    updateProductSchema: {
+        parse: jest.fn()
+    },
+    productIdSchema: {
+        parse: jest.fn()
+    }
+}));
 
-describe("ProductController", () => {
-  let mockService: jest.Mocked<IService>;
-  let mockReq: any;
-  let mockRes: any;
+const mockService: jest.Mocked<IService & { getActiveProducts: jest.Mock }> = {
+    save: jest.fn(),
+    saveAll: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    getAll: jest.fn(),
+    getById: jest.fn(),
+    getActiveProducts: jest.fn()
+} as any;
 
-  beforeEach(() => {
-    // Crear el mock del servicio
-    mockService = {
-      getAll: jest.fn(),
-      getById: jest.fn(),
-      save: jest.fn(),
-      saveAll: jest.fn(),
-      delete: jest.fn(),
-      update: jest.fn(),
-    } as any;
+const mockRequest = (body = {}, params = {}) => ({
+    body,
+    params
+});
 
-    // Establecer el servicio mock
-    productController.setService(mockService);
-
-    mockReq = {
-      body: {},
-      params: {},
+const mockResponse = () => {
+    const res: any = {
+        status: jest.fn(() => res),
+        send: jest.fn(() => res)
     };
+    return res;
+};
 
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn().mockReturnThis(),
-    };
-
-    jest.spyOn(console, "log").mockImplementation();
-    jest.spyOn(console, "error").mockImplementation();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe("saveProduct", () => {
-    it("debería guardar el producto exitosamente", async () => {
-      const datosProducto = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: "3.50",
-        cost: "1.20",
-      };
-
-      const datosValidados = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: 3.50,
-        cost: 1.20,
-      };
-
-      const productoGuardado = { 
-        productId: 1, 
-        ...datosValidados 
-      };
-
-      mockReq.body = datosProducto;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosProducto);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "success",
-        message: "El producto se guardo correctamente",
-        data: productoGuardado,
-      });
-      expect(console.log).toHaveBeenCalledWith("Producto guardado correctamente");
+describe('ProductController', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        setService(mockService);
+        
+        // Mock console.log and console.error to avoid test output pollution
+        jest.spyOn(console, 'log').mockImplementation();
+        jest.spyOn(console, 'error').mockImplementation();
     });
 
-    it("debería manejar errores de validación ZodError para nombre vacío", async () => {
-      const datosInvalidos = {
-        name: "",
-        description: "Descripción válida",
-        price: "3.50",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El nombre no puede estar vacio",
-            path: ["name"],
-            code: "too_small",
-          },
-        ],
-      };
-
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El nombre no puede estar vacio",
-        campo: ["name"],
-        error: "too_small",
-      });
-      expect(console.log).not.toHaveBeenCalledWith("Producto guardado correctamente");
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    it("debería manejar errores de validación ZodError para nombre muy largo", async () => {
-      const nombreMuyLargo = "a".repeat(51);
-      const datosInvalidos = {
-        name: nombreMuyLargo,
-        description: "Descripción válida",
-        price: "3.50",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El nombre no puede ser mayor a 50 caracteres",
-            path: ["name"],
-            code: "too_big",
-          },
-        ],
-      };
+    describe('getProducts', () => {
+        it('should return all products successfully', async () => {
+            const mockProducts = [
+                {
+                    productId: 1,
+                    name: 'Café Americano',
+                    description: 'Café negro tradicional',
+                    price: 5.50,
+                    cost: 2.00,
+                    active: true
+                },
+                {
+                    productId: 2,
+                    name: 'Cappuccino',
+                    description: 'Café con leche y espuma',
+                    price: 7.00,
+                    cost: 3.00,
+                    active: false
+                }
+            ];
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            mockService.getAll.mockResolvedValue(mockProducts);
+            const req = mockRequest();
+            const res = mockResponse();
 
-      await productController.saveProduct(mockReq, mockRes);
+            await getProducts(req, res);
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El nombre no puede ser mayor a 50 caracteres",
-        campo: ["name"],
-        error: "too_big",
-      });
+            expect(mockService.getAll).toHaveBeenCalledTimes(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'success',
+                data: [
+                    {
+                        productId: 1,
+                        name: 'Café Americano',
+                        description: 'Café negro tradicional',
+                        price: 5.50,
+                        cost: 2.00,
+                        active: true
+                    },
+                    {
+                        productId: 2,
+                        name: 'Cappuccino',
+                        description: 'Café con leche y espuma',
+                        price: 7.00,
+                        cost: 3.00,
+                        active: false
+                    }
+                ]
+            });
+        });
+
+        it('should handle service errors', async () => {
+            const errorMessage = 'Database connection failed';
+            mockService.getAll.mockRejectedValue(new Error(errorMessage));
+            
+            const req = mockRequest();
+            const res = mockResponse();
+
+            await getProducts(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: `Error al obtener los productos: ${errorMessage}`
+            });
+        });
+
+        it('should handle empty products list', async () => {
+            mockService.getAll.mockResolvedValue([]);
+            
+            const req = mockRequest();
+            const res = mockResponse();
+
+            await getProducts(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'success',
+                data: []
+            });
+        });
     });
 
-    it("debería manejar errores de validación ZodError para descripción vacía", async () => {
-      const datosInvalidos = {
-        name: "Café Americano",
-        description: "",
-        price: "3.50",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El nombre del cliente no puede estar vacío",
-            path: ["description"],
-            code: "too_small",
-          },
-        ],
-      };
+    describe('getProductById', () => {
+        it('should return a product by id successfully', async () => {
+            const productId = 1;
+            const mockProduct = {
+                productId: 1,
+                name: 'Café Americano',
+                description: 'Café negro tradicional',
+                price: 5.50,
+                cost: 2.00,
+                active: true
+            };
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.getById.mockResolvedValue(mockProduct);
 
-      await productController.saveProduct(mockReq, mockRes);
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El nombre del cliente no puede estar vacío",
-        campo: ["description"],
-        error: "too_small",
-      });
+            await getProductById(req, res);
+
+            expect(productIdSchema.parse).toHaveBeenCalledWith({ id: productId });
+            expect(mockService.getById).toHaveBeenCalledWith(productId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({ body: mockProduct });
+        });
+
+        it('should handle validation errors', async () => {
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ message: 'ID debe ser un número positivo', path: ['id'] }]
+            };
+
+            (productIdSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest({}, { id: 'invalid' });
+            const res = mockResponse();
+
+            await getProductById(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'ID inválido: ID debe ser un número positivo'
+            });
+        });
+
+        it('should handle product not found', async () => {
+            const productId = 999;
+            const notFoundError = new Error('Producto no encontrado');
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.getById.mockRejectedValue(notFoundError);
+
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
+
+            await getProductById(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Producto no encontrado'
+            });
+        });
+
+        it('should handle general service errors', async () => {
+            const productId = 1;
+            const serviceError = new Error('Database error');
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.getById.mockRejectedValue(serviceError);
+
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
+
+            await getProductById(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Error al obtener el producto: Database error'
+            });
+        });
     });
 
-    it("debería manejar errores de validación ZodError para descripción muy larga", async () => {
-      const descripcionMuyLarga = "a".repeat(101);
-      const datosInvalidos = {
-        name: "Café Americano",
-        description: descripcionMuyLarga,
-        price: "3.50",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El nombre del cliente es muy largo",
-            path: ["description"],
-            code: "too_big",
-          },
-        ],
-      };
+    describe('saveProduct', () => {
+        it('should save a product successfully', async () => {
+            const productData = {
+                name: 'Café Americano',
+                description: 'Café negro tradicional',
+                price: 5.50,
+                cost: 2.00
+            };
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            const validatedData = {
+                name: 'Café Americano',
+                description: 'Café negro tradicional',
+                price: 5.50,
+                cost: 2.00
+            };
 
-      await productController.saveProduct(mockReq, mockRes);
+            const savedProduct = {
+                productId: 1,
+                ...validatedData,
+                active: true
+            };
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El nombre del cliente es muy largo",
-        campo: ["description"],
-        error: "too_big",
-      });
+            (createProductSchema.parse as jest.Mock).mockReturnValue(validatedData);
+            mockService.save.mockResolvedValue(savedProduct);
+
+            const req = mockRequest(productData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(createProductSchema.parse).toHaveBeenCalledWith(productData);
+            expect(mockService.save).toHaveBeenCalledWith(validatedData);
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'success',
+                message: 'El producto se guardó correctamente',
+                data: savedProduct
+            });
+        });
+
+        it('should handle validation errors', async () => {
+            const invalidData = {
+                name: '',
+                description: 'Descripción',
+                price: -5,
+                cost: 2
+            };
+
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El nombre no puede estar vacío', 
+                    path: ['name'], 
+                    code: 'too_small' 
+                }]
+            };
+
+            (createProductSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest(invalidData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Datos inválidos: El nombre no puede estar vacío',
+                campo: ['name'],
+                error: 'too_small'
+            });
+        });
+
+        it('should handle service errors', async () => {
+            const productData = {
+                name: 'Café Americano',
+                description: 'Café negro tradicional',
+                price: 5.50,
+                cost: 2.00
+            };
+
+            (createProductSchema.parse as jest.Mock).mockReturnValue(productData);
+            mockService.save.mockRejectedValue(new Error('Database error'));
+
+            const req = mockRequest(productData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Error interno del servidor: Database error'
+            });
+        });
+
+        it('should validate price greater than cost', async () => {
+            const invalidData = {
+                name: 'Café Americano',
+                description: 'Café negro tradicional',
+                price: 2.00,
+                cost: 5.50
+            };
+
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El precio debe ser mayor al costo', 
+                    path: ['price'], 
+                    code: 'custom' 
+                }]
+            };
+
+            (createProductSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest(invalidData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Datos inválidos: El precio debe ser mayor al costo',
+                campo: ['price'],
+                error: 'custom'
+            });
+        });
     });
 
-    it("debería manejar errores de validación ZodError para precio inválido", async () => {
-      const datosInvalidos = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: "0",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El precio debe ser mayor a 0",
-            path: ["price"],
-            code: "custom",
-          },
-        ],
-      };
+    describe('updateProduct', () => {
+        it('should update a product successfully', async () => {
+            const productId = 1;
+            const updateData = {
+                name: 'Café Americano Premium',
+                price: 6.00
+            };
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            const updatedProduct = {
+                productId: 1,
+                name: 'Café Americano Premium',
+                description: 'Café negro tradicional',
+                price: 6.00,
+                cost: 2.00,
+                active: true
+            };
 
-      await productController.saveProduct(mockReq, mockRes);
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            (updateProductSchema.parse as jest.Mock).mockReturnValue(updateData);
+            mockService.update.mockResolvedValue(updatedProduct);
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El precio debe ser mayor a 0",
-        campo: ["price"],
-        error: "custom",
-      });
+            const req = mockRequest(updateData, { id: productId });
+            const res = mockResponse();
+
+            await updateProduct(req, res);
+
+            expect(productIdSchema.parse).toHaveBeenCalledWith({ id: productId });
+            expect(updateProductSchema.parse).toHaveBeenCalledWith(updateData);
+            expect(mockService.update).toHaveBeenCalledWith({
+                productId: productId,
+                ...updateData
+            });
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                message: 'Producto actualizado correctamente',
+                data: updatedProduct
+            });
+        });
+
+        it('should handle validation errors for ID', async () => {
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El ID debe ser un número positivo', 
+                    path: ['id'] 
+                }]
+            };
+
+            (productIdSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest({ name: 'Test' }, { id: 'invalid' });
+            const res = mockResponse();
+
+            await updateProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Datos inválidos: El ID debe ser un número positivo',
+                campo: ['id']
+            });
+        });
+
+        it('should handle validation errors for update data', async () => {
+            const productId = 1;
+            const invalidUpdateData = {
+                name: '',
+                price: -5
+            };
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El nombre no puede estar vacío', 
+                    path: ['name'] 
+                }]
+            };
+
+            (updateProductSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest(invalidUpdateData, { id: productId });
+            const res = mockResponse();
+
+            await updateProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Datos inválidos: El nombre no puede estar vacío',
+                campo: ['name']
+            });
+        });
+
+        it('should handle product not found', async () => {
+            const productId = 999;
+            const updateData = { name: 'Test' };
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            (updateProductSchema.parse as jest.Mock).mockReturnValue(updateData);
+            mockService.update.mockRejectedValue(new Error('Producto no encontrado'));
+
+            const req = mockRequest(updateData, { id: productId });
+            const res = mockResponse();
+
+            await updateProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Producto no encontrado'
+            });
+        });
+
+        it('should handle general service errors', async () => {
+            const productId = 1;
+            const updateData = { name: 'Test' };
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            (updateProductSchema.parse as jest.Mock).mockReturnValue(updateData);
+            mockService.update.mockRejectedValue(new Error('Database error'));
+
+            const req = mockRequest(updateData, { id: productId });
+            const res = mockResponse();
+
+            await updateProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Error interno del servidor: Database error'
+            });
+        });
     });
 
-    it("debería manejar errores de validación ZodError para precio no numérico", async () => {
-      const datosInvalidos = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: "invalid",
-        cost: "1.20",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El precio debe ser mayor a 0",
-            path: ["price"],
-            code: "custom",
-          },
-        ],
-      };
+    describe('deleteProduct', () => {
+        it('should delete a product successfully', async () => {
+            const productId = 1;
+            const deleteResult = { affected: 1 };
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.delete.mockResolvedValue(deleteResult);
 
-      await productController.saveProduct(mockReq, mockRes);
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El precio debe ser mayor a 0",
-        campo: ["price"],
-        error: "custom",
-      });
+            await deleteProduct(req, res);
+
+            expect(productIdSchema.parse).toHaveBeenCalledWith({ id: productId });
+            expect(mockService.delete).toHaveBeenCalledWith(productId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                message: 'Producto eliminado correctamente',
+                data: deleteResult
+            });
+        });
+
+        it('should handle validation errors', async () => {
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El ID debe ser un número positivo' 
+                }]
+            };
+
+            (productIdSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest({}, { id: 'invalid' });
+            const res = mockResponse();
+
+            await deleteProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'ID inválido: El ID debe ser un número positivo'
+            });
+        });
+
+        it('should handle product not found', async () => {
+            const productId = 999;
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.delete.mockRejectedValue(new Error('Producto no encontrado'));
+
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
+
+            await deleteProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Producto no encontrado'
+            });
+        });
+
+        it('should handle general service errors', async () => {
+            const productId = 1;
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.delete.mockRejectedValue(new Error('Database error'));
+
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
+
+            await deleteProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Error interno del servidor: Database error'
+            });
+        });
+
+        it('should handle string ID conversion', async () => {
+            const productId = '5';
+            const deleteResult = { affected: 1 };
+
+            (productIdSchema.parse as jest.Mock).mockReturnValue({ id: productId });
+            mockService.delete.mockResolvedValue(deleteResult);
+
+            const req = mockRequest({}, { id: productId });
+            const res = mockResponse();
+
+            await deleteProduct(req, res);
+
+            expect(mockService.delete).toHaveBeenCalledWith(parseInt(String(productId)));
+        });
     });
 
-    it("debería manejar errores de validación ZodError para costo inválido", async () => {
-      const datosInvalidos = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: "3.50",
-        cost: "0",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El costo debe ser mayor a 0",
-            path: ["cost"],
-            code: "custom",
-          },
-        ],
-      };
+    describe('getActiveProducts', () => {
+        it('should return active products successfully', async () => {
+            const activeProducts = [
+                {
+                    productId: 1,
+                    name: 'Café Americano',
+                    description: 'Café negro tradicional',
+                    price: 5.50,
+                    cost: 2.00,
+                    active: true
+                },
+                {
+                    productId: 3,
+                    name: 'Latte',
+                    description: 'Café con leche',
+                    price: 6.50,
+                    cost: 2.50,
+                    active: true
+                }
+            ];
 
-      mockReq.body = datosInvalidos;
-      mockedProductSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
+            mockService.getActiveProducts.mockResolvedValue(activeProducts);
 
-      await productController.saveProduct(mockReq, mockRes);
+            const req = mockRequest();
+            const res = mockResponse();
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El costo debe ser mayor a 0",
-        campo: ["cost"],
-        error: "custom",
-      });
+            await getActiveProducts(req, res);
+
+            expect(mockService.getActiveProducts).toHaveBeenCalledTimes(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                body: activeProducts
+            });
+        });
+
+        it('should handle service errors', async () => {
+            const errorMessage = 'Database connection failed';
+            mockService.getActiveProducts.mockRejectedValue(new Error(errorMessage));
+
+            const req = mockRequest();
+            const res = mockResponse();
+
+            await getActiveProducts(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: `Error al obtener los productos activos: ${errorMessage}`
+            });
+        });
+
+        it('should handle empty active products list', async () => {
+            mockService.getActiveProducts.mockResolvedValue([]);
+
+            const req = mockRequest();
+            const res = mockResponse();
+
+            await getActiveProducts(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                body: []
+            });
+        });
     });
 
-    it("debería manejar errores generales del servidor", async () => {
-      const datosProducto = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: "3.50",
-        cost: "1.20",
-      };
+    describe('Edge Cases', () => {
+        it('should handle products with special characters in name', async () => {
+            const productData = {
+                name: 'Café Ñoño & Special',
+                description: 'Café con caracteres especiales',
+                price: 5.50,
+                cost: 2.00
+            };
 
-      const datosValidados = {
-        name: "Café Americano",
-        description: "Café negro clásico",
-        price: 3.50,
-        cost: 1.20,
-      };
+            (createProductSchema.parse as jest.Mock).mockReturnValue(productData);
+            mockService.save.mockResolvedValue({ productId: 1, ...productData, active: true });
 
-      const errorServidor = new Error("Error interno del servidor");
+            const req = mockRequest(productData);
+            const res = mockResponse();
 
-      mockReq.body = datosProducto;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockRejectedValue(errorServidor);
+            await saveProduct(req, res);
 
-      await productController.saveProduct(mockReq, mockRes);
+            expect(res.status).toHaveBeenCalledWith(201);
+        });
 
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosProducto);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Hubo en error en el servidor al guardar el producto",
-        errors: errorServidor,
-      });
-      expect(console.log).toHaveBeenCalledWith("Error interno del servidor");
-      expect(console.log).not.toHaveBeenCalledWith("Producto guardado correctamente");
+        it('should handle decimal price and cost transformations', async () => {
+            const productData = {
+                name: 'Café Test',
+                description: 'Test description',
+                price: '5.99999',
+                cost: '2.11111'
+            };
+
+            const transformedData = {
+                name: 'Café Test',
+                description: 'Test description',
+                price: 6.00,
+                cost: 2.11
+            };
+
+            (createProductSchema.parse as jest.Mock).mockReturnValue(transformedData);
+            mockService.save.mockResolvedValue({ productId: 1, ...transformedData, active: true });
+
+            const req = mockRequest(productData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(createProductSchema.parse).toHaveBeenCalledWith(productData);
+            expect(res.status).toHaveBeenCalledWith(201);
+        });
+
+        it('should handle maximum length validation for name and description', async () => {
+            const longName = 'A'.repeat(51);
+            const longDescription = 'B'.repeat(101);
+
+            const invalidData = {
+                name: longName,
+                description: longDescription,
+                price: 5.50,
+                cost: 2.00
+            };
+
+            const validationError = {
+                name: 'ZodError',
+                issues: [{ 
+                    message: 'El nombre no puede ser mayor a 50 caracteres', 
+                    path: ['name'], 
+                    code: 'too_big' 
+                }]
+            };
+
+            (createProductSchema.parse as jest.Mock).mockImplementation(() => {
+                throw validationError;
+            });
+
+            const req = mockRequest(invalidData);
+            const res = mockResponse();
+
+            await saveProduct(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'Datos inválidos: El nombre no puede ser mayor a 50 caracteres',
+                campo: ['name'],
+                error: 'too_big'
+            });
+        });
     });
-
-    it("debería manejar transformaciones de string a number correctamente", async () => {
-      const datosProducto = {
-        name: "Latte",
-        description: "Café con leche espumosa",
-        price: "4.75",
-        cost: "2.10",
-      };
-
-      const datosValidados = {
-        name: "Latte",
-        description: "Café con leche espumosa",
-        price: 4.75,
-        cost: 2.10,
-      };
-
-      const productoGuardado = { 
-        productId: 2, 
-        ...datosValidados 
-      };
-
-      mockReq.body = datosProducto;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosProducto);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "success",
-        message: "El producto se guardo correctamente",
-        data: productoGuardado,
-      });
-    });
-
-    it("debería manejar nombres y descripciones con espacios (trim)", async () => {
-      const datosConEspacios = {
-        name: "   Cappuccino   ",
-        description: "   Café con espuma de leche   ",
-        price: "4.00",
-        cost: "1.80",
-      };
-
-      const datosLimpios = {
-        name: "Cappuccino",
-        description: "Café con espuma de leche",
-        price: 4.00,
-        cost: 1.80,
-      };
-
-      const productoGuardado = { 
-        productId: 3, 
-        ...datosLimpios 
-      };
-
-      mockReq.body = datosConEspacios;
-      mockedProductSchema.parse.mockReturnValue(datosLimpios);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosConEspacios);
-      expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-  });
-
-  describe("getProducts", () => {
-    it("debería retornar los productos exitosamente", async () => {
-      const productosSimulados = [
-        {
-          productId: 1,
-          name: "Café Americano",
-          description: "Café negro clásico",
-          price: 3.50,
-          cost: 1.20,
-        },
-        {
-          productId: 2,
-          name: "Latte",
-          description: "Café con leche espumosa",
-          price: 4.75,
-          cost: 2.10,
-        },
-      ];
-
-      const productosDTO = [
-        {
-          productId: 1,
-          name: "Café Americano",
-          description: "Café negro clásico",
-          price: 3.50,
-          cost: 1.20,
-        },
-        {
-          productId: 2,
-          name: "Latte",
-          description: "Café con leche espumosa",
-          price: 4.75,
-          cost: 2.10,
-        },
-      ];
-
-      mockService.getAll.mockResolvedValue(productosSimulados);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "success",
-        data: productosDTO,
-      });
-      expect(console.log).toHaveBeenCalledWith("Productos obtenidos correctamente");
-    });
-
-    it("debería manejar errores ZodError (caso poco probable pero contemplado)", async () => {
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "Error de validación inesperado",
-            path: ["unexpected"],
-            code: "custom",
-          },
-        ],
-      };
-
-      mockService.getAll.mockRejectedValue(errorZod);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: Error de validación inesperado",
-        campo: ["unexpected"],
-        error: "custom",
-      });
-      expect(console.log).not.toHaveBeenCalledWith("Productos obtenidos correctamente");
-    });
-
-    it("debería manejar errores al obtener los productos", async () => {
-      const errorServidor = new Error("Error de conexión a la base de datos");
-      errorServidor.name = "DatabaseError";
-
-      mockService.getAll.mockRejectedValue(errorServidor);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Error al obtener los productos",
-        errors: undefined,
-      });
-      expect(console.log).not.toHaveBeenCalledWith("Productos obtenidos correctamente");
-    });
-
-    it("debería manejar errores con issues", async () => {
-      const errorConIssues = {
-        name: "CustomError",
-        issues: ["Issue 1", "Issue 2"],
-      };
-
-      mockService.getAll.mockRejectedValue(errorConIssues);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Error al obtener los productos",
-        errors: ["Issue 1", "Issue 2"],
-      });
-    });
-
-    it("debería manejar errores con errors", async () => {
-      const errorConErrors = {
-        name: "ValidationError",
-        errors: ["Error 1", "Error 2"],
-      };
-
-      mockService.getAll.mockRejectedValue(errorConErrors);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Error al obtener los productos",
-        errors: ["Error 1", "Error 2"],
-      });
-    });
-
-    it("debería retornar un array vacío cuando no hay productos", async () => {
-      const productosVacios: any[] = [];
-
-      mockService.getAll.mockResolvedValue(productosVacios);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "success",
-        data: [],
-      });
-      expect(console.log).toHaveBeenCalledWith("Productos obtenidos correctamente");
-    });
-
-    it("debería mapear correctamente los productos a DTOs", async () => {
-      const productosConCamposExtra = [
-        {
-          productId: 1,
-          name: "Espresso",
-          description: "Café concentrado",
-          price: 2.50,
-          cost: 0.80,
-          extraField: "should be ignored",
-          anotherField: 123,
-        },
-      ];
-
-      const expectedDTO = [
-        {
-          productId: 1,
-          name: "Espresso",
-          description: "Café concentrado",
-          price: 2.50,
-          cost: 0.80,
-        },
-      ];
-
-      mockService.getAll.mockResolvedValue(productosConCamposExtra);
-
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "success",
-        data: expectedDTO,
-      });
-    });
-  });
-
-  describe("setService", () => {
-    it("debería establecer el servicio correctamente", async () => {
-      const nuevoServicio = {
-        getAll: jest.fn(),
-        getById: jest.fn(),
-        save: jest.fn(),
-        saveAll: jest.fn(),
-        delete: jest.fn(),
-        update: jest.fn(),
-      } as any;
-
-      expect(() => productController.setService(nuevoServicio)).not.toThrow();
-
-      // Verificar que el servicio se estableció correctamente
-      // ejecutando una función que lo use
-      nuevoServicio.getAll.mockResolvedValue([]);
-      await productController.getProducts(mockReq, mockRes);
-
-      expect(nuevoServicio.getAll).toHaveBeenCalled();
-    });
-  });
-
-  describe("Casos con diferentes tipos de productos", () => {
-    const tiposDeProductos = [
-      { name: "Espresso", description: "Café concentrado italiano", price: "2.50", cost: "0.80" },
-      { name: "Americano", description: "Café negro clásico", price: "3.00", cost: "1.00" },
-      { name: "Latte", description: "Café con leche espumosa", price: "4.50", cost: "2.00" },
-      { name: "Cappuccino", description: "Café con espuma de leche", price: "4.00", cost: "1.80" },
-      { name: "Mocha", description: "Café con chocolate", price: "5.00", cost: "2.50" },
-      { name: "Frappé", description: "Café frío batido", price: "5.50", cost: "2.80" },
-    ];
-
-    tiposDeProductos.forEach((producto) => {
-      it(`debería guardar producto: "${producto.name}"`, async () => {
-        const datosValidados = {
-          name: producto.name,
-          description: producto.description,
-          price: parseFloat(producto.price),
-          cost: parseFloat(producto.cost),
-        };
-
-        const productoGuardado = { 
-          productId: 1, 
-          ...datosValidados 
-        };
-
-        mockReq.body = producto;
-        mockedProductSchema.parse.mockReturnValue(datosValidados);
-        mockService.save.mockResolvedValue(productoGuardado);
-
-        await productController.saveProduct(mockReq, mockRes);
-
-        expect(mockedProductSchema.parse).toHaveBeenCalledWith(producto);
-        expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-        expect(mockRes.status).toHaveBeenCalledWith(201);
-      });
-    });
-  });
-
-  describe("Casos límite de validación", () => {
-    it("debería manejar nombre con exactamente 1 carácter", async () => {
-      const datosMinimos = {
-        name: "A",
-        description: "B",
-        price: "0.01",
-        cost: "0.01",
-      };
-
-      const datosValidados = {
-        name: "A",
-        description: "B",
-        price: 0.01,
-        cost: 0.01,
-      };
-
-      const productoGuardado = { 
-        productId: 1, 
-        ...datosValidados 
-      };
-
-      mockReq.body = datosMinimos;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosMinimos);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
-    it("debería manejar nombre con exactamente 50 caracteres", async () => {
-      const nombreMaximo = "a".repeat(50);
-      const descripcionMaxima = "b".repeat(100);
-      const datosMaximos = {
-        name: nombreMaximo,
-        description: descripcionMaxima,
-        price: "999.99",
-        cost: "499.99",
-      };
-
-      const datosValidados = {
-        name: nombreMaximo,
-        description: descripcionMaxima,
-        price: 999.99,
-        cost: 499.99,
-      };
-
-      const productoGuardado = { 
-        productId: 1, 
-        ...datosValidados 
-      };
-
-      mockReq.body = datosMaximos;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosMaximos);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
-    it("debería manejar precios decimales con múltiples dígitos", async () => {
-      const datosDecimales = {
-        name: "Producto Premium",
-        description: "Descripción del producto premium",
-        price: "12.345",
-        cost: "6.789",
-      };
-
-      const datosValidados = {
-        name: "Producto Premium",
-        description: "Descripción del producto premium",
-        price: 12.345,
-        cost: 6.789,
-      };
-
-      const productoGuardado = { 
-        productId: 1, 
-        ...datosValidados 
-      };
-
-      mockReq.body = datosDecimales;
-      mockedProductSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(productoGuardado);
-
-      await productController.saveProduct(mockReq, mockRes);
-
-      expect(mockedProductSchema.parse).toHaveBeenCalledWith(datosDecimales);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-  });
 });
