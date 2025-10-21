@@ -32,7 +32,7 @@ export class BillService implements IService {
     bill.customer = data.customer;
     bill.date = data.date;
     console.log("Guardando factura...");
-    console.log(bill)
+    console.log(bill);
     return await this.billRepository.save(bill);
   }
 
@@ -47,20 +47,23 @@ export class BillService implements IService {
     const { billId, ...updateData } = body;
 
     if (!billId) {
-      throw new Error("cashRegisterId es requerido para actualizar");
+      throw new Error("billId es requerido para actualizar");
     }
 
-    const cashRegister = await this.billRepository.findOne({
+    const bill = await this.billRepository.findOne({
       where: { billId },
     });
-    if (!cashRegister) {
-      throw new Error(`Caja registradora con ID ${billId} no encontrada`);
+
+    console.log(bill);
+
+    if (!bill) {
+      throw new Error(`Factura con ID ${billId} no encontrada`);
     }
 
-    Object.assign(cashRegister, updateData);
-    console.log(cashRegister);
+    Object.assign(bill, updateData);
+    console.log(bill);
 
-    return await this.billRepository.save(cashRegister);
+    return await this.billRepository.save(bill);
   }
 
   async getAll(): Promise<any[]> {

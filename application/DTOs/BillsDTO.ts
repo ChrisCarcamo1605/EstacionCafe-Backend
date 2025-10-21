@@ -15,11 +15,11 @@ export interface BillItemDTO {
 }
 
 export interface UpdateBillDTO {
-  billId: number;
-  customer: string;
-  cashRegisterId: number;
-  total: number;
-  date: Date;
+  billId?: number;
+  customer?: string;
+  cashRegisterId?: number;
+  total?: number;
+  date?: Date;
 }
 
 export interface SaveBillDetailDTO {

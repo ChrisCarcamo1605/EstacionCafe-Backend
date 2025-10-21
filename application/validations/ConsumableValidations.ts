@@ -57,7 +57,8 @@ export const updateConsumableSchema = z.object({
     .string()
     .min(1, "El nombre es requerido")
     .max(255, "El nombre no puede exceder 255 caracteres")
-    .trim(),
+    .trim()
+    .optional(),
   cosumableTypeId: z
     .union([
       z.string().transform((val) => parseInt(val, 10)),
@@ -66,14 +67,16 @@ export const updateConsumableSchema = z.object({
     .refine(
       (val) => !isNaN(val) && val >= 0,
       "El ID del tipo de consumible no puede ser negativo"
-    ),
+    )
+    .optional(),
   quantity: z
     .union([z.string().transform((val) => parseFloat(val)), z.number()])
     .refine(
       (val) => !isNaN(val) && val >= 0,
       "La cantidad no puede ser negativa"
-    ),
-  unitMeasurement: z.nativeEnum(UnitMeasurement).optional(),
+    )
+    .optional(),
+  unitMeasurement: z.nativeEnum(UnitMeasurement).optional().optional(),
 
   cost: z
     .union([z.string().transform((val) => parseFloat(val)), z.number()])
@@ -81,7 +84,8 @@ export const updateConsumableSchema = z.object({
     .refine(
       (val) => Number((val % 0.01).toFixed(2)) === 0,
       "El costo debe tener máximo 2 decimales"
-    ),
+    )
+    .optional(),
 });
 
 export const consumableIdSchema = z.object({

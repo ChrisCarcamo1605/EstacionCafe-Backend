@@ -47,12 +47,12 @@ export const updateProductSchema = z.object({
   price: z
      .string()
     .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0") .optional(),
 
   cost: z
      .string()
     .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0"),
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0") .optional(),
 });
 
 export const productIdSchema = z.object({

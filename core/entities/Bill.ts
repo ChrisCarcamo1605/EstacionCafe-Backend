@@ -15,13 +15,13 @@ export class Bill {
   billId?: number = undefined;
 
   @Column({ name: "cash_register" })
-  cashRegisterId?: number;
+  cashRegisterId!: number;
   @Column()
   customer: string = "";
   @Column()
   date: Date = new Date();
   @Column("decimal", { name: "total", precision: 10, scale: 2 })
-  total: number = 0;
+  total!: number;
 
   @OneToMany(() => BillDetails, (billDet: BillDetails) => billDet.bill)
   billDetails!: BillDetails[];
