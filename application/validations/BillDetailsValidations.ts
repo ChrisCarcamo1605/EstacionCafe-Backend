@@ -7,7 +7,7 @@ const billDetailsSchema = z.object({
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "El ID del producto debe ser un número positivo"
+      "El ID del producto debe ser un número positivoo"
     ),
   quantity: z
     .string()

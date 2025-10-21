@@ -26,12 +26,13 @@ export class SupplierService implements IService {
     }
 
     async delete(id: number): Promise<any> {
-        console.log(`Eliminando proveedor con ID: ${id}`);
-        const result = await this.supplierRepository.delete(id);
-        if (result.affected === 0) {
-            throw new Error(`Proveedor con ID ${id} no encontrado`);
-        }
-        return { message: "Proveedor eliminado correctamente", id };
+        console.log(`Desactivando proveedor con ID: ${id}`);
+        
+        const supplier = await this.getById(id);
+        supplier.active = false;
+        
+        await this.supplierRepository.save(supplier);
+        return { message: "Proveedor desactivado correctamente", id };
     }
 
     async update(body: any): Promise<any> {

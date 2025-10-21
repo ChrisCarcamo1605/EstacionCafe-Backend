@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Consumable } from "./Consumable";
 
 @Entity("suppliers")
 export class Supplier {
     @PrimaryGeneratedColumn("increment", { name: "supplier_id" })
-    supplierId?: number = undefined;
+    supplierId!: number;
 
     @Column({ length: 100 })
     name: string = "";
@@ -16,4 +17,7 @@ export class Supplier {
 
     @Column({ default: true })
     active: boolean = true;
+
+    @OneToMany(()=> Consumable, (consumable:Consumable)=> consumable.supplier)
+    consumable!:Consumable;
 }

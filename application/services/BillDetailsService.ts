@@ -2,7 +2,7 @@ import { Repository } from "typeorm";
 import { IService } from "../../core/interfaces/IService";
 import { BillDetails } from "../../core/entities/BillDetails";
 import { BillDetailsSchema } from "../validations/BillDetailsValidations";
-import { SaveBillDetailDTO } from "../DTOs/BillsDTO";
+import { SaveBillDetailDTO, SaveBillDTO } from "../DTOs/BillsDTO";
 import { Bill } from "../../core/entities/Bill";
 
 export class BillDetailsService implements IService {
@@ -29,12 +29,16 @@ export class BillDetailsService implements IService {
     const details: BillDetails[] = [];
     const data: SaveBillDetailDTO = body;
 
-    const bill: Bill = new Bill();
-    bill.cashRegister = data.cashRegister;
-    bill.customer = data.customer;
-    bill.date = data.date;
-    bill.total = data.billDetails.reduce((acc, val) => acc + val.subTotal, 0);
+    console.log("entrando al save all");
+    const bill: any = {
+      cashRegister: data.cashRegister,
+      customer: data.customer,
+      total: data.billDetails.reduce((acc, val) => acc + val.subTotal, 0),
+      date: data.date,
+    };
+    
     console.log("Guardando factura...");
+    console.log(bill);
 
     const billResult = await this.billService.save(bill);
 
@@ -49,8 +53,12 @@ export class BillDetailsService implements IService {
     console.log("Guardando detalles de la factura...");
     return this.detailRepo.save(details);
   }
-  delete(id: number): Promise<any> {
-    throw new Error("Method not implemented.");
+  async delete(id: number): Promise<any> {
+     const result = await this.detailRepo.delete(id);
+        if (result.affected === 0) {
+            throw new Error(`Detalle con ID ${id} no encontrado`);
+        }
+        return { message: "Detalle eliminado correctamente", id };
   }
   update(body: any): Promise<any> {
     throw new Error("Method not implemented.");

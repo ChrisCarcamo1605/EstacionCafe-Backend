@@ -1,24 +1,45 @@
-import { email, z } from "zod";
+import { z } from "zod";
 
-export const userSchema = z.object({
-  username: z.string().max(25).min(5).trim(),
-  password: z
-    .string("El password es de tipo string no number")
-    .min(8)
-    .max(50)
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
-    ),
-  typeId: z
+export const createUserSchema = z.object({
+  username: z
     .string()
-    .transform((val) => parseInt(val))
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
+    .max(50, "El nombre de usuario es muy largo")
+    .trim(),
+
+  password: z
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(100, "La contraseña es muy larga"),
+
+  email: z.string().email("Debe ser un email válido").toLowerCase(),
+
+  typeId: z.string().transform((x) => parseInt(x)),
+});
+
+export const updateUserSchema = z.object({
+  username: z
+    .string()
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
+    .max(50, "El nombre de usuario es muy largo")
+    .trim().optional(),
+
+  password: z
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(100, "La contraseña es muy larga").optional(),
+
+  email: z.string().email("Debe ser un email válido").toLowerCase().optional().optional(),
+
+  typeId: z.string().transform((x) => parseInt(x)).optional(),
+});
+
+export const userIdSchema = z.object({
+  id: z
+    .string()
+    .transform((val) => parseInt(val, 10))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "Ingrese un id de UserTypeId valido"
+      "El ID debe ser un número positivo"
     ),
-  email: z
-    .email("Ingrese un email válido")
-    .max(100, "El email no puede exceder 100 caracteres")
-    .trim(),
 });
