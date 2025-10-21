@@ -13,6 +13,14 @@ export class BillDetailsService implements IService {
     this.detailRepo = detailRepo;
     this.billService = billService;
   }
+  async getById(id: number): Promise<BillDetails[]> {
+    console.log(`Obteniendo detalles de la factura ${id}...`);
+    return this.detailRepo.find({
+      where: { billId: id },
+      relations: ["product", "bill"],
+    });
+  }
+
 
   save(body: any): Promise<any> {
     throw new Error("Method not implemented.");

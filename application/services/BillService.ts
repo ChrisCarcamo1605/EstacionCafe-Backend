@@ -7,6 +7,10 @@ export class BillService implements IService {
   public constructor(private billRepository: Repository<Bill>) {
     this.billRepository = billRepository;
   }
+  async getById(id: number): Promise<any> {
+    console.log(`Obteniendo factura con ID: ${id}`);
+    return await this.billRepository.findOne({ where: { billId:id } });
+  }
   saveAll(body: any[]): Promise<any[]> {
     throw new Error("Method not implemented.");
   }

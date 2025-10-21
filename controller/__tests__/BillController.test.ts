@@ -15,6 +15,7 @@ describe("BillController", () => {
     // Crear el mock del servicio
     mockService = {
       getAll: jest.fn(),
+      getById: jest.fn(),
       save: jest.fn(),
       saveAll: jest.fn(),
       delete: jest.fn(),
@@ -195,6 +196,7 @@ describe("BillController", () => {
     it("debería establecer el servicio correctamente", async () => {
       const nuevoServicio = {
         getAll: jest.fn(),
+        getById: jest.fn(),
         save: jest.fn(),
         saveAll: jest.fn(),
         delete: jest.fn(),

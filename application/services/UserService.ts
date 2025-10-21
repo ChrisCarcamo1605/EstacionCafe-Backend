@@ -10,6 +10,9 @@ export class UserService implements IService {
   constructor(userRepo: Repository<User>) {
     this.userRepository = userRepo;
   }
+  async getById(id: number): Promise<any | null> {
+    console.log(`Obteniendo usuario con ID: ${id}`);
+    return await this.userRepository.findOne({ where: { userId:id } });  }
 
   saveAll(body: any[]): Promise<any[]> {
     throw new Error("Method not implemented.");

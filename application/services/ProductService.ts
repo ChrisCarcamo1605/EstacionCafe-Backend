@@ -6,6 +6,10 @@ export class ProductService implements IService {
   constructor(private productRepository: Repository<Product>) {
     this.productRepository = productRepository;
   }
+  async getById(id: number): Promise<any | null> {
+    console.log(`Obteniendo factura con ID: ${id}`);
+    return await this.productRepository.findOne({ where: { productId: id } });
+  }
   saveAll(body: any[]): Promise<any[]> {
     throw new Error("Method not implemented.");
   }
