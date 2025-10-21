@@ -1,10 +1,20 @@
 import * as consumableController from "../ConsumableController";
 import { IService } from "../../core/interfaces/IService";
-import { ConsumableSchema } from "../../application/validations/ConsumableValidations";
 import { UnitMeasurement } from "../../core/enums/UnitMeasurement";
 
-jest.mock("../../application/validations/ConsumableValidations");
-const mockedConsumableSchema = ConsumableSchema as jest.Mocked<typeof ConsumableSchema>;
+jest.mock("../../application/validations/ConsumableValidations", () => ({
+  ConsumableSchema: {
+    parse: jest.fn(),
+  },
+  consumableIdSchema: {
+    parse: jest.fn(),
+  },
+  updateConsumableSchema: {
+    parse: jest.fn(),
+  },
+}));
+
+const { ConsumableSchema, consumableIdSchema, updateConsumableSchema } = require("../../application/validations/ConsumableValidations");
 
 describe("ConsumableController", () => {
   let mockService: jest.Mocked<IService>;
@@ -57,16 +67,16 @@ describe("ConsumableController", () => {
       const consumibleGuardado = { consumableId: 1, ...datosConsumible };
 
       mockReq.body = datosConsumible;
-      mockedConsumableSchema.parse.mockReturnValue(datosConsumible);
+      ConsumableSchema.parse.mockReturnValue(datosConsumible);
       mockService.save.mockResolvedValue(consumibleGuardado);
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
       expect(mockService.save).toHaveBeenCalledWith(datosConsumible);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
+        status: "success",
         message: "Consumible guardado correctamente",
         data: consumibleGuardado,
       });
@@ -93,13 +103,13 @@ describe("ConsumableController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedConsumableSchema.parse.mockImplementation(() => {
+      ConsumableSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -131,13 +141,13 @@ describe("ConsumableController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedConsumableSchema.parse.mockImplementation(() => {
+      ConsumableSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -169,13 +179,13 @@ describe("ConsumableController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedConsumableSchema.parse.mockImplementation(() => {
+      ConsumableSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -207,13 +217,13 @@ describe("ConsumableController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedConsumableSchema.parse.mockImplementation(() => {
+      ConsumableSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -245,13 +255,13 @@ describe("ConsumableController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedConsumableSchema.parse.mockImplementation(() => {
+      ConsumableSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -274,12 +284,12 @@ describe("ConsumableController", () => {
       const errorServidor = new Error("Error interno del servidor");
 
       mockReq.body = datosConsumible;
-      mockedConsumableSchema.parse.mockReturnValue(datosConsumible);
+      ConsumableSchema.parse.mockReturnValue(datosConsumible);
       mockService.save.mockRejectedValue(errorServidor);
 
       await consumableController.saveConsumable(mockReq, mockRes);
 
-      expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
+      expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
       expect(mockService.save).toHaveBeenCalledWith(datosConsumible);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -304,7 +314,7 @@ describe("ConsumableController", () => {
       const errorSinMensaje = {};
 
       mockReq.body = datosConsumible;
-      mockedConsumableSchema.parse.mockReturnValue(datosConsumible);
+      ConsumableSchema.parse.mockReturnValue(datosConsumible);
       mockService.save.mockRejectedValue(errorSinMensaje);
 
       await consumableController.saveConsumable(mockReq, mockRes);
@@ -347,7 +357,7 @@ describe("ConsumableController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
+        status: "success",
         message: "Consumibles obtenidos correctamente",
         data: consumiblesSimulados,
       });
@@ -395,7 +405,7 @@ describe("ConsumableController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
+        status: "success",
         message: "Consumibles obtenidos correctamente",
         data: consumiblesVacios,
       });
@@ -403,32 +413,67 @@ describe("ConsumableController", () => {
   });
 
   describe("updateConsumable", () => {
-    it("debería estar definido pero no implementado", () => {
+    it("debería estar definido", () => {
       expect(consumableController.updateConsumable).toBeDefined();
       expect(typeof consumableController.updateConsumable).toBe("function");
     });
 
-    it("no debería hacer nada cuando se llama", async () => {
-      const result = await consumableController.updateConsumable(mockReq, mockRes);
+    it("debería actualizar un consumible exitosamente", async () => {
+      const updateData = {
+        name: "Azúcar actualizado",
+        quantity: 200,
+        cost: 30.00,
+      };
+      const updatedConsumable = { consumableId: 1, ...updateData };
 
-      expect(result).toBeUndefined();
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(mockRes.send).not.toHaveBeenCalled();
+      mockReq.params = { id: "1" };
+      mockReq.body = updateData;
+      
+      // Mock the schemas
+      consumableIdSchema.parse.mockReturnValue({ id: 1 });
+      updateConsumableSchema.parse.mockReturnValue(updateData);
+      mockService.update.mockResolvedValue(updatedConsumable);
+
+      await consumableController.updateConsumable(mockReq, mockRes);
+
+      expect(consumableIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(updateConsumableSchema.parse).toHaveBeenCalledWith(updateData);
+      expect(mockService.update).toHaveBeenCalledWith({
+        consumableId: 1,
+        ...updateData
+      });
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "Consumible actualizado correctamente",
+        data: updatedConsumable,
+      });
     });
   });
 
   describe("deleteConsumable", () => {
-    it("debería estar definido pero no implementado", () => {
+    it("debería estar definido", () => {
       expect(consumableController.deleteConsumable).toBeDefined();
       expect(typeof consumableController.deleteConsumable).toBe("function");
     });
 
-    it("no debería hacer nada cuando se llama", async () => {
-      const result = await consumableController.deleteConsumable(mockReq, mockRes);
+    it("debería eliminar un consumible exitosamente", async () => {
+      const deletedConsumable = { consumableId: 1, deleted: true };
 
-      expect(result).toBeUndefined();
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(mockRes.send).not.toHaveBeenCalled();
+      mockReq.params = { id: "1" };
+      
+      // Mock the schema
+      consumableIdSchema.parse.mockReturnValue({ id: 1 });
+      mockService.delete.mockResolvedValue(deletedConsumable);
+
+      await consumableController.deleteConsumable(mockReq, mockRes);
+
+      expect(consumableIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockService.delete).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "Consumible eliminado correctamente",
+        data: deletedConsumable,
+      });
     });
   });
 
@@ -483,16 +528,16 @@ describe("ConsumableController", () => {
         const consumibleGuardado = { consumableId: 1, ...datosConsumible };
 
         mockReq.body = datosConsumible;
-        mockedConsumableSchema.parse.mockReturnValue(datosConsumible);
+        ConsumableSchema.parse.mockReturnValue(datosConsumible);
         mockService.save.mockResolvedValue(consumibleGuardado);
 
         await consumableController.saveConsumable(mockReq, mockRes);
 
-        expect(mockedConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
+        expect(ConsumableSchema.parse).toHaveBeenCalledWith(datosConsumible);
         expect(mockService.save).toHaveBeenCalledWith(datosConsumible);
         expect(mockRes.status).toHaveBeenCalledWith(201);
         expect(mockRes.send).toHaveBeenCalledWith({
-          status: "sucess",
+          status: "success",
           message: "Consumible guardado correctamente",
           data: consumibleGuardado,
         });

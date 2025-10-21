@@ -4,7 +4,6 @@ import { BillDetails } from "../../../core/entities/BillDetails";
 import { SaveBillDetailDTO } from "../../DTOs/BillsDTO";
 import { IService } from "../../../core/interfaces/IService";
 import { Bill } from "../../../core/entities/Bill";
-import { any } from "zod";
 
 describe("BillDetailsService", () => {
   let billDetailsService: BillDetailsService;
@@ -22,7 +21,7 @@ describe("BillDetailsService", () => {
       update: jest.fn(),
     } as any;
 
-    // Crear mock del servicio de facturas
+    // Crear mock del servicio de facturasAA
     mockBillService = {
       save: jest.fn(),
       saveAll: jest.fn(),
@@ -80,6 +79,7 @@ describe("BillDetailsService", () => {
       });
       expect(result).toEqual(mockDetails);
       expect(result).toHaveLength(2);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo detalles de la factura 1...");
     });
 
     it("debería retornar array vacío cuando no hay detalles", async () => {
@@ -93,6 +93,7 @@ describe("BillDetailsService", () => {
         relations: ["product", "bill"],
       });
       expect(result).toEqual([]);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo detalles de la factura 999...");
     });
 
     it("debería manejar errores del repositorio", async () => {
@@ -130,9 +131,11 @@ describe("BillDetailsService", () => {
       const savedBill = {
         billId: 1,
         customer: "María García",
-        cashRegister: 1,
+        cashRegisterId: 1,
         total: 100.0,
         date: new Date("2025-10-20"),
+        billDetails: [],
+        cashRegister: {} as any,
       } as Bill;
 
       const savedDetails = [
@@ -186,6 +189,9 @@ describe("BillDetailsService", () => {
       );
 
       expect(result).toEqual(savedDetails);
+      expect(console.log).toHaveBeenCalledWith("entrando al save all");
+      expect(console.log).toHaveBeenCalledWith("Guardando factura...");
+      expect(console.log).toHaveBeenCalledWith("Guardando detalles de la factura...");
     });
 
     it("debería calcular el total correctamente", async () => {
@@ -221,7 +227,15 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 5, quantity: 1, subTotal: 30.0 }],
       };
 
-      const savedBill = { billId: 10 } as Bill;
+      const savedBill = { 
+        billId: 10,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       let savedDetails: any[];
 
       mockBillService.save.mockResolvedValue(savedBill);
@@ -247,7 +261,15 @@ describe("BillDetailsService", () => {
         billDetails: [],
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { 
+        billId: 1,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       mockBillService.save.mockResolvedValue(savedBill);
       mockDetailRepo.save.mockResolvedValue([] as any);
 
@@ -287,7 +309,15 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 1, quantity: 1, subTotal: 10.0 }],
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { 
+        billId: 1,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       const detailError = new Error("Error al guardar detalles");
 
       mockBillService.save.mockResolvedValue(savedBill);
@@ -331,6 +361,7 @@ describe("BillDetailsService", () => {
       });
       expect(result).toEqual(mockAllDetails);
       expect(result).toHaveLength(2);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo bills details...");
     });
 
     it("debería retornar array vacío cuando no hay detalles", async () => {
@@ -339,6 +370,7 @@ describe("BillDetailsService", () => {
       const result = await billDetailsService.getAll();
 
       expect(result).toEqual([]);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo bills details...");
     });
 
     it("debería manejar errores del repositorio", async () => {
@@ -348,6 +380,45 @@ describe("BillDetailsService", () => {
       await expect(billDetailsService.getAll()).rejects.toThrow(
         "Error de consulta"
       );
+    });
+  });
+
+  describe("delete", () => {
+    it("debería eliminar un detalle de factura exitosamente", async () => {
+      const detailId = 1;
+      const deleteResult = { affected: 1 };
+
+      mockDetailRepo.delete.mockResolvedValue(deleteResult as any);
+
+      const result = await billDetailsService.delete(detailId);
+
+      expect(mockDetailRepo.delete).toHaveBeenCalledWith(detailId);
+      expect(result).toEqual({
+        message: "Detalle eliminado correctamente",
+        id: detailId,
+      });
+    });
+
+    it("debería lanzar error cuando el detalle no existe", async () => {
+      const detailId = 999;
+      const deleteResult = { affected: 0 };
+
+      mockDetailRepo.delete.mockResolvedValue(deleteResult as any);
+
+      await expect(billDetailsService.delete(detailId)).rejects.toThrow(
+        `Detalle con ID ${detailId} no encontrado`
+      );
+      expect(mockDetailRepo.delete).toHaveBeenCalledWith(detailId);
+    });
+
+    it("debería manejar errores del repositorio", async () => {
+      const detailId = 1;
+      const repositoryError = new Error("Error de eliminación");
+
+      mockDetailRepo.delete.mockRejectedValue(repositoryError);
+
+      await expect(billDetailsService.delete(detailId)).rejects.toThrow("Error de eliminación");
+      expect(mockDetailRepo.delete).toHaveBeenCalledWith(detailId);
     });
   });
 
@@ -366,9 +437,11 @@ describe("BillDetailsService", () => {
       const savedBill = {
         billId: 100,
         customer: "Cliente Integración",
-        cashRegister: 2,
+        cashRegisterId: 2,
         total: 115.0,
         date: new Date("2025-10-20T10:30:00"),
+        billDetails: [],
+        cashRegister: {} as any,
       } as Bill;
 
       const savedDetails = [
@@ -421,7 +494,15 @@ describe("BillDetailsService", () => {
         billDetails: productos,
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { 
+        billId: 1,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       mockBillService.save.mockResolvedValue(savedBill);
 
       await billDetailsService.saveAll(billDetailData);
@@ -457,7 +538,15 @@ describe("BillDetailsService", () => {
         ],
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { 
+        billId: 1,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       mockBillService.save.mockResolvedValue(savedBill);
       mockDetailRepo.save.mockResolvedValue([] as any);
 
@@ -480,7 +569,15 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 1, quantity: 0, subTotal: 0.0 }],
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { 
+        billId: 1,
+        customer: "",
+        cashRegisterId: 1,
+        total: 0,
+        date: new Date(),
+        billDetails: [],
+        cashRegister: {} as any,
+      } as Bill;
       mockBillService.save.mockResolvedValue(savedBill);
       mockDetailRepo.save.mockResolvedValue([] as any);
 
@@ -504,7 +601,15 @@ describe("BillDetailsService", () => {
           billDetails: [{ productId: 1, quantity: 1, subTotal: 25.0 }],
         };
 
-        const savedBill = { billId: 1 } as Bill;
+        const savedBill = { 
+          billId: 1,
+          customer: "",
+          cashRegisterId: 1,
+          total: 0,
+          date: new Date(),
+          billDetails: [],
+          cashRegister: {} as any,
+        } as Bill;
         mockBillService.save.mockResolvedValue(savedBill);
 
         await billDetailsService.saveAll(billDetailData);
@@ -533,7 +638,15 @@ describe("BillDetailsService", () => {
           billDetails: [{ productId: 1, quantity: 1, subTotal: 10.0 }],
         };
 
-        const savedBill = { billId: 1 } as Bill;
+        const savedBill = { 
+          billId: 1,
+          customer: "",
+          cashRegisterId: 1,
+          total: 0,
+          date: new Date(),
+          billDetails: [],
+          cashRegister: {} as any,
+        } as Bill;
         mockBillService.save.mockResolvedValue(savedBill);
         mockDetailRepo.save.mockResolvedValue([] as any);
 

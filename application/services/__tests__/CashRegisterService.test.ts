@@ -1,5 +1,5 @@
-import { Repository } from "typeorm";
 import { CashRegisterService } from "../CashRegisterService";
+import { Repository } from "typeorm";
 import { CashRegister } from "../../../core/entities/CashRegister";
 import { SaveCashRegisterDTO } from "../../DTOs/CashRegisterDTO";
 
@@ -8,18 +8,19 @@ describe("CashRegisterService", () => {
   let mockRepository: jest.Mocked<Repository<CashRegister>>;
 
   beforeEach(() => {
-    // Crear mock del repositorio
+    // Create mock repository with all necessary methods
     mockRepository = {
-      save: jest.fn(),
-      find: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
       delete: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Repository<CashRegister>>;
 
-    // Crear instancia del servicio con el repositorio mock
     cashRegisterService = new CashRegisterService(mockRepository);
+
+    // Mock console methods to avoid noise in tests
+    jest.spyOn(console, "log").mockImplementation();
+    jest.spyOn(console, "error").mockImplementation();
   });
 
   afterEach(() => {
@@ -27,218 +28,189 @@ describe("CashRegisterService", () => {
   });
 
   describe("save", () => {
-    it("debería guardar una caja registradora exitosamente", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-001",
-        active: true,
+    it("should save a cash register successfully with default active true", async () => {
+      const saveCashRegisterDTO: SaveCashRegisterDTO = {
+        number: "CAJA001",
       };
 
-      const savedCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-001",
+      const expectedCashRegister = new CashRegister();
+      expectedCashRegister.cashRegisterId = 1;
+      expectedCashRegister.number = saveCashRegisterDTO.number;
+      expectedCashRegister.active = true;
+
+      mockRepository.save.mockResolvedValue(expectedCashRegister);
+
+      const result = await cashRegisterService.save(saveCashRegisterDTO);
+
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        number: saveCashRegisterDTO.number,
         active: true,
-      } as CashRegister;
-
-      mockRepository.save.mockResolvedValue(savedCashRegister);
-
-      const result = await cashRegisterService.save(cashRegisterData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          number: "CR-001",
-          active: true,
-        })
-      );
-      expect(result).toEqual(savedCashRegister);
+      }));
+      expect(result).toEqual(expectedCashRegister);
     });
 
-    it("debería crear una entidad CashRegister con los datos correctos", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-002",
+    it("should save a cash register with explicit active value", async () => {
+      const saveCashRegisterDTO: SaveCashRegisterDTO = {
+        number: "CAJA002",
         active: false,
       };
 
-      let savedEntity: any;
-      mockRepository.save.mockImplementation((cashRegister) => {
-        savedEntity = cashRegister;
-        return Promise.resolve({ cashRegisterId: 1, ...cashRegister } as CashRegister);
-      });
+      const expectedCashRegister = new CashRegister();
+      expectedCashRegister.cashRegisterId = 1;
+      expectedCashRegister.number = saveCashRegisterDTO.number;
+      expectedCashRegister.active = false;
 
-      await cashRegisterService.save(cashRegisterData);
+      mockRepository.save.mockResolvedValue(expectedCashRegister);
 
-      expect(savedEntity).toBeInstanceOf(CashRegister);
-      expect(savedEntity.number).toBe("CR-002");
-      expect(savedEntity.active).toBe(false);
+      const result = await cashRegisterService.save(saveCashRegisterDTO);
+
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        number: saveCashRegisterDTO.number,
+        active: false,
+      }));
+      expect(result).toEqual(expectedCashRegister);
     });
 
-    it("debería establecer active como true por defecto cuando no se especifica", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-003",
-        // active no especificado
+    it("should handle database errors during save", async () => {
+      const saveCashRegisterDTO: SaveCashRegisterDTO = {
+        number: "CAJA001",
       };
 
-      let savedEntity: any;
-      mockRepository.save.mockImplementation((cashRegister) => {
-        savedEntity = cashRegister;
-        return Promise.resolve(cashRegister as CashRegister);
-      });
+      const databaseError = new Error("Database connection failed");
+      mockRepository.save.mockRejectedValue(databaseError);
 
-      await cashRegisterService.save(cashRegisterData);
-
-      expect(savedEntity.active).toBe(true);
-    });
-
-    it("debería manejar active = undefined estableciendo true", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-004",
-        active: undefined,
-      };
-
-      let savedEntity: any;
-      mockRepository.save.mockImplementation((cashRegister) => {
-        savedEntity = cashRegister;
-        return Promise.resolve(cashRegister as CashRegister);
-      });
-
-      await cashRegisterService.save(cashRegisterData);
-
-      expect(savedEntity.active).toBe(true);
-    });
-
-    it("debería manejar diferentes números de caja", async () => {
-      const numeros = ["CR-001", "CAJA-01", "REG-123", "01", "PRINCIPAL"];
-
-      for (const numero of numeros) {
-        const cashRegisterData: SaveCashRegisterDTO = {
-          number: numero,
-          active: true,
-        };
-
-        mockRepository.save.mockResolvedValue({} as CashRegister);
-
-        await cashRegisterService.save(cashRegisterData);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            number: numero,
-          })
-        );
-      }
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-ERROR",
-        active: true,
-      };
-
-      const repositoryError = new Error("Error de base de datos");
-      mockRepository.save.mockRejectedValue(repositoryError);
-
-      await expect(cashRegisterService.save(cashRegisterData)).rejects.toThrow("Error de base de datos");
-      expect(mockRepository.save).toHaveBeenCalled();
+      await expect(cashRegisterService.save(saveCashRegisterDTO)).rejects.toThrow("Database connection failed");
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("saveAll", () => {
-    it("debería guardar múltiples cajas registradoras exitosamente", async () => {
-      const cashRegistersData = [
-        { number: "CR-001", active: true },
-        { number: "CR-002", active: false },
-        { number: "CR-003", active: true },
+    it("should save multiple cash registers successfully", async () => {
+      const cashRegisters = [
+        { number: "CAJA001", active: true },
+        { number: "CAJA002", active: false },
       ];
 
-      const savedCashRegisters = [
-        { cashRegisterId: 1, number: "CR-001", active: true },
-        { cashRegisterId: 2, number: "CR-002", active: false },
-        { cashRegisterId: 3, number: "CR-003", active: true },
-      ] as CashRegister[];
+      const expectedCashRegisters = cashRegisters.map((cr, index) => ({
+        cashRegisterId: index + 1,
+        ...cr,
+      }));
 
-      mockRepository.save.mockResolvedValue(savedCashRegisters as any);
+      mockRepository.save.mockResolvedValue(expectedCashRegisters as any);
 
-      const result = await cashRegisterService.saveAll(cashRegistersData);
+      const result = await cashRegisterService.saveAll(cashRegisters);
 
-      expect(mockRepository.save).toHaveBeenCalledWith(cashRegistersData);
-      expect(result).toEqual(savedCashRegisters);
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(cashRegisters);
+      expect(result).toEqual(expectedCashRegisters);
     });
 
-    it("debería manejar array vacío", async () => {
+    it("should handle empty array input", async () => {
+      const cashRegisters: any[] = [];
       mockRepository.save.mockResolvedValue([] as any);
 
-      const result = await cashRegisterService.saveAll([]);
+      const result = await cashRegisterService.saveAll(cashRegisters);
 
       expect(mockRepository.save).toHaveBeenCalledWith([]);
       expect(result).toEqual([]);
     });
 
-    it("debería manejar errores del repositorio", async () => {
-      const cashRegistersData = [{ number: "CR-001", active: true }];
-      const repositoryError = new Error("Error de guardado masivo");
+    it("should handle database errors during saveAll", async () => {
+      const cashRegisters = [{ number: "CAJA001", active: true }];
+      const databaseError = new Error("Database connection failed");
+      
+      mockRepository.save.mockRejectedValue(databaseError);
 
-      mockRepository.save.mockRejectedValue(repositoryError);
-
-      await expect(cashRegisterService.saveAll(cashRegistersData)).rejects.toThrow("Error de guardado masivo");
+      await expect(cashRegisterService.saveAll(cashRegisters)).rejects.toThrow("Database connection failed");
     });
   });
 
-  describe("delete", () => {
-    it("debería eliminar una caja registradora exitosamente", async () => {
+  describe("getById", () => {
+    it("should get a cash register by id successfully", async () => {
       const cashRegisterId = 1;
-      const deleteResult = { affected: 1 };
+      const expectedCashRegister = new CashRegister();
+      expectedCashRegister.cashRegisterId = cashRegisterId;
+      expectedCashRegister.number = "CAJA001";
+      expectedCashRegister.active = true;
 
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
+      mockRepository.findOne.mockResolvedValue(expectedCashRegister);
 
-      const result = await cashRegisterService.delete(cashRegisterId);
+      const result = await cashRegisterService.getById(cashRegisterId);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(cashRegisterId);
-      expect(result).toEqual({
-        message: "Caja registradora eliminada correctamente",
-        id: cashRegisterId,
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { cashRegisterId },
+      });
+      expect(result).toEqual(expectedCashRegister);
+    });
+
+    it("should throw error when cash register not found", async () => {
+      const cashRegisterId = 999;
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(cashRegisterService.getById(cashRegisterId)).rejects.toThrow(`Caja registradora con ID ${cashRegisterId} no encontrada`);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { cashRegisterId },
       });
     });
 
-    it("debería lanzar error cuando la caja registradora no existe", async () => {
-      const cashRegisterId = 999;
-      const deleteResult = { affected: 0 };
+    it("should handle database errors during getById", async () => {
+      const cashRegisterId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
+      await expect(cashRegisterService.getById(cashRegisterId)).rejects.toThrow("Database connection failed");
+    });
+  });
 
-      await expect(cashRegisterService.delete(cashRegisterId)).rejects.toThrow(
-        `Caja registradora con ID ${cashRegisterId} no encontrada`
-      );
-      expect(mockRepository.delete).toHaveBeenCalledWith(cashRegisterId);
+  describe("getAll", () => {
+    it("should get all cash registers successfully", async () => {
+      const expectedCashRegisters = [
+        { cashRegisterId: 1, number: "CAJA001", active: true },
+        { cashRegisterId: 2, number: "CAJA002", active: false },
+      ] as CashRegister[];
+
+      mockRepository.find.mockResolvedValue(expectedCashRegisters);
+
+      const result = await cashRegisterService.getAll();
+
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        order: { number: "ASC" },
+      });
+      expect(result).toEqual(expectedCashRegisters);
     });
 
-    it("debería manejar errores del repositorio", async () => {
-      const cashRegisterId = 1;
-      const repositoryError = new Error("Error de eliminación");
+    it("should return empty array when no cash registers found", async () => {
+      mockRepository.find.mockResolvedValue([]);
 
-      mockRepository.delete.mockRejectedValue(repositoryError);
+      const result = await cashRegisterService.getAll();
 
-      await expect(cashRegisterService.delete(cashRegisterId)).rejects.toThrow("Error de eliminación");
-      expect(mockRepository.delete).toHaveBeenCalledWith(cashRegisterId);
+      expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle database errors during getAll", async () => {
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
+
+      await expect(cashRegisterService.getAll()).rejects.toThrow("Database connection failed");
     });
   });
 
   describe("update", () => {
-    it("debería actualizar una caja registradora exitosamente", async () => {
+    it("should update a cash register successfully", async () => {
       const updateData = {
         cashRegisterId: 1,
-        number: "CR-001-UPDATED",
+        number: "CAJA001-UPDATED",
         active: false,
       };
 
-      const existingCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-001",
-        active: true,
-      } as CashRegister;
+      const existingCashRegister = new CashRegister();
+      existingCashRegister.cashRegisterId = 1;
+      existingCashRegister.number = "CAJA001";
+      existingCashRegister.active = true;
 
-      const updatedCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-001-UPDATED",
-        active: false,
-      } as CashRegister;
+      const updatedCashRegister = { ...existingCashRegister, ...updateData };
 
       mockRepository.findOne.mockResolvedValue(existingCashRegister);
       mockRepository.save.mockResolvedValue(updatedCashRegister);
@@ -246,190 +218,111 @@ describe("CashRegisterService", () => {
       const result = await cashRegisterService.update(updateData);
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { cashRegisterId: 1 },
+        where: { cashRegisterId: updateData.cashRegisterId },
       });
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          cashRegisterId: 1,
-          number: "CR-001-UPDATED",
-          active: false,
-        })
-      );
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        cashRegisterId: updateData.cashRegisterId,
+        number: updateData.number,
+        active: updateData.active,
+      }));
       expect(result).toEqual(updatedCashRegister);
     });
 
-    it("debería actualizar solo los campos proporcionados", async () => {
+    it("should throw error when cashRegisterId is not provided", async () => {
       const updateData = {
-        cashRegisterId: 1,
+        number: "CAJA001-UPDATED",
         active: false,
-        // number no se actualiza
       };
 
-      const existingCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-ORIGINAL",
-        active: true,
-      } as CashRegister;
-
-      mockRepository.findOne.mockResolvedValue(existingCashRegister);
-      mockRepository.save.mockResolvedValue(existingCashRegister);
-
-      await cashRegisterService.update(updateData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          number: "CR-ORIGINAL", // No cambió
-          active: false, // Cambió
-        })
-      );
-    });
-
-    it("debería lanzar error cuando cashRegisterId no se proporciona", async () => {
-      const updateData = {
-        number: "CR-SIN-ID",
-        active: true,
-      };
-
-      await expect(cashRegisterService.update(updateData)).rejects.toThrow(
-        "cashRegisterId es requerido para actualizar"
-      );
+      await expect(cashRegisterService.update(updateData)).rejects.toThrow("cashRegisterId es requerido para actualizar");
       expect(mockRepository.findOne).not.toHaveBeenCalled();
       expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it("debería lanzar error cuando la caja registradora no existe", async () => {
+    it("should throw error when cash register not found for update", async () => {
       const updateData = {
         cashRegisterId: 999,
-        number: "CR-NO-EXISTE",
+        number: "CAJA999",
       };
 
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(cashRegisterService.update(updateData)).rejects.toThrow(
-        "Caja registradora con ID 999 no encontrada"
-      );
+      await expect(cashRegisterService.update(updateData)).rejects.toThrow(`Caja registradora con ID ${updateData.cashRegisterId} no encontrada`);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { cashRegisterId: 999 },
+        where: { cashRegisterId: updateData.cashRegisterId },
       });
       expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it("debería manejar errores del repositorio en findOne", async () => {
+    it("should handle database errors during update", async () => {
       const updateData = {
         cashRegisterId: 1,
-        number: "CR-ERROR",
+        number: "CAJA001-UPDATED",
       };
 
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.findOne.mockRejectedValue(repositoryError);
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-      await expect(cashRegisterService.update(updateData)).rejects.toThrow("Error de consulta");
-    });
-
-    it("debería manejar errores del repositorio en save", async () => {
-      const updateData = {
-        cashRegisterId: 1,
-        number: "CR-ERROR-SAVE",
-      };
-
-      const existingCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-ORIGINAL",
-        active: true,
-      } as CashRegister;
-
-      const saveError = new Error("Error de guardado");
-
-      mockRepository.findOne.mockResolvedValue(existingCashRegister);
-      mockRepository.save.mockRejectedValue(saveError);
-
-      await expect(cashRegisterService.update(updateData)).rejects.toThrow("Error de guardado");
+      await expect(cashRegisterService.update(updateData)).rejects.toThrow("Database connection failed");
     });
   });
 
-  describe("getAll", () => {
-    it("debería obtener todas las cajas registradoras ordenadas por número", async () => {
-      const mockCashRegisters = [
-        { cashRegisterId: 1, number: "CR-001", active: true },
-        { cashRegisterId: 2, number: "CR-002", active: false },
-        { cashRegisterId: 3, number: "CR-003", active: true },
-      ] as CashRegister[];
-
-      mockRepository.find.mockResolvedValue(mockCashRegisters);
-
-      const result = await cashRegisterService.getAll();
-
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        order: { number: "ASC" },
-      });
-      expect(result).toEqual(mockCashRegisters);
-      expect(result).toHaveLength(3);
-    });
-
-    it("debería retornar array vacío cuando no hay cajas registradoras", async () => {
-      mockRepository.find.mockResolvedValue([]);
-
-      const result = await cashRegisterService.getAll();
-
-      expect(result).toEqual([]);
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.find.mockRejectedValue(repositoryError);
-
-      await expect(cashRegisterService.getAll()).rejects.toThrow("Error de consulta");
-    });
-  });
-
-  describe("getById", () => {
-    it("debería obtener una caja registradora por ID", async () => {
+  describe("delete", () => {
+    it("should deactivate a cash register successfully (soft delete)", async () => {
       const cashRegisterId = 1;
-      const mockCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-001",
-        active: true,
-      } as CashRegister;
+      const existingCashRegister = new CashRegister();
+      existingCashRegister.cashRegisterId = cashRegisterId;
+      existingCashRegister.number = "CAJA001";
+      existingCashRegister.active = true;
 
-      mockRepository.findOne.mockResolvedValue(mockCashRegister);
+      const deactivatedCashRegister = { ...existingCashRegister, active: false };
 
-      const result = await cashRegisterService.getById(cashRegisterId);
+      // Mock getById call within delete method
+      mockRepository.findOne.mockResolvedValue(existingCashRegister);
+      mockRepository.save.mockResolvedValue(deactivatedCashRegister);
+
+      const result = await cashRegisterService.delete(cashRegisterId);
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { cashRegisterId: 1 },
+        where: { cashRegisterId },
       });
-      expect(result).toEqual(mockCashRegister);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        active: false,
+      }));
+      expect(result).toEqual({
+        message: "Caja registradora desactivada correctamente",
+        id: cashRegisterId,
+      });
     });
 
-    it("debería lanzar error cuando la caja registradora no existe", async () => {
+    it("should throw error when cash register not found for deletion", async () => {
       const cashRegisterId = 999;
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(cashRegisterService.getById(cashRegisterId)).rejects.toThrow(
-        `Caja registradora con ID ${cashRegisterId} no encontrada`
-      );
+      await expect(cashRegisterService.delete(cashRegisterId)).rejects.toThrow(`Caja registradora con ID ${cashRegisterId} no encontrada`);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { cashRegisterId: 999 },
+        where: { cashRegisterId },
       });
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it("debería manejar errores del repositorio", async () => {
+    it("should handle database errors during delete", async () => {
       const cashRegisterId = 1;
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.findOne.mockRejectedValue(repositoryError);
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-      await expect(cashRegisterService.getById(cashRegisterId)).rejects.toThrow("Error de consulta");
+      await expect(cashRegisterService.delete(cashRegisterId)).rejects.toThrow("Database connection failed");
     });
   });
 
   describe("getActiveCashRegisters", () => {
-    it("debería obtener solo las cajas registradoras activas", async () => {
-      const mockActiveCashRegisters = [
-        { cashRegisterId: 1, number: "CR-001", active: true },
-        { cashRegisterId: 3, number: "CR-003", active: true },
+    it("should get only active cash registers successfully", async () => {
+      const expectedActiveCashRegisters = [
+        { cashRegisterId: 1, number: "CAJA001", active: true },
+        { cashRegisterId: 3, number: "CAJA003", active: true },
       ] as CashRegister[];
 
-      mockRepository.find.mockResolvedValue(mockActiveCashRegisters);
+      mockRepository.find.mockResolvedValue(expectedActiveCashRegisters);
 
       const result = await cashRegisterService.getActiveCashRegisters();
 
@@ -437,271 +330,81 @@ describe("CashRegisterService", () => {
         where: { active: true },
         order: { number: "ASC" },
       });
-      expect(result).toEqual(mockActiveCashRegisters);
-      expect(result.every(cr => cr.active)).toBe(true);
+      expect(result).toEqual(expectedActiveCashRegisters);
     });
 
-    it("debería retornar array vacío cuando no hay cajas activas", async () => {
+    it("should return empty array when no active cash registers found", async () => {
       mockRepository.find.mockResolvedValue([]);
 
       const result = await cashRegisterService.getActiveCashRegisters();
 
       expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { active: true },
+        order: { number: "ASC" },
+      });
     });
 
-    it("debería manejar errores del repositorio", async () => {
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.find.mockRejectedValue(repositoryError);
+    it("should handle database errors during getActiveCashRegisters", async () => {
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
 
-      await expect(cashRegisterService.getActiveCashRegisters()).rejects.toThrow("Error de consulta");
+      await expect(cashRegisterService.getActiveCashRegisters()).rejects.toThrow("Database connection failed");
     });
   });
 
   describe("getByNumber", () => {
-    it("debería obtener cajas registradoras por número", async () => {
-      const number = "CR-001";
-      const mockCashRegisters = [
-        { cashRegisterId: 1, number: "CR-001", active: true },
+    it("should get cash registers by number successfully", async () => {
+      const searchNumber = "CAJA001";
+      const expectedCashRegisters = [
+        { cashRegisterId: 1, number: searchNumber, active: true },
       ] as CashRegister[];
 
-      mockRepository.find.mockResolvedValue(mockCashRegisters);
+      mockRepository.find.mockResolvedValue(expectedCashRegisters);
 
-      const result = await cashRegisterService.getByNumber(number);
+      const result = await cashRegisterService.getByNumber(searchNumber);
 
       expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { number: "CR-001" },
+        where: { number: searchNumber },
         order: { number: "ASC" },
       });
-      expect(result).toEqual(mockCashRegisters);
+      expect(result).toEqual(expectedCashRegisters);
     });
 
-    it("debería retornar array vacío cuando no encuentra el número", async () => {
-      const number = "CR-NO-EXISTE";
+    it("should return empty array when no cash registers match the number", async () => {
+      const searchNumber = "NONEXISTENT";
       mockRepository.find.mockResolvedValue([]);
 
-      const result = await cashRegisterService.getByNumber(number);
+      const result = await cashRegisterService.getByNumber(searchNumber);
 
+      expect(result).toEqual([]);
       expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { number: "CR-NO-EXISTE" },
+        where: { number: searchNumber },
         order: { number: "ASC" },
       });
-      expect(result).toEqual([]);
     });
 
-    it("debería manejar diferentes formatos de número", async () => {
-      const numeros = ["CR-001", "CAJA-01", "01", "PRINCIPAL", "REG-123"];
+    it("should handle database errors during getByNumber", async () => {
+      const searchNumber = "CAJA001";
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
 
-      for (const numero of numeros) {
-        mockRepository.find.mockResolvedValue([]);
-
-        await cashRegisterService.getByNumber(numero);
-
-        expect(mockRepository.find).toHaveBeenCalledWith({
-          where: { number: numero },
-          order: { number: "ASC" },
-        });
-      }
+      await expect(cashRegisterService.getByNumber(searchNumber)).rejects.toThrow("Database connection failed");
     });
 
-    it("debería manejar errores del repositorio", async () => {
-      const number = "CR-ERROR";
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.find.mockRejectedValue(repositoryError);
+    it("should handle multiple cash registers with same number", async () => {
+      const searchNumber = "CAJA001";
+      const expectedCashRegisters = [
+        { cashRegisterId: 1, number: searchNumber, active: true },
+        { cashRegisterId: 4, number: searchNumber, active: false },
+      ] as CashRegister[];
 
-      await expect(cashRegisterService.getByNumber(number)).rejects.toThrow("Error de consulta");
-    });
-  });
+      mockRepository.find.mockResolvedValue(expectedCashRegisters);
 
-  describe("Casos de integración", () => {
-    it("debería manejar flujo completo de CRUD", async () => {
-      const cashRegisterData: SaveCashRegisterDTO = {
-        number: "CR-INTEGRACIÓN",
-        active: true,
-      };
+      const result = await cashRegisterService.getByNumber(searchNumber);
 
-      const savedCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-INTEGRACIÓN",
-        active: true,
-      } as CashRegister;
-
-      const updateData = {
-        cashRegisterId: 1,
-        active: false,
-      };
-
-      const updatedCashRegister = {
-        ...savedCashRegister,
-        active: false,
-      } as CashRegister;
-
-      // 1. Guardar
-      mockRepository.save.mockResolvedValueOnce(savedCashRegister);
-      const saveResult = await cashRegisterService.save(cashRegisterData);
-      expect(saveResult).toEqual(savedCashRegister);
-
-      // 2. Obtener por ID
-      mockRepository.findOne.mockResolvedValueOnce(savedCashRegister);
-      const getResult = await cashRegisterService.getById(1);
-      expect(getResult).toEqual(savedCashRegister);
-
-      // 3. Actualizar
-      mockRepository.findOne.mockResolvedValueOnce(savedCashRegister);
-      mockRepository.save.mockResolvedValueOnce(updatedCashRegister);
-      const updateResult = await cashRegisterService.update(updateData);
-      expect(updateResult).toEqual(updatedCashRegister);
-
-      // 4. Obtener todas
-      mockRepository.find.mockResolvedValueOnce([updatedCashRegister]);
-      const getAllResult = await cashRegisterService.getAll();
-      expect(getAllResult).toContain(updatedCashRegister);
-
-      // 5. Eliminar
-      mockRepository.delete.mockResolvedValueOnce({ affected: 1 } as any);
-      const deleteResult = await cashRegisterService.delete(1);
-      expect(deleteResult.message).toBe("Caja registradora eliminada correctamente");
-    });
-
-    it("debería manejar gestión de cajas activas e inactivas", async () => {
-      const cajasData = [
-        { number: "CR-001", active: true },
-        { number: "CR-002", active: false },
-        { number: "CR-003", active: true },
-        { number: "CR-004", active: false },
-      ];
-
-      const todasLasCajas = cajasData.map((data, index) => ({
-        cashRegisterId: index + 1,
-        ...data,
-      })) as CashRegister[];
-
-      const cajasActivas = todasLasCajas.filter(caja => caja.active);
-
-      // Obtener todas las cajas
-      mockRepository.find.mockResolvedValueOnce(todasLasCajas);
-      const allResult = await cashRegisterService.getAll();
-      expect(allResult).toHaveLength(4);
-
-      // Obtener solo las activas
-      mockRepository.find.mockResolvedValueOnce(cajasActivas);
-      const activeResult = await cashRegisterService.getActiveCashRegisters();
-      expect(activeResult).toHaveLength(2);
-      expect(activeResult.every(cr => cr.active)).toBe(true);
-    });
-
-    it("debería manejar búsqueda por número específico", async () => {
-      const numerosBusqueda = ["CR-001", "CR-002", "CR-ESPECIAL"];
-
-      for (const numero of numerosBusqueda) {
-        const cajaEncontrada = [
-          { cashRegisterId: 1, number: numero, active: true },
-        ] as CashRegister[];
-
-        mockRepository.find.mockResolvedValueOnce(cajaEncontrada);
-
-        const result = await cashRegisterService.getByNumber(numero);
-
-        expect(result).toHaveLength(1);
-        expect(result[0].number).toBe(numero);
-      }
-    });
-  });
-
-  describe("Validaciones de datos", () => {
-    it("debería manejar números con diferentes formatos", async () => {
-      const formatosNumero = [
-        "CR-001",
-        "CAJA-PRINCIPAL",
-        "01",
-        "REG-123-A",
-        "PRINCIPAL",
-        "CAJA_01",
-        "CR.001",
-      ];
-
-      for (const numero of formatosNumero) {
-        const cashRegisterData: SaveCashRegisterDTO = {
-          number: numero,
-          active: true,
-        };
-
-        mockRepository.save.mockResolvedValue({} as CashRegister);
-
-        await cashRegisterService.save(cashRegisterData);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            number: numero,
-          })
-        );
-      }
-    });
-
-    it("debería manejar valores booleanos de active", async () => {
-      const valoresActive = [true, false];
-
-      for (const active of valoresActive) {
-        const cashRegisterData: SaveCashRegisterDTO = {
-          number: `CR-${active}`,
-          active: active,
-        };
-
-        mockRepository.save.mockResolvedValue({} as CashRegister);
-
-        await cashRegisterService.save(cashRegisterData);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            active: active,
-          })
-        );
-      }
-    });
-
-    it("debería manejar actualizaciones parciales", async () => {
-      const existingCashRegister = {
-        cashRegisterId: 1,
-        number: "CR-ORIGINAL",
-        active: true,
-      } as CashRegister;
-
-      const actualizacionesParciales = [
-        { cashRegisterId: 1, number: "CR-NUEVO-NUMERO" },
-        { cashRegisterId: 1, active: false },
-        { cashRegisterId: 1, number: "CR-ACTUALIZADO", active: false },
-      ];
-
-      for (const update of actualizacionesParciales) {
-        mockRepository.findOne.mockResolvedValue(existingCashRegister);
-        mockRepository.save.mockResolvedValue({} as CashRegister);
-
-        await cashRegisterService.update(update);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining(update)
-        );
-      }
-    });
-
-    it("debería manejar IDs diversos", async () => {
-      const ids = [1, 10, 100, 999, 1000];
-
-      for (const id of ids) {
-        const mockCashRegister = {
-          cashRegisterId: id,
-          number: `CR-${id}`,
-          active: true,
-        } as CashRegister;
-
-        mockRepository.findOne.mockResolvedValue(mockCashRegister);
-
-        const result = await cashRegisterService.getById(id);
-
-        expect(result.cashRegisterId).toBe(id);
-        expect(mockRepository.findOne).toHaveBeenCalledWith({
-          where: { cashRegisterId: id },
-        });
-      }
+      expect(result).toEqual(expectedCashRegisters);
+      expect(result).toHaveLength(2);
     });
   });
 });

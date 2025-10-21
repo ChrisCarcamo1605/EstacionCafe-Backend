@@ -1,9 +1,11 @@
 import * as userTypeController from "../UserTypeController";
 import { IService } from "../../core/interfaces/IService";
-import { UserTypeSchema } from "../../application/validations/UserTypeValidations";
+import { createUserTypeSchema, updateUserTypeSchema, userTypeIdSchema } from "../../application/validations/UserTypeValidations";
 
 jest.mock("../../application/validations/UserTypeValidations");
-const mockedUserTypeSchema = UserTypeSchema as jest.Mocked<typeof UserTypeSchema>;
+const mockedCreateUserTypeSchema = createUserTypeSchema as jest.Mocked<typeof createUserTypeSchema>;
+const mockedUpdateUserTypeSchema = updateUserTypeSchema as jest.Mocked<typeof updateUserTypeSchema>;
+const mockedUserTypeIdSchema = userTypeIdSchema as jest.Mocked<typeof userTypeIdSchema>;
 
 describe("UserTypeController", () => {
   let mockService: jest.Mocked<IService>;
@@ -42,51 +44,193 @@ describe("UserTypeController", () => {
     jest.clearAllMocks();
   });
 
-  describe("saveType", () => {
-    it("debería guardar el tipo de usuario exitosamente", async () => {
-      const datosTipo = {
-        name: "Administrador",
-        permissionLevel: "10",
-      };
+  describe("getUserTypes", () => {
+    it("debería obtener todos los tipos de usuario exitosamente", async () => {
+      const tiposUsuarioSimulados = [
+        {
+          userTypeId: 1,
+          name: "Administrador",
+          permissionLevel: 10,
+        },
+        {
+          userTypeId: 2,
+          name: "Cajero",
+          permissionLevel: 5,
+        },
+      ];
 
-      const datosValidados = {
+      mockService.getAll.mockResolvedValue(tiposUsuarioSimulados);
+
+      await userTypeController.getUserTypes(mockReq, mockRes);
+
+      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        body: tiposUsuarioSimulados,
+      });
+      expect(console.log).toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+    });
+
+    it("debería manejar errores del servidor al obtener tipos de usuario", async () => {
+      const errorServidor = new Error("Error de conexión a la base de datos");
+
+      mockService.getAll.mockRejectedValue(errorServidor);
+
+      await userTypeController.getUserTypes(mockReq, mockRes);
+
+      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: `Error al obtener los tipos de usuario: ${errorServidor.message}`,
+      });
+      expect(console.log).not.toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+    });
+
+    it("debería retornar un array vacío cuando no hay tipos de usuario", async () => {
+      const tiposVacios: any[] = [];
+
+      mockService.getAll.mockResolvedValue(tiposVacios);
+
+      await userTypeController.getUserTypes(mockReq, mockRes);
+
+      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        body: [],
+      });
+      expect(console.log).toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+    });
+  });
+
+  describe("getUserTypeById", () => {
+    it("debería obtener un tipo de usuario por ID exitosamente", async () => {
+      const tipoUsuario = {
+        userTypeId: 1,
         name: "Administrador",
         permissionLevel: 10,
       };
 
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosValidados,
-        active: true 
-      };
+      mockReq.params = { id: "1" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockService.getById.mockResolvedValue(tipoUsuario);
 
-      mockReq.body = datosTipo;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(tipoGuardado);
+      await userTypeController.getUserTypeById(mockReq, mockRes);
 
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosTipo);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockService.getById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
-        message: "El tipo de usuario fue registrado correctamente",
-        data: tipoGuardado,
+        body: tipoUsuario,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipo de usuario guardado correctamente");
+      expect(console.log).toHaveBeenCalledWith("Tipo de usuario obtenido correctamente");
     });
 
-    it("debería manejar errores de validación ZodError para name muy corto", async () => {
-      const datosInvalidos = {
-        name: "abc", // Menos de 4 caracteres
-        permissionLevel: "5",
-      };
+    it("debería manejar errores de validación ZodError para ID inválido", async () => {
       const errorZod = {
         name: "ZodError",
         issues: [
           {
-            message: "String must contain at least 4 character(s)",
+            message: "El ID debe ser un número positivo",
+            path: ["id"],
+            code: "custom",
+          },
+        ],
+      };
+
+      mockReq.params = { id: "invalid" };
+      mockedUserTypeIdSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await userTypeController.getUserTypeById(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockService.getById).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "ID inválido: El ID debe ser un número positivo",
+      });
+      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario obtenido correctamente");
+    });
+
+    it("debería manejar error cuando el tipo de usuario no existe", async () => {
+      const errorNoEncontrado = new Error("Tipo de usuario no encontrado");
+
+      mockReq.params = { id: "999" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 999 });
+      mockService.getById.mockRejectedValue(errorNoEncontrado);
+
+      await userTypeController.getUserTypeById(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockService.getById).toHaveBeenCalledWith(999);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: errorNoEncontrado.message,
+      });
+    });
+
+    it("debería manejar errores generales del servidor", async () => {
+      const errorServidor = new Error("Error interno del servidor");
+
+      mockReq.params = { id: "1" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockService.getById.mockRejectedValue(errorServidor);
+
+      await userTypeController.getUserTypeById(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockService.getById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: `Error al obtener el tipo de usuario: ${errorServidor.message}`,
+      });
+    });
+  });
+
+  describe("saveUserType", () => {
+    it("debería guardar un tipo de usuario exitosamente", async () => {
+      const datosTipoUsuario = {
+        name: "Administrador",
+        permissionLevel: 10,
+      };
+
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosTipoUsuario,
+      };
+
+      mockReq.body = datosTipoUsuario;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosTipoUsuario);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosTipoUsuario);
+      expect(mockService.save).toHaveBeenCalledWith(datosTipoUsuario);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "Tipo de usuario creado correctamente",
+        data: tipoUsuarioGuardado,
+      });
+      expect(console.log).toHaveBeenCalledWith("Tipo de usuario creado correctamente");
+    });
+
+    it("debería manejar errores de validación ZodError para nombre vacío", async () => {
+      const datosInvalidos = {
+        name: "",
+        permissionLevel: 5,
+      };
+
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El nombre es requerido",
             path: ["name"],
             code: "too_small",
           },
@@ -94,35 +238,36 @@ describe("UserTypeController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedUserTypeSchema.parse.mockImplementation(() => {
+      mockedCreateUserTypeSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: String must contain at least 4 character(s)",
+        message: "Datos inválidos: El nombre es requerido",
         campo: ["name"],
         error: "too_small",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario guardado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario creado correctamente");
     });
 
-    it("debería manejar errores de validación ZodError para name muy largo", async () => {
-      const nombreMuyLargo = "a".repeat(51); // Más de 50 caracteres
+    it("debería manejar errores de validación ZodError para nombre muy largo", async () => {
+      const nombreMuyLargo = "a".repeat(51);
       const datosInvalidos = {
         name: nombreMuyLargo,
-        permissionLevel: "5",
+        permissionLevel: 5,
       };
+
       const errorZod = {
         name: "ZodError",
         issues: [
           {
-            message: "String must contain at most 50 character(s)",
+            message: "El nombre es muy largo",
             path: ["name"],
             code: "too_big",
           },
@@ -130,33 +275,104 @@ describe("UserTypeController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedUserTypeSchema.parse.mockImplementation(() => {
+      mockedCreateUserTypeSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: String must contain at most 50 character(s)",
+        message: "Datos inválidos: El nombre es muy largo",
         campo: ["name"],
         error: "too_big",
       });
     });
 
-    it("debería manejar errores de validación ZodError para permissionLevel inválido", async () => {
+    it("debería manejar errores de validación ZodError para nivel de permisos inválido", async () => {
       const datosInvalidos = {
-        name: "Gerente",
-        permissionLevel: "invalid",
+        name: "Admin",
+        permissionLevel: 11,
       };
+
       const errorZod = {
         name: "ZodError",
         issues: [
           {
-            message: "Expected number, received nan",
+            message: "El nivel de permisos no puede ser mayor a 10",
+            path: ["permissionLevel"],
+            code: "too_big",
+          },
+        ],
+      };
+
+      mockReq.body = datosInvalidos;
+      mockedCreateUserTypeSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockService.save).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Datos inválidos: El nivel de permisos no puede ser mayor a 10",
+        campo: ["permissionLevel"],
+        error: "too_big",
+      });
+    });
+
+    it("debería manejar errores de validación ZodError para nivel de permisos negativo", async () => {
+      const datosInvalidos = {
+        name: "Admin",
+        permissionLevel: -1,
+      };
+
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El nivel de permisos no puede ser negativo",
+            path: ["permissionLevel"],
+            code: "too_small",
+          },
+        ],
+      };
+
+      mockReq.body = datosInvalidos;
+      mockedCreateUserTypeSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockService.save).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Datos inválidos: El nivel de permisos no puede ser negativo",
+        campo: ["permissionLevel"],
+        error: "too_small",
+      });
+    });
+
+    it("debería manejar errores de validación ZodError para nivel de permisos no entero", async () => {
+      const datosInvalidos = {
+        name: "Admin",
+        permissionLevel: 5.5,
+      };
+
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El nivel de permisos debe ser un número entero",
             path: ["permissionLevel"],
             code: "invalid_type",
           },
@@ -164,285 +380,364 @@ describe("UserTypeController", () => {
       };
 
       mockReq.body = datosInvalidos;
-      mockedUserTypeSchema.parse.mockImplementation(() => {
+      mockedCreateUserTypeSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: Expected number, received nan",
+        message: "Datos inválidos: El nivel de permisos debe ser un número entero",
         campo: ["permissionLevel"],
         error: "invalid_type",
       });
     });
 
-    it("debería manejar errores de validación ZodError para permissionLevel negativo", async () => {
-      const datosInvalidos = {
-        name: "Empleado",
-        permissionLevel: "-1",
-      };
-      const errorZod = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "El nivel de permisos debe ser mayor o igual a 0",
-            path: ["permissionLevel"],
-            code: "custom",
-          },
-        ],
-      };
-
-      mockReq.body = datosInvalidos;
-      mockedUserTypeSchema.parse.mockImplementation(() => {
-        throw errorZod;
-      });
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
-      expect(mockService.save).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Datos inválidos: El nivel de permisos debe ser mayor o igual a 0",
-        campo: ["permissionLevel"],
-        error: "custom",
-      });
-    });
-
-    it("debería manejar transformaciones de string a number en permissionLevel", async () => {
-      const datosTipo = {
-        name: "Supervisor",
-        permissionLevel: "8", // String que se transforma a number
-      };
-
-      const datosValidados = {
-        name: "Supervisor",
-        permissionLevel: 8, // Transformado a number
-      };
-
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosValidados,
-        active: true 
-      };
-
-      mockReq.body = datosTipo;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(tipoGuardado);
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosTipo);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
-    it("debería manejar name con espacios (trim)", async () => {
-      const datosConEspacios = {
-        name: "   Cajero   ",
-        permissionLevel: "3",
-      };
-
-      const datosLimpios = {
-        name: "Cajero",
-        permissionLevel: 3,
-      };
-
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosLimpios,
-        active: true 
-      };
-
-      mockReq.body = datosConEspacios;
-      mockedUserTypeSchema.parse.mockReturnValue(datosLimpios);
-      mockService.save.mockResolvedValue(tipoGuardado);
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosConEspacios);
-      expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
     it("debería manejar errores generales del servidor", async () => {
-      const datosTipo = {
-        name: "Administrador",
-        permissionLevel: "10",
-      };
-
-      const datosValidados = {
+      const datosTipoUsuario = {
         name: "Administrador",
         permissionLevel: 10,
       };
 
       const errorServidor = new Error("Error interno del servidor");
 
-      mockReq.body = datosTipo;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
+      mockReq.body = datosTipoUsuario;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosTipoUsuario);
       mockService.save.mockRejectedValue(errorServidor);
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosTipo);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosTipoUsuario);
+      expect(mockService.save).toHaveBeenCalledWith(datosTipoUsuario);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Hubo un error",
-        errors: undefined,
+        message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario guardado correctamente");
+      expect(console.error).toHaveBeenCalledWith("Error al crear tipo de usuario:", errorServidor);
+      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario creado correctamente");
     });
 
-    it("debería manejar errores con propiedades errors", async () => {
-      const datosTipo = {
-        name: "Administrador",
-        permissionLevel: "10",
+    it("debería manejar nombres con espacios (trim)", async () => {
+      const datosConEspacios = {
+        name: "   Supervisor   ",
+        permissionLevel: 7,
       };
 
-      const datosValidados = {
-        name: "Administrador",
-        permissionLevel: 10,
+      const datosLimpios = {
+        name: "Supervisor",
+        permissionLevel: 7,
       };
 
-      const errorConErrors = {
-        message: "Error con errores",
-        errors: ["Error 1", "Error 2"],
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosLimpios,
       };
 
-      mockReq.body = datosTipo;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockRejectedValue(errorConErrors);
+      mockReq.body = datosConEspacios;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosLimpios);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Hubo un error",
-        errors: ["Error 1", "Error 2"],
-      });
-    });
-
-    it("debería manejar errores con propiedades issues", async () => {
-      const datosTipo = {
-        name: "Administrador",
-        permissionLevel: "10",
-      };
-
-      const datosValidados = {
-        name: "Administrador",
-        permissionLevel: 10,
-      };
-
-      const errorConIssues = {
-        message: "Error con issues",
-        issues: ["Issue 1", "Issue 2"],
-      };
-
-      mockReq.body = datosTipo;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockRejectedValue(errorConIssues);
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Hubo un error",
-        errors: ["Issue 1", "Issue 2"],
-      });
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosConEspacios);
+      expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
     });
   });
 
-  describe("getTypes", () => {
-    it("debería retornar los tipos de usuarios exitosamente", async () => {
-      const tiposSimulados = [
-        {
-          typeId: 1,
-          name: "Administrador",
-          permissionLevel: 10,
-          active: true,
-        },
-        {
-          typeId: 2,
-          name: "Gerente",
-          permissionLevel: 8,
-          active: true,
-        },
-        {
-          typeId: 3,
-          name: "Cajero",
-          permissionLevel: 3,
-          active: true,
-        },
-      ];
+  describe("updateUserType", () => {
+    it("debería actualizar un tipo de usuario exitosamente", async () => {
+      const datosActualizacion = {
+        name: "Administrador Actualizado",
+        permissionLevel: 9,
+      };
 
-      mockService.getAll.mockResolvedValue(tiposSimulados);
+      const tipoUsuarioActualizado = {
+        userTypeId: 1,
+        ...datosActualizacion,
+      };
 
-      await userTypeController.getTypes(mockReq, mockRes);
+      mockReq.params = { id: "1" };
+      mockReq.body = datosActualizacion;
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockedUpdateUserTypeSchema.parse.mockReturnValue(datosActualizacion);
+      mockService.update.mockResolvedValue(tipoUsuarioActualizado);
 
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockService.update).toHaveBeenCalledWith({
+        userTypeId: 1,
+        ...datosActualizacion,
+      });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
-        message: "Tipos de usuarios obtenidos exitosamente",
-        data: tiposSimulados,
+        message: "Tipo de usuario actualizado correctamente",
+        data: tipoUsuarioActualizado,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipos de usuarios obtenidos exitosamente");
+      expect(console.log).toHaveBeenCalledWith("Tipo de usuario actualizado correctamente");
     });
 
-    it("debería manejar errores al obtener los tipos de usuarios", async () => {
-      const mensajeError = "Error de conexión a la base de datos";
-      mockService.getAll.mockRejectedValue(new Error(mensajeError));
+    it("debería actualizar solo el nombre", async () => {
+      const datosActualizacion = {
+        name: "Nuevo Nombre",
+      };
 
-      await userTypeController.getTypes(mockReq, mockRes);
+      const tipoUsuarioActualizado = {
+        userTypeId: 1,
+        name: "Nuevo Nombre",
+        permissionLevel: 5,
+      };
 
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      mockReq.params = { id: "1" };
+      mockReq.body = datosActualizacion;
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockedUpdateUserTypeSchema.parse.mockReturnValue(datosActualizacion);
+      mockService.update.mockResolvedValue(tipoUsuarioActualizado);
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockService.update).toHaveBeenCalledWith({
+        userTypeId: 1,
+        ...datosActualizacion,
+      });
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it("debería actualizar solo el nivel de permisos", async () => {
+      const datosActualizacion = {
+        permissionLevel: 8,
+      };
+
+      const tipoUsuarioActualizado = {
+        userTypeId: 1,
+        name: "Administrador",
+        permissionLevel: 8,
+      };
+
+      mockReq.params = { id: "1" };
+      mockReq.body = datosActualizacion;
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockedUpdateUserTypeSchema.parse.mockReturnValue(datosActualizacion);
+      mockService.update.mockResolvedValue(tipoUsuarioActualizado);
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockService.update).toHaveBeenCalledWith({
+        userTypeId: 1,
+        ...datosActualizacion,
+      });
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it("debería manejar errores de validación ZodError para ID inválido", async () => {
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El ID debe ser un número positivo",
+            path: ["id"],
+            code: "custom",
+          },
+        ],
+      };
+
+      mockReq.params = { id: "invalid" };
+      mockReq.body = { name: "Test" };
+      mockedUserTypeIdSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedUpdateUserTypeSchema.parse).not.toHaveBeenCalled();
+      expect(mockService.update).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Datos inválidos: El ID debe ser un número positivo",
+        campo: ["id"],
+      });
+    });
+
+    it("debería manejar errores de validación ZodError para datos de actualización inválidos", async () => {
+      const datosInvalidos = {
+        name: "",
+        permissionLevel: 11,
+      };
+
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El nombre es requerido",
+            path: ["name"],
+            code: "too_small",
+          },
+        ],
+      };
+
+      mockReq.params = { id: "1" };
+      mockReq.body = datosInvalidos;
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockedUpdateUserTypeSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockService.update).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Datos inválidos: El nombre es requerido",
+        campo: ["name"],
+      });
+    });
+
+    it("debería manejar error cuando el tipo de usuario no existe", async () => {
+      const errorNoEncontrado = new Error("Tipo de usuario no encontrado");
+
+      mockReq.params = { id: "999" };
+      mockReq.body = { name: "Test" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 999 });
+      mockedUpdateUserTypeSchema.parse.mockReturnValue({ name: "Test" });
+      mockService.update.mockRejectedValue(errorNoEncontrado);
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockService.update).toHaveBeenCalledWith({
+        userTypeId: 999,
+        name: "Test",
+      });
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: errorNoEncontrado.message,
+      });
+    });
+
+    it("debería manejar errores generales del servidor", async () => {
+      const errorServidor = new Error("Error interno del servidor");
+
+      mockReq.params = { id: "1" };
+      mockReq.body = { name: "Test" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockedUpdateUserTypeSchema.parse.mockReturnValue({ name: "Test" });
+      mockService.update.mockRejectedValue(errorServidor);
+
+      await userTypeController.updateUserType(mockReq, mockRes);
+
+      expect(mockService.update).toHaveBeenCalledWith({
+        userTypeId: 1,
+        name: "Test",
+      });
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: `Hubo un error al obtener los datos: ${mensajeError}`,
+        message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipos de usuarios obtenidos exitosamente");
+      expect(console.error).toHaveBeenCalledWith("Error al actualizar tipo de usuario:", errorServidor);
+    });
+  });
+
+  describe("deleteUserType", () => {
+    it("debería eliminar un tipo de usuario exitosamente", async () => {
+      const tipoUsuarioEliminado = {
+        userTypeId: 1,
+        name: "Administrador",
+        permissionLevel: 10,
+      };
+
+      mockReq.params = { id: "1" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockService.delete.mockResolvedValue(tipoUsuarioEliminado);
+
+      await userTypeController.deleteUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockService.delete).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "Tipo de usuario eliminado correctamente",
+        data: tipoUsuarioEliminado,
+      });
+      expect(console.log).toHaveBeenCalledWith("Tipo de usuario eliminado correctamente");
     });
 
-    it("debería manejar errores sin mensaje específico", async () => {
-      const errorSinMensaje = {};
-      mockService.getAll.mockRejectedValue(errorSinMensaje);
+    it("debería manejar errores de validación ZodError para ID inválido", async () => {
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El ID debe ser un número positivo",
+            path: ["id"],
+            code: "custom",
+          },
+        ],
+      };
 
-      await userTypeController.getTypes(mockReq, mockRes);
+      mockReq.params = { id: "invalid" };
+      mockedUserTypeIdSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
 
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      await userTypeController.deleteUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockService.delete).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "ID inválido: El ID debe ser un número positivo",
+      });
+      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario eliminado correctamente");
+    });
+
+    it("debería manejar error cuando el tipo de usuario no existe", async () => {
+      const errorNoEncontrado = new Error("Tipo de usuario no encontrado");
+
+      mockReq.params = { id: "999" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 999 });
+      mockService.delete.mockRejectedValue(errorNoEncontrado);
+
+      await userTypeController.deleteUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockService.delete).toHaveBeenCalledWith(999);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: errorNoEncontrado.message,
+      });
+    });
+
+    it("debería manejar errores generales del servidor", async () => {
+      const errorServidor = new Error("Error interno del servidor");
+
+      mockReq.params = { id: "1" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 1 });
+      mockService.delete.mockRejectedValue(errorServidor);
+
+      await userTypeController.deleteUserType(mockReq, mockRes);
+
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Hubo un error al obtener los datos: undefined",
+        message: `Error interno del servidor: ${errorServidor.message}`,
       });
-    });
-
-    it("debería retornar un array vacío cuando no hay tipos de usuarios", async () => {
-      const tiposVacios: any[] = [];
-
-      mockService.getAll.mockResolvedValue(tiposVacios);
-
-      await userTypeController.getTypes(mockReq, mockRes);
-
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        status: "sucess",
-        message: "Tipos de usuarios obtenidos exitosamente",
-        data: tiposVacios,
-      });
-      expect(console.log).toHaveBeenCalledWith("Tipos de usuarios obtenidos exitosamente");
+      expect(console.error).toHaveBeenCalledWith("Error al eliminar tipo de usuario:", errorServidor);
     });
   });
 
@@ -460,181 +755,171 @@ describe("UserTypeController", () => {
       expect(() => userTypeController.setService(nuevoServicio)).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
+      // ejecutando una función que lo use
       nuevoServicio.getAll.mockResolvedValue([]);
-      await userTypeController.getTypes(mockReq, mockRes);
+      await userTypeController.getUserTypes(mockReq, mockRes);
 
       expect(nuevoServicio.getAll).toHaveBeenCalled();
     });
   });
 
+  describe("Casos con diferentes tipos de usuario", () => {
+    const tiposDeUsuario = [
+      { name: "Administrador", permissionLevel: 10 },
+      { name: "Gerente", permissionLevel: 8 },
+      { name: "Supervisor", permissionLevel: 6 },
+      { name: "Cajero", permissionLevel: 4 },
+      { name: "Barista", permissionLevel: 2 },
+      { name: "Invitado", permissionLevel: 0 },
+    ];
+
+    tiposDeUsuario.forEach((tipoUsuario) => {
+      it(`debería guardar tipo de usuario: "${tipoUsuario.name}"`, async () => {
+        const tipoUsuarioGuardado = {
+          userTypeId: 1,
+          ...tipoUsuario,
+        };
+
+        mockReq.body = tipoUsuario;
+        mockedCreateUserTypeSchema.parse.mockReturnValue(tipoUsuario);
+        mockService.save.mockResolvedValue(tipoUsuarioGuardado);
+
+        await userTypeController.saveUserType(mockReq, mockRes);
+
+        expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(tipoUsuario);
+        expect(mockService.save).toHaveBeenCalledWith(tipoUsuario);
+        expect(mockRes.status).toHaveBeenCalledWith(201);
+      });
+    });
+  });
+
   describe("Casos límite de validación", () => {
-    it("debería manejar name con exactamente 4 caracteres", async () => {
+    it("debería manejar nombre con exactamente 1 carácter", async () => {
       const datosMinimos = {
-        name: "Test", // Exactamente 4 caracteres
-        permissionLevel: "1",
-      };
-
-      const datosValidados = {
-        name: "Test",
-        permissionLevel: 1,
-      };
-
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosValidados,
-        active: true 
-      };
-
-      mockReq.body = datosMinimos;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(tipoGuardado);
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosMinimos);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
-    it("debería manejar name con exactamente 50 caracteres", async () => {
-      const nameMaximo = "a".repeat(50); // Exactamente 50 caracteres
-      const datosMaximos = {
-        name: nameMaximo,
-        permissionLevel: "5",
-      };
-
-      const datosValidados = {
-        name: nameMaximo,
-        permissionLevel: 5,
-      };
-
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosValidados,
-        active: true 
-      };
-
-      mockReq.body = datosMaximos;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(tipoGuardado);
-
-      await userTypeController.saveType(mockReq, mockRes);
-
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosMaximos);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-    });
-
-    it("debería manejar permissionLevel con valor 0", async () => {
-      const datosConCero = {
-        name: "Invitado",
-        permissionLevel: "0", // Valor mínimo permitido
-      };
-
-      const datosValidados = {
-        name: "Invitado",
+        name: "A",
         permissionLevel: 0,
       };
 
-      const tipoGuardado = { 
-        typeId: 1, 
-        ...datosValidados,
-        active: true 
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosMinimos,
       };
 
-      mockReq.body = datosConCero;
-      mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-      mockService.save.mockResolvedValue(tipoGuardado);
+      mockReq.body = datosMinimos;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosMinimos);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
 
-      await userTypeController.saveType(mockReq, mockRes);
+      await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosConCero);
-      expect(mockService.save).toHaveBeenCalledWith(datosValidados);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosMinimos);
+      expect(mockService.save).toHaveBeenCalledWith(datosMinimos);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+    });
+
+    it("debería manejar nombre con exactamente 50 caracteres", async () => {
+      const nombreMaximo = "a".repeat(50);
+      const datosMaximos = {
+        name: nombreMaximo,
+        permissionLevel: 10,
+      };
+
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosMaximos,
+      };
+
+      mockReq.body = datosMaximos;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosMaximos);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosMaximos);
+      expect(mockService.save).toHaveBeenCalledWith(datosMaximos);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+    });
+
+    it("debería manejar nivel de permisos en el límite inferior (0)", async () => {
+      const datosLimiteInferior = {
+        name: "Usuario Limitado",
+        permissionLevel: 0,
+      };
+
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosLimiteInferior,
+      };
+
+      mockReq.body = datosLimiteInferior;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosLimiteInferior);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosLimiteInferior);
+      expect(mockService.save).toHaveBeenCalledWith(datosLimiteInferior);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+    });
+
+    it("debería manejar nivel de permisos en el límite superior (10)", async () => {
+      const datosLimiteSuperior = {
+        name: "Super Administrador",
+        permissionLevel: 10,
+      };
+
+      const tipoUsuarioGuardado = {
+        userTypeId: 1,
+        ...datosLimiteSuperior,
+      };
+
+      mockReq.body = datosLimiteSuperior;
+      mockedCreateUserTypeSchema.parse.mockReturnValue(datosLimiteSuperior);
+      mockService.save.mockResolvedValue(tipoUsuarioGuardado);
+
+      await userTypeController.saveUserType(mockReq, mockRes);
+
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosLimiteSuperior);
+      expect(mockService.save).toHaveBeenCalledWith(datosLimiteSuperior);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
   });
 
-  describe("Casos con diferentes niveles de permisos", () => {
-    const nivelesDePermiso = [
-      { input: "0", expected: 0, tipo: "Invitado" },
-      { input: "1", expected: 1, tipo: "Usuario Básico" },
-      { input: "5", expected: 5, tipo: "Empleado" },
-      { input: "8", expected: 8, tipo: "Supervisor" },
-      { input: "10", expected: 10, tipo: "Administrador" },
-      { input: "999", expected: 999, tipo: "Super Admin" },
-    ];
+  describe("Transformaciones de ID", () => {
+    it("debería manejar IDs como strings que se convierten a números", async () => {
+      const tipoUsuario = {
+        userTypeId: 42,
+        name: "Test User Type",
+        permissionLevel: 5,
+      };
 
-    nivelesDePermiso.forEach(({ input, expected, tipo }) => {
-      it(`debería transformar permissionLevel "${input}" a ${expected} para tipo "${tipo}"`, async () => {
-        const datosTipo = {
-          name: tipo,
-          permissionLevel: input,
-        };
+      mockReq.params = { id: "42" };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: 42 });
+      mockService.getById.mockResolvedValue(tipoUsuario);
 
-        const datosValidados = {
-          name: tipo,
-          permissionLevel: expected,
-        };
+      await userTypeController.getUserTypeById(mockReq, mockRes);
 
-        const tipoGuardado = { 
-          typeId: 1, 
-          ...datosValidados,
-          active: true 
-        };
-
-        mockReq.body = datosTipo;
-        mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-        mockService.save.mockResolvedValue(tipoGuardado);
-
-        await userTypeController.saveType(mockReq, mockRes);
-
-        expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(datosTipo);
-        expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-        expect(mockRes.status).toHaveBeenCalledWith(201);
-      });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "42" });
+      expect(mockService.getById).toHaveBeenCalledWith(42);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
-  });
 
-  describe("Casos con nombres de tipos realistas", () => {
-    const tiposRealistas = [
-      { name: "Administrador General", permissionLevel: "10" },
-      { name: "Gerente de Tienda", permissionLevel: "8" },
-      { name: "Supervisor de Turno", permissionLevel: "6" },
-      { name: "Cajero Principal", permissionLevel: "4" },
-      { name: "Cajero", permissionLevel: "3" },
-      { name: "Asistente", permissionLevel: "2" },
-      { name: "Becario", permissionLevel: "1" },
-      { name: "Invitado", permissionLevel: "0" },
-    ];
+    it("debería manejar IDs grandes correctamente", async () => {
+      const idGrande = 999999;
+      const tipoUsuario = {
+        userTypeId: idGrande,
+        name: "Test User Type",
+        permissionLevel: 5,
+      };
 
-    tiposRealistas.forEach((tipoDatos) => {
-      it(`debería guardar el tipo "${tipoDatos.name}" con nivel ${tipoDatos.permissionLevel}`, async () => {
-        const datosValidados = {
-          name: tipoDatos.name,
-          permissionLevel: parseInt(tipoDatos.permissionLevel),
-        };
+      mockReq.params = { id: idGrande.toString() };
+      mockedUserTypeIdSchema.parse.mockReturnValue({ id: idGrande });
+      mockService.getById.mockResolvedValue(tipoUsuario);
 
-        const tipoGuardado = { 
-          typeId: 1, 
-          ...datosValidados,
-          active: true 
-        };
+      await userTypeController.getUserTypeById(mockReq, mockRes);
 
-        mockReq.body = tipoDatos;
-        mockedUserTypeSchema.parse.mockReturnValue(datosValidados);
-        mockService.save.mockResolvedValue(tipoGuardado);
-
-        await userTypeController.saveType(mockReq, mockRes);
-
-        expect(mockedUserTypeSchema.parse).toHaveBeenCalledWith(tipoDatos);
-        expect(mockService.save).toHaveBeenCalledWith(datosValidados);
-        expect(mockRes.status).toHaveBeenCalledWith(201);
-        expect(mockRes.send).toHaveBeenCalledWith({
-          status: "sucess",
-          message: "El tipo de usuario fue registrado correctamente",
-          data: tipoGuardado,
-        });
-      });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: idGrande.toString() });
+      expect(mockService.getById).toHaveBeenCalledWith(idGrande);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
   });
 });

@@ -1,7 +1,7 @@
-import { Repository } from "typeorm";
 import { ConsumableService } from "../ConsumableService";
+import { Repository } from "typeorm";
 import { Consumable } from "../../../core/entities/Consumable";
-import { SaveConsumableDTO } from "../../DTOs/ConsumableDTO";
+import { SaveConsumableDTO, UpdateConsumableDTO, ConsumableItemDTO } from "../../DTOs/ConsumableDTO";
 import { UnitMeasurement } from "../../../core/enums/UnitMeasurement";
 
 describe("ConsumableService", () => {
@@ -9,21 +9,20 @@ describe("ConsumableService", () => {
   let mockRepository: jest.Mocked<Repository<Consumable>>;
 
   beforeEach(() => {
-    // Crear mock del repositorio
+    // Create mock repository with all necessary methods
     mockRepository = {
-      save: jest.fn(),
-      find: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
       delete: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    } as any;
+      createQueryBuilder: jest.fn(),
+    } as unknown as jest.Mocked<Repository<Consumable>>;
 
-    // Crear instancia del servicio con el repositorio mock
     consumableService = new ConsumableService(mockRepository);
 
-    // Limpiar console.log
+    // Mock console methods to avoid noise in tests
     jest.spyOn(console, "log").mockImplementation();
+    jest.spyOn(console, "error").mockImplementation();
   });
 
   afterEach(() => {
@@ -31,380 +30,212 @@ describe("ConsumableService", () => {
   });
 
   describe("save", () => {
-    it("debería guardar un consumible exitosamente", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Leche Entera",
-        TypeId: 2,
-        cost: 25.50,
-        quantity: 100,
-        unitMeasurement: UnitMeasurement.LITER,
-      };
-
-      const savedConsumable = {
-        consumableId: 1,
+    it("should save a consumable successfully", async () => {
+      const saveConsumableDTO: SaveConsumableDTO = {
         supplierId: 1,
-        name: "Leche Entera",
-        cosumableTypeId: 2,
-        cost: 25.50,
+        name: "Café Molido",
+        cosumableTypeId: 1,
+        cost: 15.50,
         quantity: 100,
-        unitMeasurement: UnitMeasurement.LITER,
-      } as Consumable;
-
-      mockRepository.save.mockResolvedValue(savedConsumable);
-
-      const result = await consumableService.save(consumableData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          supplierId: 1,
-          name: "Leche Entera",
-          cosumableTypeId: 2,
-          cost: 25.50,
-          quantity: 100,
-          unitMeasurement: UnitMeasurement.LITER,
-        })
-      );
-      expect(result).toEqual(savedConsumable);
-    });
-
-    it("debería crear una entidad Consumable con los datos correctos", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 3,
-        name: "Azúcar Morena",
-        TypeId: 1,
-        cost: 15.75,
-        quantity: 50,
         unitMeasurement: UnitMeasurement.KILOGRAM,
       };
 
-      let savedEntity: any;
-      mockRepository.save.mockImplementation((consumable) => {
-        savedEntity = consumable;
-        return Promise.resolve({ consumableId: 1, ...consumable } as Consumable);
-      });
+      const expectedConsumable = new Consumable();
+      expectedConsumable.consumableId = 1;
+      expectedConsumable.supplierId = saveConsumableDTO.supplierId;
+      expectedConsumable.name = saveConsumableDTO.name;
+      expectedConsumable.cosumableTypeId = saveConsumableDTO.cosumableTypeId;
+      expectedConsumable.cost = saveConsumableDTO.cost;
+      expectedConsumable.quantity = saveConsumableDTO.quantity;
+      expectedConsumable.unitMeasurement = saveConsumableDTO.unitMeasurement;
 
-      await consumableService.save(consumableData);
+      mockRepository.save.mockResolvedValue(expectedConsumable);
 
-      expect(savedEntity).toBeInstanceOf(Consumable);
-      expect(savedEntity.supplierId).toBe(3);
-      expect(savedEntity.name).toBe("Azúcar Morena");
-      expect(savedEntity.cosumableTypeId).toBe(1);
-      expect(savedEntity.cost).toBe(15.75);
-      expect(savedEntity.quantity).toBe(50);
-      expect(savedEntity.unitMeasurement).toBe(UnitMeasurement.KILOGRAM);
+      const result = await consumableService.save(saveConsumableDTO);
+
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        supplierId: saveConsumableDTO.supplierId,
+        name: saveConsumableDTO.name,
+        cosumableTypeId: saveConsumableDTO.cosumableTypeId,
+        cost: saveConsumableDTO.cost,
+        quantity: saveConsumableDTO.quantity,
+        unitMeasurement: saveConsumableDTO.unitMeasurement,
+      }));
+      expect(result).toEqual(expectedConsumable);
     });
 
-    it("debería manejar diferentes unidades de medida", async () => {
-      const unidades = [
-        UnitMeasurement.GRAM,
-        UnitMeasurement.KILOGRAM,
-        UnitMeasurement.LITER,
-        UnitMeasurement.MILLILITER,
-        UnitMeasurement.UNIT,
-        UnitMeasurement.POUND,
-        UnitMeasurement.OUNCE,
-        UnitMeasurement.CUP,
-        UnitMeasurement.PIECE,
-      ];
-
-      for (const unidad of unidades) {
-        const consumableData: SaveConsumableDTO = {
-          supplier: 1,
-          name: `Producto ${unidad}`,
-          TypeId: 1,
-          cost: 10.00,
-          quantity: 20,
-          unitMeasurement: unidad,
-        };
-
-        mockRepository.save.mockResolvedValue({} as Consumable);
-
-        await consumableService.save(consumableData);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            unitMeasurement: unidad,
-          })
-        );
-      }
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Test",
-        TypeId: 1,
-        cost: 10.00,
-        quantity: 5,
-        unitMeasurement: UnitMeasurement.UNIT,
+    it("should handle database errors during save", async () => {
+      const saveConsumableDTO: SaveConsumableDTO = {
+        supplierId: 1,
+        name: "Café Molido",
+        cosumableTypeId: 1,
+        cost: 15.50,
+        quantity: 100,
+        unitMeasurement: UnitMeasurement.KILOGRAM,
       };
 
-      const repositoryError = new Error("Error de base de datos");
-      mockRepository.save.mockRejectedValue(repositoryError);
+      const databaseError = new Error("Database connection failed");
+      mockRepository.save.mockRejectedValue(databaseError);
 
-      await expect(consumableService.save(consumableData)).rejects.toThrow("Error de base de datos");
-      expect(mockRepository.save).toHaveBeenCalled();
+      await expect(consumableService.save(saveConsumableDTO)).rejects.toThrow("Database connection failed");
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("saveAll", () => {
-    it("debería guardar múltiples consumibles exitosamente", async () => {
-      const consumablesData: SaveConsumableDTO[] = [
+    it("should save multiple consumables successfully", async () => {
+      const saveConsumableDTOs: SaveConsumableDTO[] = [
         {
-          supplier: 1,
-          name: "Café Arábica",
-          TypeId: 1,
-          cost: 45.00,
-          quantity: 25,
+          supplierId: 1,
+          name: "Café Molido",
+          cosumableTypeId: 1,
+          cost: 15.50,
+          quantity: 100,
           unitMeasurement: UnitMeasurement.KILOGRAM,
         },
         {
-          supplier: 2,
-          name: "Leche Descremada",
-          TypeId: 2,
-          cost: 20.00,
+          supplierId: 2,
+          name: "Leche",
+          cosumableTypeId: 2,
+          cost: 2.75,
           quantity: 50,
           unitMeasurement: UnitMeasurement.LITER,
         },
       ];
 
-      const savedConsumables = [
-        { consumableId: 1, supplierId: 1, name: "Café Arábica", cosumableTypeId: 1, cost: 45.00, quantity: 25, unitMeasurement: UnitMeasurement.KILOGRAM },
-        { consumableId: 2, supplierId: 2, name: "Leche Descremada", cosumableTypeId: 2, cost: 20.00, quantity: 50, unitMeasurement: UnitMeasurement.LITER },
-      ] as Consumable[];
+      const expectedConsumables = saveConsumableDTOs.map((dto, index) => {
+        const consumable = new Consumable();
+        consumable.consumableId = index + 1;
+        consumable.supplierId = dto.supplierId;
+        consumable.name = dto.name;
+        consumable.cosumableTypeId = dto.cosumableTypeId;
+        consumable.cost = dto.cost;
+        consumable.quantity = dto.quantity;
+        consumable.unitMeasurement = dto.unitMeasurement;
+        return consumable;
+      });
 
-      mockRepository.save.mockResolvedValue(savedConsumables as any);
+      mockRepository.save.mockResolvedValue(expectedConsumables as any);
 
-      const result = await consumableService.saveAll(consumablesData);
+      const result = await consumableService.saveAll(saveConsumableDTOs);
 
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({
-            supplierId: 1,
-            name: "Café Arábica",
-            cosumableTypeId: 1,
-            unitMeasurement: UnitMeasurement.KILOGRAM,
-          }),
-          expect.objectContaining({
-            supplierId: 2,
-            name: "Leche Descremada", 
-            cosumableTypeId: 2,
-            unitMeasurement: UnitMeasurement.LITER,
-          }),
-        ])
-      );
-      expect(result).toEqual(savedConsumables);
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.objectContaining({
+          supplierId: saveConsumableDTOs[0].supplierId,
+          name: saveConsumableDTOs[0].name,
+          cosumableTypeId: saveConsumableDTOs[0].cosumableTypeId,
+        }),
+        expect.objectContaining({
+          supplierId: saveConsumableDTOs[1].supplierId,
+          name: saveConsumableDTOs[1].name,
+          cosumableTypeId: saveConsumableDTOs[1].cosumableTypeId,
+        }),
+      ]));
+      expect(result).toEqual(expectedConsumables);
     });
 
-    it("debería crear entidades Consumable para cada elemento", async () => {
-      const consumablesData: SaveConsumableDTO[] = [
+    it("should handle empty array input", async () => {
+      const saveConsumableDTOs: SaveConsumableDTO[] = [];
+      const expectedConsumables: Consumable[] = [];
+
+      mockRepository.save.mockResolvedValue(expectedConsumables as any);
+
+      const result = await consumableService.saveAll(saveConsumableDTOs);
+
+      expect(mockRepository.save).toHaveBeenCalledWith([]);
+      expect(result).toEqual(expectedConsumables);
+    });
+
+    it("should handle database errors during saveAll", async () => {
+      const saveConsumableDTOs: SaveConsumableDTO[] = [
         {
-          supplier: 1,
-          name: "Test Item",
-          TypeId: 1,
-          cost: 10.00,
-          quantity: 5,
-          unitMeasurement: UnitMeasurement.UNIT,
+          supplierId: 1,
+          name: "Café Molido",
+          cosumableTypeId: 1,
+          cost: 15.50,
+          quantity: 100,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
         },
       ];
 
-      let savedEntities: any[];
-      mockRepository.save.mockImplementation((consumables: any) => {
-        savedEntities = consumables as any[];
-        return Promise.resolve(consumables as any);
-      });
+      const databaseError = new Error("Database connection failed");
+      mockRepository.save.mockRejectedValue(databaseError);
 
-      await consumableService.saveAll(consumablesData);
-
-      expect(savedEntities![0]).toBeInstanceOf(Consumable);
-      expect(savedEntities![0].name).toBe("Test Item");
-    });
-
-    it("debería manejar array vacío", async () => {
-      mockRepository.save.mockResolvedValue([] as any);
-
-      const result = await consumableService.saveAll([]);
-
-      expect(mockRepository.save).toHaveBeenCalledWith([]);
-      expect(result).toEqual([]);
+      await expect(consumableService.saveAll(saveConsumableDTOs)).rejects.toThrow("Database connection failed");
     });
   });
 
-  describe("delete", () => {
-    it("debería eliminar un consumible exitosamente", async () => {
+  describe("getById", () => {
+    it("should get a consumable by id successfully", async () => {
       const consumableId = 1;
-      const deleteResult = { affected: 1 };
+      const expectedConsumable = new Consumable();
+      expectedConsumable.consumableId = consumableId;
+      expectedConsumable.name = "Café Molido";
+      expectedConsumable.supplierId = 1;
+      expectedConsumable.cosumableTypeId = 1;
+      expectedConsumable.cost = 15.50;
+      expectedConsumable.quantity = 100;
+      expectedConsumable.unitMeasurement = UnitMeasurement.KILOGRAM;
 
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
+      mockRepository.findOne.mockResolvedValue(expectedConsumable);
 
-      await consumableService.delete(consumableId);
-
-      expect(mockRepository.delete).toHaveBeenCalledWith(consumableId);
-    });
-
-    it("debería lanzar error cuando el consumible no existe", async () => {
-      const consumableId = 999;
-      const deleteResult = { affected: 0 };
-
-      mockRepository.delete.mockResolvedValue(deleteResult as any);
-
-      await expect(consumableService.delete(consumableId)).rejects.toThrow(
-        `Consumible con ID ${consumableId} no encontrado`
-      );
-      expect(mockRepository.delete).toHaveBeenCalledWith(consumableId);
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const consumableId = 1;
-      const repositoryError = new Error("Error de eliminación");
-
-      mockRepository.delete.mockRejectedValue(repositoryError);
-
-      await expect(consumableService.delete(consumableId)).rejects.toThrow("Error de eliminación");
-      expect(mockRepository.delete).toHaveBeenCalledWith(consumableId);
-    });
-  });
-
-  describe("update", () => {
-    it("debería actualizar un consumible exitosamente", async () => {
-      const updateData = {
-        TypeId: 1,
-        name: "Nombre Actualizado",
-        cost: 30.00,
-      };
-
-      const existingConsumable = {
-        consumableId: 1,
-        supplierId: 2,
-        name: "Nombre Anterior",
-        cosumableTypeId: 1,
-        cost: 25.00,
-        quantity: 100,
-        unitMeasurement: UnitMeasurement.KILOGRAM,
-      } as Consumable;
-
-      const updatedConsumable = {
-        ...existingConsumable,
-        name: "Nombre Actualizado",
-        cost: 30.00,
-      } as Consumable;
-
-      mockRepository.findOne.mockResolvedValue(existingConsumable);
-      mockRepository.save.mockResolvedValue(updatedConsumable);
-
-      const result = await consumableService.update(updateData);
+      const result = await consumableService.getById(consumableId);
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { consumableId: 1 },
+        where: { consumableId },
+        relations: ["consumableType", "supplier"],
       });
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Nombre Actualizado",
-          cost: 30.00,
-          supplierId: 2, // No cambió
-          quantity: 100, // No cambió
-        })
-      );
-      expect(result).toEqual(updatedConsumable);
+      expect(result).toEqual(expectedConsumable);
     });
 
-    it("debería actualizar solo los campos proporcionados", async () => {
-      const updateData = {
-        TypeId: 1,
-        quantity: 150,
-      };
-
-      const existingConsumable = {
-        consumableId: 1,
-        supplierId: 2,
-        name: "Producto Original",
-        cosumableTypeId: 1,
-        cost: 25.00,
-        quantity: 100,
-        unitMeasurement: UnitMeasurement.KILOGRAM,
-      } as Consumable;
-
-      mockRepository.findOne.mockResolvedValue(existingConsumable);
-      mockRepository.save.mockResolvedValue(existingConsumable);
-
-      await consumableService.update(updateData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Producto Original", // No cambió
-          cost: 25.00, // No cambió
-          quantity: 150, // Cambió
-          unitMeasurement: UnitMeasurement.KILOGRAM, // No cambió
-        })
-      );
-    });
-
-    it("debería lanzar error cuando el consumible no existe", async () => {
-      const updateData = {
-        TypeId: 999,
-        name: "No existe",
-      };
-
+    it("should throw error when consumable not found", async () => {
+      const consumableId = 999;
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(consumableService.update(updateData)).rejects.toThrow(
-        "Consumible con ID 999 no encontrado"
-      );
+      await expect(consumableService.getById(consumableId)).rejects.toThrow(`Consumible con ID ${consumableId} no encontrado`);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { consumableId: 999 },
+        where: { consumableId },
+        relations: ["consumableType", "supplier"],
       });
-      expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it("debería manejar actualización de unidad de medida", async () => {
-      const updateData = {
-        TypeId: 1,
-        unitMeasurement: UnitMeasurement.LITER,
-      };
+    it("should handle database errors during getById", async () => {
+      const consumableId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-      const existingConsumable = {
-        consumableId: 1,
-        unitMeasurement: UnitMeasurement.KILOGRAM,
-      } as Consumable;
-
-      mockRepository.findOne.mockResolvedValue(existingConsumable);
-      mockRepository.save.mockResolvedValue(existingConsumable);
-
-      await consumableService.update(updateData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          unitMeasurement: UnitMeasurement.LITER,
-        })
-      );
+      await expect(consumableService.getById(consumableId)).rejects.toThrow("Database connection failed");
     });
   });
 
   describe("getAll", () => {
-    it("debería obtener todos los consumibles con relaciones", async () => {
+    it("should get all consumables successfully and map to ConsumableItemDTO", async () => {
       const mockConsumables = [
         {
           consumableId: 1,
+          name: "Café Molido",
           supplierId: 1,
-          name: "Café Premium",
           cosumableTypeId: 1,
-          cost: 50.00,
-          quantity: 20,
+          cost: 15.50,
+          quantity: 100,
           unitMeasurement: UnitMeasurement.KILOGRAM,
-          consumableType: { consumableTypeId: 1, name: "Granos", consumable: {} as Consumable },
-          ingredients: [],
+          active: true,
+          consumableType: { consumableTypeId: 1, name: "Bebidas" },
+          supplier: { supplierId: 1, name: "Proveedor 1", email: "test@test.com", phone: "123456789" },
         },
         {
           consumableId: 2,
+          name: "Leche",
           supplierId: 2,
-          name: "Leche Orgánica",
           cosumableTypeId: 2,
-          cost: 30.00,
-          quantity: 40,
+          cost: 2.75,
+          quantity: 50,
           unitMeasurement: UnitMeasurement.LITER,
-          consumableType: { consumableTypeId: 2, name: "Lácteos", consumable: {} as Consumable },
-          ingredients: [],
+          active: true,
+          consumableType: { consumableTypeId: 2, name: "Lácteos" },
+          supplier: { supplierId: 2, name: "Proveedor 2", email: "test2@test.com", phone: "987654321" },
         },
       ] as Consumable[];
 
@@ -413,254 +244,420 @@ describe("ConsumableService", () => {
       const result = await consumableService.getAll();
 
       expect(mockRepository.find).toHaveBeenCalledWith({
-        relations: ["consumableType"],
+        relations: ["consumableType", "supplier"],
+        order: { name: "ASC" },
       });
-      expect(result).toEqual(mockConsumables);
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual(expect.objectContaining({
+        consumableId: 1,
+        name: "Café Molido",
+        supplierId: 1,
+        cosumableTypeId: 1,
+        cost: 15.50,
+        quantity: 100,
+        unitMeasurement: UnitMeasurement.KILOGRAM,
+        active: true,
+        consumableType: { consumableTypeId: 1, name: "Bebidas" },
+        supplier: { supplierId: 1, name: "Proveedor 1", email: "test@test.com", phone: "123456789" },
+      }));
     });
 
-    it("debería retornar array vacío cuando no hay consumibles", async () => {
+    it("should return empty array when no consumables found", async () => {
       mockRepository.find.mockResolvedValue([]);
 
       const result = await consumableService.getAll();
 
       expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledTimes(1);
     });
 
-    it("debería manejar errores del repositorio", async () => {
-      const repositoryError = new Error("Error de conexión");
-      mockRepository.find.mockRejectedValue(repositoryError);
+    it("should handle database errors during getAll", async () => {
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
 
-      await expect(consumableService.getAll()).rejects.toThrow("Error de conexión");
-      expect(mockRepository.find).toHaveBeenCalled();
+      await expect(consumableService.getAll()).rejects.toThrow("Database connection failed");
     });
   });
 
-  describe("getById", () => {
-    it("debería obtener un consumible por ID con relaciones", async () => {
-      const consumableId = 1;
-      const mockConsumable = {
+  describe("update", () => {
+    it("should update a consumable successfully", async () => {
+      const updateConsumableDTO: UpdateConsumableDTO = {
         consumableId: 1,
-        supplierId: 1,
-        name: "Café Especial",
-        cosumableTypeId: 1,
-        cost: 60.00,
-        quantity: 15,
-        unitMeasurement: UnitMeasurement.KILOGRAM,
-        consumableType: { consumableTypeId: 1, name: "Granos Premium", consumable: {} as Consumable },
-        ingredients: [],
-      } as Consumable;
+        name: "Café Molido Premium",
+        cost: 18.00,
+        quantity: 150,
+      };
 
-      mockRepository.findOne.mockResolvedValue(mockConsumable);
+      const existingConsumable = new Consumable();
+      existingConsumable.consumableId = 1;
+      existingConsumable.name = "Café Molido";
+      existingConsumable.supplierId = 1;
+      existingConsumable.cosumableTypeId = 1;
+      existingConsumable.cost = 15.50;
+      existingConsumable.quantity = 100;
+      existingConsumable.unitMeasurement = UnitMeasurement.KILOGRAM;
 
-      const result = await consumableService.getById(consumableId);
+      const updatedConsumable = { ...existingConsumable };
+      updatedConsumable.name = updateConsumableDTO.name!;
+      updatedConsumable.cost = updateConsumableDTO.cost!;
+      updatedConsumable.quantity = updateConsumableDTO.quantity!;
+
+      mockRepository.findOne.mockResolvedValue(existingConsumable);
+      mockRepository.save.mockResolvedValue(updatedConsumable);
+
+      const result = await consumableService.update(updateConsumableDTO);
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { consumableId: 1 },
-        relations: ["consumableType"],
+        where: { consumableId: updateConsumableDTO.consumableId },
       });
-      expect(result).toEqual(mockConsumable);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        consumableId: updateConsumableDTO.consumableId,
+        name: updateConsumableDTO.name,
+        cost: updateConsumableDTO.cost,
+        quantity: updateConsumableDTO.quantity,
+      }));
+      expect(result).toEqual(updatedConsumable);
     });
 
-    it("debería retornar null cuando el consumible no existe", async () => {
-      const consumableId = 999;
-      mockRepository.findOne.mockResolvedValue(null);
-
-      const result = await consumableService.getById(consumableId);
-
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { consumableId: 999 },
-        relations: ["consumableType"],
-      });
-      expect(result).toBeNull();
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const consumableId = 1;
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.findOne.mockRejectedValue(repositoryError);
-
-      await expect(consumableService.getById(consumableId)).rejects.toThrow("Error de consulta");
-      expect(mockRepository.findOne).toHaveBeenCalled();
-    });
-  });
-
-  describe("Casos de integración", () => {
-    it("debería manejar flujo completo de CRUD", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Nuevo Consumible",
-        TypeId: 1,
-        cost: 25.00,
-        quantity: 50,
-        unitMeasurement: UnitMeasurement.UNIT,
-      };
-
-      const savedConsumable = {
+    it("should update only specified fields", async () => {
+      const updateConsumableDTO: UpdateConsumableDTO = {
         consumableId: 1,
-        supplierId: 1,
-        name: "Nuevo Consumible",
-        cosumableTypeId: 1,
-        cost: 25.00,
-        quantity: 50,
-        unitMeasurement: UnitMeasurement.UNIT,
-      } as Consumable;
-
-      const updateData = {
-        TypeId: 1,
-        cost: 35.00,
-      };
-
-      const updatedConsumable = {
-        ...savedConsumable,
-        cost: 35.00,
-      } as Consumable;
-
-      // 1. Guardar
-      mockRepository.save.mockResolvedValueOnce(savedConsumable);
-      const saveResult = await consumableService.save(consumableData);
-      expect(saveResult).toEqual(savedConsumable);
-
-      // 2. Obtener por ID
-      mockRepository.findOne.mockResolvedValueOnce(savedConsumable);
-      const getResult = await consumableService.getById(1);
-      expect(getResult).toEqual(savedConsumable);
-
-      // 3. Actualizar
-      mockRepository.findOne.mockResolvedValueOnce(savedConsumable);
-      mockRepository.save.mockResolvedValueOnce(updatedConsumable);
-      const updateResult = await consumableService.update(updateData);
-      expect(updateResult).toEqual(updatedConsumable);
-
-      // 4. Eliminar
-      mockRepository.delete.mockResolvedValueOnce({ affected: 1 } as any);
-      await expect(consumableService.delete(1)).resolves.not.toThrow();
-    });
-
-    it("debería manejar diferentes escenarios de unidades de medida", async () => {
-      const escenarios = [
-        { unidad: UnitMeasurement.GRAM, cantidad: 500, nombre: "Canela en Polvo" },
-        { unidad: UnitMeasurement.LITER, cantidad: 10, nombre: "Leche Entera" },
-        { unidad: UnitMeasurement.UNIT, cantidad: 100, nombre: "Vasos Desechables" },
-        { unidad: UnitMeasurement.KILOGRAM, cantidad: 5, nombre: "Azúcar Blanca" },
-      ];
-
-      for (const escenario of escenarios) {
-        const consumableData: SaveConsumableDTO = {
-          supplier: 1,
-          name: escenario.nombre,
-          TypeId: 1,
-          cost: 20.00,
-          quantity: escenario.cantidad,
-          unitMeasurement: escenario.unidad,
-        };
-
-        mockRepository.save.mockResolvedValue({} as Consumable);
-
-        await consumableService.save(consumableData);
-
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            name: escenario.nombre,
-            quantity: escenario.cantidad,
-            unitMeasurement: escenario.unidad,
-          })
-        );
-      }
-    });
-  });
-
-  describe("Validaciones de datos", () => {
-    it("debería manejar costos con decimales precisos", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Producto Caro",
-        TypeId: 1,
-        cost: 99.99,
-        quantity: 1,
-        unitMeasurement: UnitMeasurement.UNIT,
-      };
-
-      mockRepository.save.mockResolvedValue({} as Consumable);
-
-      await consumableService.save(consumableData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          cost: 99.99,
-        })
-      );
-    });
-
-    it("debería manejar cantidades grandes", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Producto a Granel",
-        TypeId: 1,
-        cost: 5.00,
-        quantity: 10000,
+        supplier: 2,
+        TypeId: 3,
         unitMeasurement: UnitMeasurement.GRAM,
       };
 
-      mockRepository.save.mockResolvedValue({} as Consumable);
+      const existingConsumable = new Consumable();
+      existingConsumable.consumableId = 1;
+      existingConsumable.name = "Café Molido";
+      existingConsumable.supplierId = 1;
+      existingConsumable.cosumableTypeId = 1;
+      existingConsumable.cost = 15.50;
+      existingConsumable.quantity = 100;
+      existingConsumable.unitMeasurement = UnitMeasurement.KILOGRAM;
 
-      await consumableService.save(consumableData);
+      const updatedConsumable = { ...existingConsumable };
+      updatedConsumable.supplierId = 2;
+      updatedConsumable.cosumableTypeId = 3;
+      updatedConsumable.unitMeasurement = UnitMeasurement.GRAM;
 
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          quantity: 10000,
-        })
-      );
+      mockRepository.findOne.mockResolvedValue(existingConsumable);
+      mockRepository.save.mockResolvedValue(updatedConsumable);
+
+      const result = await consumableService.update(updateConsumableDTO);
+
+      expect(result.supplierId).toBe(2);
+      expect(result.cosumableTypeId).toBe(3);
+      expect(result.unitMeasurement).toBe(UnitMeasurement.GRAM);
+      expect(result.name).toBe("Café Molido"); // Should remain unchanged
     });
 
-    it("debería manejar nombres con caracteres especiales", async () => {
-      const consumableData: SaveConsumableDTO = {
-        supplier: 1,
-        name: "Café 100% Arábica - Edición Especial",
-        TypeId: 1,
-        cost: 75.50,
-        quantity: 2.5,
-        unitMeasurement: UnitMeasurement.KILOGRAM,
+    it("should throw error when consumableId is not provided", async () => {
+      const updateConsumableDTO: UpdateConsumableDTO = {
+        name: "Café Molido Premium",
+        cost: 18.00,
       };
 
-      mockRepository.save.mockResolvedValue({} as Consumable);
-
-      await consumableService.save(consumableData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Café 100% Arábica - Edición Especial",
-        })
-      );
+      await expect(consumableService.update(updateConsumableDTO)).rejects.toThrow("consumableId es requerido para actualizar");
+      expect(mockRepository.findOne).not.toHaveBeenCalled();
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it("debería manejar IDs de proveedor y tipo diversos", async () => {
-      const casos = [
-        { supplier: 1, TypeId: 1 },
-        { supplier: 999, TypeId: 888 },
-        { supplier: 5, TypeId: 3 },
-      ];
+    it("should throw error when consumable not found for update", async () => {
+      const updateConsumableDTO: UpdateConsumableDTO = {
+        consumableId: 999,
+        name: "Café Inexistente",
+      };
 
-      for (const caso of casos) {
-        const consumableData: SaveConsumableDTO = {
-          supplier: caso.supplier,
-          name: "Test Product",
-          TypeId: caso.TypeId,
-          cost: 10.00,
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(consumableService.update(updateConsumableDTO)).rejects.toThrow(`Consumible con ID ${updateConsumableDTO.consumableId} no encontrado`);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { consumableId: updateConsumableDTO.consumableId },
+      });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("should handle database errors during update", async () => {
+      const updateConsumableDTO: UpdateConsumableDTO = {
+        consumableId: 1,
+        name: "Café Molido Premium",
+      };
+
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
+
+      await expect(consumableService.update(updateConsumableDTO)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("delete", () => {
+    it("should deactivate a consumable successfully (soft delete)", async () => {
+      const consumableId = 1;
+      const existingConsumable = new Consumable();
+      existingConsumable.consumableId = consumableId;
+      existingConsumable.name = "Café Molido";
+      existingConsumable.active = true;
+
+      const deactivatedConsumable = { ...existingConsumable, active: false };
+
+      // Mock getById call within delete method
+      mockRepository.findOne.mockResolvedValue(existingConsumable);
+      mockRepository.save.mockResolvedValue(deactivatedConsumable);
+
+      const result = await consumableService.delete(consumableId);
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { consumableId },
+        relations: ["consumableType", "supplier"],
+      });
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        active: false,
+      }));
+      expect(result).toEqual({
+        message: "Consumible desactivado correctamente",
+        id: consumableId,
+      });
+    });
+
+    it("should throw error when consumable not found for deletion", async () => {
+      const consumableId = 999;
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(consumableService.delete(consumableId)).rejects.toThrow(`Consumible con ID ${consumableId} no encontrado`);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { consumableId },
+        relations: ["consumableType", "supplier"],
+      });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("should handle database errors during delete", async () => {
+      const consumableId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
+
+      await expect(consumableService.delete(consumableId)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("getBySupplier", () => {
+    it("should get consumables by supplier successfully", async () => {
+      const supplierId = 1;
+      const expectedConsumables = [
+        {
+          consumableId: 1,
+          name: "Café Molido",
+          supplierId: supplierId,
+          cosumableTypeId: 1,
+          cost: 15.50,
+          quantity: 100,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+        {
+          consumableId: 3,
+          name: "Azúcar",
+          supplierId: supplierId,
+          cosumableTypeId: 2,
+          cost: 3.25,
+          quantity: 50,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+      ] as Consumable[];
+
+      mockRepository.find.mockResolvedValue(expectedConsumables);
+
+      const result = await consumableService.getBySupplier(supplierId);
+
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { supplierId },
+        relations: ["consumableType", "supplier"],
+        order: { name: "ASC" },
+      });
+      expect(result).toEqual(expectedConsumables);
+    });
+
+    it("should return empty array when supplier has no consumables", async () => {
+      const supplierId = 999;
+      mockRepository.find.mockResolvedValue([]);
+
+      const result = await consumableService.getBySupplier(supplierId);
+
+      expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { supplierId },
+        relations: ["consumableType", "supplier"],
+        order: { name: "ASC" },
+      });
+    });
+
+    it("should handle database errors during getBySupplier", async () => {
+      const supplierId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
+
+      await expect(consumableService.getBySupplier(supplierId)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("getByConsumableType", () => {
+    it("should get consumables by consumable type successfully", async () => {
+      const consumableTypeId = 1;
+      const expectedConsumables = [
+        {
+          consumableId: 1,
+          name: "Café Molido",
+          supplierId: 1,
+          cosumableTypeId: consumableTypeId,
+          cost: 15.50,
+          quantity: 100,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+        {
+          consumableId: 2,
+          name: "Café en Grano",
+          supplierId: 2,
+          cosumableTypeId: consumableTypeId,
+          cost: 20.00,
+          quantity: 75,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+      ] as Consumable[];
+
+      mockRepository.find.mockResolvedValue(expectedConsumables);
+
+      const result = await consumableService.getByConsumableType(consumableTypeId);
+
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { cosumableTypeId: consumableTypeId },
+        relations: ["consumableType", "supplier"],
+        order: { name: "ASC" },
+      });
+      expect(result).toEqual(expectedConsumables);
+    });
+
+    it("should return empty array when consumable type has no consumables", async () => {
+      const consumableTypeId = 999;
+      mockRepository.find.mockResolvedValue([]);
+
+      const result = await consumableService.getByConsumableType(consumableTypeId);
+
+      expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { cosumableTypeId: consumableTypeId },
+        relations: ["consumableType", "supplier"],
+        order: { name: "ASC" },
+      });
+    });
+
+    it("should handle database errors during getByConsumableType", async () => {
+      const consumableTypeId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
+
+      await expect(consumableService.getByConsumableType(consumableTypeId)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("getLowStockConsumables", () => {
+    it("should get low stock consumables with default threshold", async () => {
+      const lowStockConsumables = [
+        {
+          consumableId: 1,
+          name: "Café Molido",
+          supplierId: 1,
+          cosumableTypeId: 1,
+          cost: 15.50,
           quantity: 5,
-          unitMeasurement: UnitMeasurement.UNIT,
-        };
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+        {
+          consumableId: 2,
+          name: "Azúcar",
+          supplierId: 2,
+          cosumableTypeId: 2,
+          cost: 3.25,
+          quantity: 8,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+      ] as Consumable[];
 
-        mockRepository.save.mockResolvedValue({} as Consumable);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(lowStockConsumables),
+      };
 
-        await consumableService.save(consumableData);
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            supplierId: caso.supplier,
-            cosumableTypeId: caso.TypeId,
-          })
-        );
-      }
+      const result = await consumableService.getLowStockConsumables();
+
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith("consumable");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("consumable.consumableType", "consumableType");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("consumable.supplier", "supplier");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("consumable.quantity <= :threshold", { threshold: 10 });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("consumable.quantity", "ASC");
+      expect(result).toEqual(lowStockConsumables);
+    });
+
+    it("should get low stock consumables with custom threshold", async () => {
+      const customThreshold = 20;
+      const lowStockConsumables = [
+        {
+          consumableId: 1,
+          name: "Café Molido",
+          supplierId: 1,
+          cosumableTypeId: 1,
+          cost: 15.50,
+          quantity: 15,
+          unitMeasurement: UnitMeasurement.KILOGRAM,
+        },
+      ] as Consumable[];
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(lowStockConsumables),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await consumableService.getLowStockConsumables(customThreshold);
+
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("consumable.quantity <= :threshold", { threshold: customThreshold });
+      expect(result).toEqual(lowStockConsumables);
+    });
+
+    it("should return empty array when no low stock consumables found", async () => {
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await consumableService.getLowStockConsumables();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle database errors during getLowStockConsumables", async () => {
+      const databaseError = new Error("Database connection failed");
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockRejectedValue(databaseError),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      await expect(consumableService.getLowStockConsumables()).rejects.toThrow("Database connection failed");
     });
   });
 });

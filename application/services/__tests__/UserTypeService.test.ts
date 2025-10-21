@@ -52,6 +52,7 @@ describe("UserTypeService", () => {
         })
       );
       expect(result).toEqual(savedUserType);
+      expect(console.log).toHaveBeenCalledWith("Guardando tipo de usuario...");
     });
 
     it("debería crear una entidad UserType con los datos correctos", async () => {
@@ -189,16 +190,16 @@ describe("UserTypeService", () => {
       expect(result).toEqual(mockUserType);
     });
 
-    it("debería retornar null cuando el tipo de usuario no existe", async () => {
+    it("debería lanzar error cuando el tipo de usuario no existe", async () => {
       const userTypeId = 999;
       mockRepository.findOne.mockResolvedValue(null);
 
-      const result = await userTypeService.getById(userTypeId);
-
+      await expect(userTypeService.getById(userTypeId)).rejects.toThrow(
+        `Tipo de usuario con ID ${userTypeId} no encontrado`
+      );
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { userTypeId: 999 },
       });
-      expect(result).toBeNull();
     });
 
     it("debería manejar errores del repositorio", async () => {
@@ -284,9 +285,12 @@ describe("UserTypeService", () => {
 
       const result = await userTypeService.getAll();
 
-      expect(mockRepository.find).toHaveBeenCalledWith();
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        order: { permissionLevel: "ASC" }
+      });
       expect(result).toEqual(mockUserTypes);
       expect(result).toHaveLength(4);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo tipos de usuarios...");
     });
 
     it("debería retornar array vacío cuando no hay tipos de usuario", async () => {
@@ -295,6 +299,7 @@ describe("UserTypeService", () => {
       const result = await userTypeService.getAll();
 
       expect(result).toEqual([]);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo tipos de usuarios...");
     });
 
     it("debería manejar errores del repositorio", async () => {
@@ -350,6 +355,221 @@ describe("UserTypeService", () => {
       
       expect(nombres.length).toBe(nombresUnicos.size);
       expect(result).toHaveLength(3);
+    });
+  });
+
+  describe("saveAll", () => {
+    it("debería guardar múltiples tipos de usuario exitosamente", async () => {
+      const userTypesData = [
+        { name: "Admin", permissionLevel: 1 },
+        { name: "User", permissionLevel: 5 },
+      ];
+
+      const savedUserTypes = userTypesData.map((data, index) => ({
+        userTypeId: index + 1,
+        ...data,
+      })) as UserType[];
+
+      mockRepository.save.mockResolvedValue(savedUserTypes as any);
+
+      const result = await userTypeService.saveAll(userTypesData);
+
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.objectContaining({
+          name: "Admin",
+          permissionLevel: 1,
+        }),
+        expect.objectContaining({
+          name: "User",
+          permissionLevel: 5,
+        }),
+      ]));
+      expect(result).toEqual(savedUserTypes);
+    });
+
+    it("debería manejar array vacío", async () => {
+      mockRepository.save.mockResolvedValue([] as any);
+
+      const result = await userTypeService.saveAll([]);
+
+      expect(mockRepository.save).toHaveBeenCalledWith([]);
+      expect(result).toEqual([]);
+    });
+
+    it("debería manejar errores del repositorio", async () => {
+      const userTypesData = [{ name: "Test", permissionLevel: 1 }];
+      const repositoryError = new Error("Error de inserción masiva");
+
+      mockRepository.save.mockRejectedValue(repositoryError);
+
+      await expect(userTypeService.saveAll(userTypesData)).rejects.toThrow("Error de inserción masiva");
+    });
+  });
+
+  describe("delete", () => {
+    it("debería eliminar un tipo de usuario exitosamente", async () => {
+      const userTypeId = 1;
+      const deleteResult = { affected: 1 };
+
+      mockRepository.delete.mockResolvedValue(deleteResult as any);
+
+      const result = await userTypeService.delete(userTypeId);
+
+      expect(mockRepository.delete).toHaveBeenCalledWith(userTypeId);
+      expect(result).toEqual({
+        message: "Tipo de usuario eliminado correctamente",
+        id: userTypeId,
+      });
+    });
+
+    it("debería lanzar error cuando el tipo de usuario no existe", async () => {
+      const userTypeId = 999;
+      const deleteResult = { affected: 0 };
+
+      mockRepository.delete.mockResolvedValue(deleteResult as any);
+
+      await expect(userTypeService.delete(userTypeId)).rejects.toThrow(
+        `Tipo de usuario con ID ${userTypeId} no encontrado`
+      );
+      expect(mockRepository.delete).toHaveBeenCalledWith(userTypeId);
+    });
+
+    it("debería manejar errores del repositorio", async () => {
+      const userTypeId = 1;
+      const repositoryError = new Error("Error de eliminación");
+
+      mockRepository.delete.mockRejectedValue(repositoryError);
+
+      await expect(userTypeService.delete(userTypeId)).rejects.toThrow("Error de eliminación");
+      expect(mockRepository.delete).toHaveBeenCalledWith(userTypeId);
+    });
+  });
+
+  describe("update", () => {
+    it("debería actualizar un tipo de usuario exitosamente", async () => {
+      const updateData = {
+        userTypeId: 1,
+        name: "Administrador Actualizado",
+        permissionLevel: 2,
+      };
+
+      const existingUserType = {
+        userTypeId: 1,
+        name: "Administrador",
+        permissionLevel: 1,
+      } as UserType;
+
+      const updatedUserType = {
+        ...existingUserType,
+        name: "Administrador Actualizado",
+        permissionLevel: 2,
+      } as UserType;
+
+      mockRepository.findOne.mockResolvedValue(existingUserType);
+      mockRepository.save.mockResolvedValue(updatedUserType);
+
+      const result = await userTypeService.update(updateData);
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { userTypeId: 1 },
+      });
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        userTypeId: 1,
+        name: "Administrador Actualizado",
+        permissionLevel: 2,
+      }));
+      expect(result).toEqual(updatedUserType);
+    });
+
+    it("debería lanzar error cuando userTypeId no se proporciona", async () => {
+      const updateData = {
+        name: "Actualizado",
+      };
+
+      await expect(userTypeService.update(updateData)).rejects.toThrow(
+        "userTypeId es requerido para actualizar"
+      );
+      expect(mockRepository.findOne).not.toHaveBeenCalled();
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("debería lanzar error cuando el tipo de usuario no existe", async () => {
+      const updateData = {
+        userTypeId: 999,
+        name: "No existe",
+      };
+
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(userTypeService.update(updateData)).rejects.toThrow(
+        "Tipo de usuario con ID 999 no encontrado"
+      );
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { userTypeId: 999 },
+      });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("debería manejar errores del repositorio", async () => {
+      const updateData = {
+        userTypeId: 1,
+        name: "Test",
+      };
+
+      const repositoryError = new Error("Error de consulta");
+      mockRepository.findOne.mockRejectedValue(repositoryError);
+
+      await expect(userTypeService.update(updateData)).rejects.toThrow("Error de consulta");
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getByPermissionLevel", () => {
+    it("debería obtener tipos de usuario por nivel de permiso", async () => {
+      const permissionLevel = 2;
+      const mockUserTypes = [
+        {
+          userTypeId: 2,
+          name: "Gerente",
+          permissionLevel: 2,
+        },
+        {
+          userTypeId: 5,
+          name: "Supervisor",
+          permissionLevel: 2,
+        },
+      ] as UserType[];
+
+      mockRepository.find.mockResolvedValue(mockUserTypes);
+
+      const result = await userTypeService.getByPermissionLevel(permissionLevel);
+
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { permissionLevel },
+        order: { name: "ASC" },
+      });
+      expect(result).toEqual(mockUserTypes);
+    });
+
+    it("debería retornar array vacío cuando no hay tipos con el nivel especificado", async () => {
+      const permissionLevel = 999;
+      mockRepository.find.mockResolvedValue([]);
+
+      const result = await userTypeService.getByPermissionLevel(permissionLevel);
+
+      expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { permissionLevel },
+        order: { name: "ASC" },
+      });
+    });
+
+    it("debería manejar errores del repositorio", async () => {
+      const permissionLevel = 1;
+      const repositoryError = new Error("Error de consulta por nivel");
+      mockRepository.find.mockRejectedValue(repositoryError);
+
+      await expect(userTypeService.getByPermissionLevel(permissionLevel)).rejects.toThrow("Error de consulta por nivel");
     });
   });
 

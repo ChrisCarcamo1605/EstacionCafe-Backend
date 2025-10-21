@@ -10,9 +10,6 @@ export class UserService implements IService {
   constructor(userRepo: Repository<User>) {
     this.userRepository = userRepo;
   }
-  async getById(id: number): Promise<any | null> {
-    console.log(`Obteniendo usuario con ID: ${id}`);
-    return await this.userRepository.findOne({ where: { userId:id } });  }
 
   async saveAll(body: SaveUserDTO[]): Promise<User[]> {
     const users = await Promise.all(body.map(async (userData) => {

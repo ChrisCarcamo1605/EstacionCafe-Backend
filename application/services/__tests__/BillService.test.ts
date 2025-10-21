@@ -1,28 +1,27 @@
-import { Repository } from "typeorm";
 import { BillService } from "../BillService";
+import { Repository } from "typeorm";
 import { Bill } from "../../../core/entities/Bill";
-import { SaveBillDTO } from "../../DTOs/BillsDTO";
+import { SaveBillDTO, UpdateBillDTO } from "../../DTOs/BillsDTO";
 
 describe("BillService", () => {
   let billService: BillService;
   let mockRepository: jest.Mocked<Repository<Bill>>;
 
   beforeEach(() => {
-    // Crear mock del repositorio
+    // Create mock repository with all necessary methods
     mockRepository = {
-      save: jest.fn(),
-      find: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
       delete: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    } as any;
+      createQueryBuilder: jest.fn(),
+    } as unknown as jest.Mocked<Repository<Bill>>;
 
-    // Crear instancia del servicio con el repositorio mock
     billService = new BillService(mockRepository);
 
-    // Limpiar console.log
+    // Mock console methods to avoid noise in tests
     jest.spyOn(console, "log").mockImplementation();
+    jest.spyOn(console, "error").mockImplementation();
   });
 
   afterEach(() => {
@@ -30,532 +29,408 @@ describe("BillService", () => {
   });
 
   describe("save", () => {
-    it("debería guardar una factura exitosamente", async () => {
-      const billData: SaveBillDTO = {
-        billId: 0,
-        customer: "Juan Pérez",
-        cashRegister: 1,
-        total: 125.5,
-        date: new Date("2025-10-20T10:30:00"),
-      };
-
-      const savedBill = {
+    it("should save a bill successfully", async () => {
+      const saveBillDTO: SaveBillDTO = {
         billId: 1,
-        customer: "Juan Pérez",
         cashRegister: 1,
-        total: 125.5,
-        date: new Date("2025-10-20T10:30:00"),
-        billDetails: [],
-      } as Bill;
-
-      mockRepository.save.mockResolvedValue(savedBill);
-
-      const result = await billService.save(billData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customer: "Juan Pérez",
-          cashRegister: 1,
-          total: 125.5,
-          date: new Date("2025-10-20T10:30:00"),
-        })
-      );
-      expect(result).toEqual(savedBill);
-    });
-
-    it("debería crear una entidad Bill con los datos correctos", async () => {
-      const billData: SaveBillDTO = {
-        billId: 0,
-        customer: "María García",
-        cashRegister: 2,
-        total: 75.25,
-        date: new Date("2025-10-20T15:45:00"),
+        customer: "Juan Pérez",
+        total: 150.75,
+        date: new Date("2025-10-20"),
       };
 
-      let savedEntity: any;
-      mockRepository.save.mockImplementation((bill) => {
-        savedEntity = bill;
-        return Promise.resolve({ billId: 1, ...bill } as Bill);
-      });
+      const expectedBill = new Bill();
+      expectedBill.billId = 1;
+      expectedBill.cashRegisterId = saveBillDTO.cashRegister;
+      expectedBill.customer = saveBillDTO.customer;
+      expectedBill.total = saveBillDTO.total;
+      expectedBill.date = saveBillDTO.date;
 
-      await billService.save(billData);
+      mockRepository.save.mockResolvedValue(expectedBill);
 
-      expect(savedEntity).toBeInstanceOf(Bill);
-      expect(savedEntity.customer).toBe("María García");
-      expect(savedEntity.cashRegister).toBe(2);
-      expect(savedEntity.total).toBe(75.25);
-      expect(savedEntity.date).toEqual(new Date("2025-10-20T15:45:00"));
+      const result = await billService.save(saveBillDTO);
+
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        cashRegisterId: saveBillDTO.cashRegister,
+        customer: saveBillDTO.customer,
+        total: saveBillDTO.total,
+        date: saveBillDTO.date,
+      }));
+      expect(result).toEqual(expectedBill);
+      expect(console.log).toHaveBeenCalledWith("Guardando factura...");
     });
 
-    it("debería manejar diferentes tipos de datos", async () => {
-      const casos = [
+    it("should handle database errors during save", async () => {
+      const saveBillDTO: SaveBillDTO = {
+        billId: 1,
+        cashRegister: 1,
+        customer: "Juan Pérez",
+        total: 150.75,
+        date: new Date("2025-10-20"),
+      };
+
+      const databaseError = new Error("Database connection failed");
+      mockRepository.save.mockRejectedValue(databaseError);
+
+      await expect(billService.save(saveBillDTO)).rejects.toThrow("Database connection failed");
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("saveAll", () => {
+    it("should save multiple bills successfully", async () => {
+      const saveBillDTOs: SaveBillDTO[] = [
         {
-          customer: "Cliente 1",
+          billId: 1,
           cashRegister: 1,
-          total: 0.0,
-          date: new Date("2025-01-01"),
+          customer: "Juan Pérez",
+          total: 150.75,
+          date: new Date("2025-10-20"),
         },
         {
-          customer: "Cliente con Nombre Largo y Caracteres Especiales!",
-          cashRegister: 99,
-          total: 999.99,
-          date: new Date("2025-12-31T23:59:59"),
-        },
-        {
-          customer: "",
-          cashRegister: 5,
-          total: 50.75,
-          date: new Date(),
+          billId: 2,
+          cashRegister: 2,
+          customer: "María García",
+          total: 200.50,
+          date: new Date("2025-10-21"),
         },
       ];
 
-      for (const caso of casos) {
-        const billData: SaveBillDTO = {
-          billId: 0,
-          ...caso,
-        };
+      const expectedBills = saveBillDTOs.map((dto) => {
+        const bill = new Bill();
+        bill.cashRegisterId = dto.cashRegister;
+        bill.customer = dto.customer;
+        bill.total = dto.total;
+        bill.date = dto.date;
+        return bill;
+      });
 
-        mockRepository.save.mockResolvedValue({} as Bill);
+      mockRepository.save.mockResolvedValue(expectedBills as any);
 
-        await billService.save(billData);
+      const result = await billService.saveAll(saveBillDTOs);
 
-        expect(mockRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({
-            customer: caso.customer,
-            cashRegister: caso.cashRegister,
-            total: caso.total,
-            date: caso.date,
-          })
-        );
-      }
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const billData: SaveBillDTO = {
-        billId: 0,
-        customer: "Test",
-        cashRegister: 1,
-        total: 10.0,
-        date: new Date(),
-      };
-
-      const repositoryError = new Error("Error de base de datos");
-      mockRepository.save.mockRejectedValue(repositoryError);
-
-      await expect(billService.save(billData)).rejects.toThrow(
-        "Error de base de datos"
-      );
-      expect(mockRepository.save).toHaveBeenCalled();
-    });
-
-    it("debería manejar totales con decimales precisos", async () => {
-      const billData: SaveBillDTO = {
-        billId: 0,
-        customer: "Cliente Decimal",
-        cashRegister: 1,
-        total: 123.456,
-        date: new Date(),
-      };
-
-      mockRepository.save.mockResolvedValue({} as Bill);
-
-      await billService.save(billData);
-
-      expect(mockRepository.save).toHaveBeenCalledWith(
+      expect(mockRepository.save).toHaveBeenCalledTimes(1);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.arrayContaining([
         expect.objectContaining({
-          total: 123.456,
-        })
-      );
+          cashRegisterId: saveBillDTOs[0].cashRegister,
+          customer: saveBillDTOs[0].customer,
+          total: saveBillDTOs[0].total,
+          date: saveBillDTOs[0].date,
+        }),
+        expect.objectContaining({
+          cashRegisterId: saveBillDTOs[1].cashRegister,
+          customer: saveBillDTOs[1].customer,
+          total: saveBillDTOs[1].total,
+          date: saveBillDTOs[1].date,
+        }),
+      ]));
+      expect(result).toEqual(expectedBills);
+    });
+
+    it("should handle empty array input", async () => {
+      const saveBillDTOs: SaveBillDTO[] = [];
+      const expectedBills: Bill[] = [];
+
+      mockRepository.save.mockResolvedValue(expectedBills as any);
+
+      const result = await billService.saveAll(saveBillDTOs);
+
+      expect(mockRepository.save).toHaveBeenCalledWith([]);
+      expect(result).toEqual(expectedBills);
     });
   });
 
   describe("getById", () => {
-    it("debería obtener una factura por ID", async () => {
+    it("should get a bill by id successfully", async () => {
       const billId = 1;
-      const mockBill = {
-        billId: 1,
-        customer: "Ana López",
-        cashRegister: 2,
-        total: 89.5,
-        date: new Date("2025-10-20"),
-        billDetails: [],
-      } as Bill;
+      const expectedBill = new Bill();
+      expectedBill.billId = billId;
+      expectedBill.customer = "Juan Pérez";
+      expectedBill.total = 150.75;
 
-      mockRepository.findOne.mockResolvedValue(mockBill);
+      mockRepository.findOne.mockResolvedValue(expectedBill);
 
       const result = await billService.getById(billId);
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { billId: 1 },
+        where: { billId },
+        relations: ["cashRegister"],
       });
-      expect(result).toEqual(mockBill);
+      expect(result).toEqual(expectedBill);
     });
 
-    it("debería retornar null cuando la factura no existe", async () => {
+    it("should throw error when bill not found", async () => {
       const billId = 999;
       mockRepository.findOne.mockResolvedValue(null);
 
-      const result = await billService.getById(billId);
-
+      await expect(billService.getById(billId)).rejects.toThrow(`Factura con ID ${billId} no encontrada`);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { billId: 999 },
+        where: { billId },
+        relations: ["cashRegister"],
       });
-      expect(result).toBeNull();
     });
 
-    it("debería manejar errores del repositorio", async () => {
+    it("should handle database errors during getById", async () => {
       const billId = 1;
-      const repositoryError = new Error("Error de consulta");
-      mockRepository.findOne.mockRejectedValue(repositoryError);
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-      await expect(billService.getById(billId)).rejects.toThrow(
-        "Error de consulta"
-      );
-      expect(mockRepository.findOne).toHaveBeenCalled();
-    });
-
-    it("debería manejar diferentes IDs", async () => {
-      const ids = [1, 100, 999, 5];
-
-      for (const id of ids) {
-        mockRepository.findOne.mockResolvedValue({} as Bill);
-
-        await billService.getById(id);
-
-        expect(mockRepository.findOne).toHaveBeenCalledWith({
-          where: { billId: id },
-        });
-      }
+      await expect(billService.getById(billId)).rejects.toThrow("Database connection failed");
     });
   });
 
   describe("getAll", () => {
-    it("debería obtener todas las facturas", async () => {
-      const mockBills = [
-        {
-          billId: 1,
-          customer: "Cliente 1",
-          cashRegister: 1,
-          total: 50.0,
-          date: new Date("2025-10-20"),
-          billDetails: [],
-        },
-        {
-          billId: 2,
-          customer: "Cliente 2",
-          cashRegister: 2,
-          total: 75.0,
-          date: new Date("2025-10-20"),
-          billDetails: [],
-        },
-        {
-          billId: 3,
-          customer: "Cliente 3",
-          cashRegister: 1,
-          total: 100.0,
-          date: new Date("2025-10-21"),
-          billDetails: [],
-        },
+    it("should get all bills successfully", async () => {
+      const expectedBills = [
+        { billId: 1, customer: "Juan Pérez", total: 150.75 },
+        { billId: 2, customer: "María García", total: 200.50 },
       ] as Bill[];
 
-      mockRepository.find.mockResolvedValue(mockBills);
+      mockRepository.find.mockResolvedValue(expectedBills);
 
       const result = await billService.getAll();
 
-      expect(mockRepository.find).toHaveBeenCalledWith();
-      expect(result).toEqual(mockBills);
-      expect(result).toHaveLength(3);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        relations: ["cashRegister"],
+        order: { date: "DESC" },
+      });
+      expect(result).toEqual(expectedBills);
+      expect(console.log).toHaveBeenCalledWith("Obteniendo facturas...");
     });
 
-    it("debería retornar array vacío cuando no hay facturas", async () => {
+    it("should handle database errors during getAll", async () => {
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
+
+      await expect(billService.getAll()).rejects.toThrow("Database connection failed");
+      expect(console.log).toHaveBeenCalledWith(databaseError);
+    });
+
+    it("should return empty array when no bills found", async () => {
       mockRepository.find.mockResolvedValue([]);
 
       const result = await billService.getAll();
 
       expect(result).toEqual([]);
-    });
-
-    it("debería manejar errores del repositorio", async () => {
-      const repositoryError = new Error("Error de conexión");
-      mockRepository.find.mockRejectedValue(repositoryError);
-
-      await expect(billService.getAll()).rejects.toThrow("Error de conexión");
-      expect(mockRepository.find).toHaveBeenCalled();
-    });
-
-    it("debería obtener facturas con diferentes estructuras", async () => {
-      const mockBills = [
-        {
-          billId: 1,
-          customer: "Cliente Normal",
-          cashRegister: 1,
-          total: 25.5,
-          date: new Date(),
-          billDetails: [],
-        },
-        {
-          billId: 2,
-          customer: "",
-          cashRegister: 2,
-          total: 0.0,
-          date: new Date(),
-          billDetails: [],
-        },
-      ] as Bill[];
-
-      mockRepository.find.mockResolvedValue(mockBills);
-
-      const result = await billService.getAll();
-
-      expect(result).toEqual(mockBills);
-      expect(result[0].customer).toBe("Cliente Normal");
-      expect(result[1].customer).toBe("");
-      expect(result[1].total).toBe(0.0);
+      expect(mockRepository.find).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("Métodos no implementados", () => {
-    describe("Casos de integración", () => {
-      it("debería manejar flujo completo de CRUD básico", async () => {
-        const billData: SaveBillDTO = {
-          billId: 0,
-          customer: "Cliente Integración",
-          cashRegister: 3,
-          total: 150.75,
-          date: new Date("2025-10-20T12:00:00"),
-        };
+  describe("update", () => {
+    it("should update a bill successfully", async () => {
+      const updateBillDTO: UpdateBillDTO = {
+        billId: 1,
+        customer: "Juan Pérez Actualizado",
+        total: 175.00,
+      };
 
-        const savedBill = {
-          billId: 5,
-          customer: "Cliente Integración",
-          cashRegister: 3,
-          total: 150.75,
-          date: new Date("2025-10-20T12:00:00"),
-          billDetails: [],
-        } as Bill;
+      const existingBill = new Bill();
+      existingBill.billId = 1;
+      existingBill.customer = "Juan Pérez";
+      existingBill.total = 150.75;
+      existingBill.cashRegisterId = 1;
+      existingBill.date = new Date("2025-10-20");
 
-        // 1. Guardar factura
-        mockRepository.save.mockResolvedValue(savedBill);
-        const saveResult = await billService.save(billData);
-        expect(saveResult).toEqual(savedBill);
+      const updatedBill = { ...existingBill, ...updateBillDTO };
 
-        // 2. Obtener por ID
-        mockRepository.findOne.mockResolvedValue(savedBill);
-        const getResult = await billService.getById(5);
-        expect(getResult).toEqual(savedBill);
+      mockRepository.findOne.mockResolvedValue(existingBill);
+      mockRepository.save.mockResolvedValue(updatedBill);
 
-        // 3. Obtener todas las facturas
-        mockRepository.find.mockResolvedValue([savedBill]);
-        const getAllResult = await billService.getAll();
-        expect(getAllResult).toContain(savedBill);
+      const result = await billService.update(updateBillDTO);
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { billId: updateBillDTO.billId },
       });
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        billId: updateBillDTO.billId,
+        customer: updateBillDTO.customer,
+        total: updateBillDTO.total,
+      }));
+      expect(result).toEqual(updatedBill);
+    });
 
-      it("debería manejar múltiples facturas del mismo cliente", async () => {
-        const cliente = "Cliente Frecuente";
-        const facturas = [
-          {
-            billId: 0,
-            customer: cliente,
-            cashRegister: 1,
-            total: 25.0,
-            date: new Date("2025-10-20T09:00:00"),
-          },
-          {
-            billId: 0,
-            customer: cliente,
-            cashRegister: 1,
-            total: 35.5,
-            date: new Date("2025-10-20T14:30:00"),
-          },
-          {
-            billId: 0,
-            customer: cliente,
-            cashRegister: 2,
-            total: 50.75,
-            date: new Date("2025-10-20T18:45:00"),
-          },
-        ];
+    it("should throw error when billId is not provided", async () => {
+      const updateBillDTO: UpdateBillDTO = {
+        customer: "Juan Pérez",
+        total: 175.00,
+      };
 
-        for (let i = 0; i < facturas.length; i++) {
-          const factura = facturas[i];
-          const savedBill = { ...factura, billId: i + 1 } as Bill;
+      await expect(billService.update(updateBillDTO)).rejects.toThrow("billId es requerido para actualizar");
+      expect(mockRepository.findOne).not.toHaveBeenCalled();
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
 
-          mockRepository.save.mockResolvedValueOnce(savedBill);
+    it("should throw error when bill not found for update", async () => {
+      const updateBillDTO: UpdateBillDTO = {
+        billId: 999,
+        customer: "Juan Pérez",
+        total: 175.00,
+      };
 
-          const result = await billService.save(factura);
+      mockRepository.findOne.mockResolvedValue(null);
 
-          expect(result.customer).toBe(cliente);
-          expect(result.billId).toBe(i + 1);
-        }
+      await expect(billService.update(updateBillDTO)).rejects.toThrow(`Factura con ID ${updateBillDTO.billId} no encontrada`);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { billId: updateBillDTO.billId },
       });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
 
-      it("debería manejar diferentes cajas registradoras", async () => {
-        const cajas = [1, 2, 3, 5, 10];
+    it("should handle database errors during update", async () => {
+      const updateBillDTO: UpdateBillDTO = {
+        billId: 1,
+        customer: "Juan Pérez",
+      };
 
-        for (const caja of cajas) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: `Cliente Caja ${caja}`,
-            cashRegister: caja,
-            total: 30.0,
-            date: new Date(),
-          };
+      const databaseError = new Error("Database connection failed");
+      mockRepository.findOne.mockRejectedValue(databaseError);
 
-          mockRepository.save.mockResolvedValue({} as Bill);
+      await expect(billService.update(updateBillDTO)).rejects.toThrow("Database connection failed");
+    });
+  });
 
-          await billService.save(billData);
+  describe("delete", () => {
+    it("should delete a bill successfully", async () => {
+      const billId = 1;
+      const deleteResult = { affected: 1, raw: {} };
 
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              cashRegister: caja,
-            })
-          );
-        }
-      });
+      mockRepository.delete.mockResolvedValue(deleteResult);
 
-      it("debería manejar rangos de fechas", async () => {
-        const fechas = [
-          new Date("2025-01-01T00:00:00"),
-          new Date("2025-06-15T12:30:00"),
-          new Date("2025-10-20T23:59:59"),
-          new Date("2025-12-31T18:00:00"),
-        ];
+      const result = await billService.delete(billId);
 
-        for (const fecha of fechas) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: "Cliente Fecha",
-            cashRegister: 1,
-            total: 25.0,
-            date: fecha,
-          };
-
-          mockRepository.save.mockResolvedValue({} as Bill);
-
-          await billService.save(billData);
-
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              date: fecha,
-            })
-          );
-        }
+      expect(mockRepository.delete).toHaveBeenCalledWith(billId);
+      expect(result).toEqual({
+        message: "Factura eliminada correctamente",
+        id: billId,
       });
     });
 
-    describe("Validaciones de datos", () => {
-      it("debería manejar nombres de cliente con caracteres especiales", async () => {
-        const nombresEspeciales = [
-          "José María Fernández-López",
-          "Ana & Co. Café",
-          'Restaurante "El Buen Sabor"',
-          "Café 100% Orgánico",
-          "María José Martínez Jr.",
-        ];
+    it("should throw error when bill not found for deletion", async () => {
+      const billId = 999;
+      const deleteResult = { affected: 0, raw: {} };
 
-        for (const nombre of nombresEspeciales) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: nombre,
-            cashRegister: 1,
-            total: 50.0,
-            date: new Date(),
-          };
+      mockRepository.delete.mockResolvedValue(deleteResult);
 
-          mockRepository.save.mockResolvedValue({} as Bill);
+      await expect(billService.delete(billId)).rejects.toThrow(`Factura con ID ${billId} no encontrada`);
+      expect(mockRepository.delete).toHaveBeenCalledWith(billId);
+    });
 
-          await billService.save(billData);
+    it("should handle database errors during delete", async () => {
+      const billId = 1;
+      const databaseError = new Error("Database connection failed");
+      mockRepository.delete.mockRejectedValue(databaseError);
 
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              customer: nombre,
-            })
-          );
-        }
+      await expect(billService.delete(billId)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("getByDateRange", () => {
+    it("should get bills by date range successfully", async () => {
+      const startDate = new Date("2025-10-01");
+      const endDate = new Date("2025-10-31");
+      const expectedBills = [
+        { billId: 1, customer: "Juan Pérez", date: new Date("2025-10-15") },
+        { billId: 2, customer: "María García", date: new Date("2025-10-20") },
+      ] as Bill[];
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(expectedBills),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await billService.getByDateRange(startDate, endDate);
+
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith("bill");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("bill.cashRegister", "cashRegister");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("bill.date >= :startDate", { startDate });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("bill.date <= :endDate", { endDate });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("bill.date", "DESC");
+      expect(result).toEqual(expectedBills);
+    });
+
+    it("should return empty array when no bills in date range", async () => {
+      const startDate = new Date("2025-12-01");
+      const endDate = new Date("2025-12-31");
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await billService.getByDateRange(startDate, endDate);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle database errors during getByDateRange", async () => {
+      const startDate = new Date("2025-10-01");
+      const endDate = new Date("2025-10-31");
+      const databaseError = new Error("Database connection failed");
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockRejectedValue(databaseError),
+      };
+
+      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      await expect(billService.getByDateRange(startDate, endDate)).rejects.toThrow("Database connection failed");
+    });
+  });
+
+  describe("getBillsByCustomer", () => {
+    it("should get bills by customer successfully", async () => {
+      const customerName = "Juan Pérez";
+      const expectedBills = [
+        { billId: 1, customer: customerName, total: 150.75 },
+        { billId: 3, customer: customerName, total: 75.25 },
+      ] as Bill[];
+
+      mockRepository.find.mockResolvedValue(expectedBills);
+
+      const result = await billService.getBillsByCustomer(customerName);
+
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { customer: customerName },
+        relations: ["cashRegister"],
+        order: { date: "DESC" },
       });
+      expect(result).toEqual(expectedBills);
+    });
 
-      it("debería manejar totales extremos", async () => {
-        const totalesExtremos = [
-          0.01, // Mínimo
-          0.0, // Cero
-          999.99, // Alto
-          1000.0, // Exacto
-          9999.99, // Muy alto
-        ];
+    it("should return empty array when customer has no bills", async () => {
+      const customerName = "Cliente Sin Facturas";
+      mockRepository.find.mockResolvedValue([]);
 
-        for (const total of totalesExtremos) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: "Cliente Total",
-            cashRegister: 1,
-            total: total,
-            date: new Date(),
-          };
+      const result = await billService.getBillsByCustomer(customerName);
 
-          mockRepository.save.mockResolvedValue({} as Bill);
-
-          await billService.save(billData);
-
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              total: total,
-            })
-          );
-        }
+      expect(result).toEqual([]);
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        where: { customer: customerName },
+        relations: ["cashRegister"],
+        order: { date: "DESC" },
       });
+    });
 
-      it("debería manejar IDs de caja registradora diversos", async () => {
-        const cajasEspeciales = [0, 1, 99, 100, 999];
+    it("should handle database errors during getBillsByCustomer", async () => {
+      const customerName = "Juan Pérez";
+      const databaseError = new Error("Database connection failed");
+      mockRepository.find.mockRejectedValue(databaseError);
 
-        for (const caja of cajasEspeciales) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: "Cliente",
-            cashRegister: caja,
-            total: 25.0,
-            date: new Date(),
-          };
-
-          mockRepository.save.mockResolvedValue({} as Bill);
-
-          await billService.save(billData);
-
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              cashRegister: caja,
-            })
-          );
-        }
-      });
-
-      it("debería manejar fechas en diferentes formatos", async () => {
-        const fecha1 = new Date("2025-10-20");
-        const fecha2 = new Date("2025-10-20T15:30:45");
-        const fecha3 = new Date("2025-10-20T15:30:45.123Z");
-        const fecha4 = new Date(2025, 9, 20, 15, 30, 45); // Mes base-0
-
-        const fechas = [fecha1, fecha2, fecha3, fecha4];
-
-        for (const fecha of fechas) {
-          const billData: SaveBillDTO = {
-            billId: 0,
-            customer: "Cliente Fecha",
-            cashRegister: 1,
-            total: 25.0,
-            date: fecha,
-          };
-
-          mockRepository.save.mockResolvedValue({} as Bill);
-
-          await billService.save(billData);
-
-          expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-              date: fecha,
-            })
-          );
-        }
-      });
+      await expect(billService.getBillsByCustomer(customerName)).rejects.toThrow("Database connection failed");
     });
   });
 });

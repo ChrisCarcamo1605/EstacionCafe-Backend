@@ -8,19 +8,7 @@ export class IngredientService implements IService {
     this.ingredientRepo = ingredientRepo;
   }
 
-  async saveAll(body: SaveIngredientDTO[]): Promise<Ingredient[]> {
-    const ingredients = body.map(data => {
-      const ingredient = new Ingredient();
-      ingredient.name = data.name;
-      ingredient.quantity = data.quantity;
-      ingredient.productId = data.productId;
-      ingredient.consumableId = data.consumableId;
-      return ingredient;
-    });
-
-    return await this.ingredientRepo.save(ingredients);
-  }
-
+  
   async save(body: SaveIngredientDTO): Promise<Ingredient> {
     const ingredient = new Ingredient();
     ingredient.name = body.name;
