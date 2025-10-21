@@ -11,10 +11,10 @@ import { Consumable } from "./Consumable";
 @Entity("ingredients")
 export class Ingredient {
   @PrimaryGeneratedColumn("increment", { name: "ingredient_id" })
-  ingredientId: number = 0;
+  ingredientId!: number;
 
   @Column({ name: "consumible_id" })
-  consumableId: number = 0;
+  consumableId!: number;
 
   @Column()
   name: string = "";
@@ -23,15 +23,15 @@ export class Ingredient {
   quantity: number = 0;
 
   @Column({ name: "product_id" })
-  productId: number = 0;
+  productId!: number;
 
   @ManyToOne(() => Consumable, (consumable) => consumable.ingredients)
   @JoinColumn({ name: "consumible_id" })
-  consumable?: Consumable;
+  consumable!: Consumable;
 
   @ManyToOne(() => Product, (product) => product.ingredients)
   @JoinColumn({ name: "product_id" })
-  product?: Product;
+  product!: Product;
 
   constructor() {}
 }

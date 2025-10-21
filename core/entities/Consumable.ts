@@ -9,6 +9,7 @@ import {
 import { ConsumableType } from "./ConsumableType";
 import { UnitMeasurement } from "../enums/UnitMeasurement";
 import { Ingredient } from "./Ingredient";
+import { Supplier } from "./Supplier";
 
 @Entity("Consumable")
 export class Consumable {
@@ -31,8 +32,15 @@ export class Consumable {
   @Column("numeric", { precision: 10, scale: 2 })
   cost: number = 0;
 
+  @Column({default:true})
+  active!:boolean;
+
   @OneToMany(() => Ingredient, (ingredient) => ingredient.consumable)
   ingredients!: Ingredient[];
+
+  @JoinColumn({ name: "supplier_id" })
+  @ManyToOne(() => Supplier, (supplier: Supplier) => supplier.consumable)
+  supplier!: Supplier;
 
   constructor() {}
 }

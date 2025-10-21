@@ -17,8 +17,8 @@ const getService = () => {
 
 export const getCashRegisters = async (req: any, res: any) => {
     try {
-        const currentService = getService();
-        const data = await currentService.getAll();
+        const data = await service!.getAll();
+        console.log("Cajas registradoras obtenidas correctamente");
 
         return res.status(200).send({ body: data });
     } catch (error: any) {
@@ -35,6 +35,7 @@ export const getCashRegisterById = async (req: any, res: any) => {
         const cashRegisterService = getService() as any;
 
         const data = await cashRegisterService.getById(id);
+        console.log("Caja registradora obtenida correctamente");
 
         return res.status(200).send({ body: data });
     } catch (error: any) {
@@ -59,12 +60,12 @@ export const getCashRegisterById = async (req: any, res: any) => {
     }
 };
 
-export const createCashRegister = async (req: any, res: any) => {
+export const saveCashRegister = async (req: any, res: any) => {
     try {
         const cashRegisterData: SaveCashRegisterDTO = req.body;
-        const currentService = getService();
-        const result = await currentService.save(createCashRegisterSchema.parse(cashRegisterData));
+        const result = await service!.save(createCashRegisterSchema.parse(cashRegisterData));
 
+        console.log("Caja registradora creada correctamente");
         return res.status(201).send({
             message: "Caja registradora creada correctamente",
             data: result,
@@ -79,6 +80,7 @@ export const createCashRegister = async (req: any, res: any) => {
             });
         }
 
+        console.error("Error al crear caja registradora:", error);
         return res.status(500).send({
             status: "error",
             message: `Error interno del servidor: ${error.message}`,
@@ -93,10 +95,11 @@ export const updateCashRegister = async (req: any, res: any) => {
 
         const cashRegisterService = getService() as any;
         const result = await cashRegisterService.update({
-            cashRegisterId: parseInt(String(id)),
+            cashRegisterId: id,
             ...updateData
         });
 
+        console.log("Caja registradora actualizada correctamente");
         return res.status(200).send({
             message: "Caja registradora actualizada correctamente",
             data: result,
@@ -117,6 +120,7 @@ export const updateCashRegister = async (req: any, res: any) => {
             });
         }
 
+        console.error("Error al actualizar caja registradora:", error);
         return res.status(500).send({
             status: "error",
             message: `Error interno del servidor: ${error.message}`,
@@ -127,10 +131,9 @@ export const updateCashRegister = async (req: any, res: any) => {
 export const deleteCashRegister = async (req: any, res: any) => {
     try {
         const { id } = cashRegisterIdSchema.parse(req.params);
+        const result = await service!.delete(parseInt(String(id)));
 
-        const currentService = getService();
-        const result = await currentService.delete(parseInt(String(id)));
-
+        console.log("Caja registradora eliminada correctamente");
         return res.status(200).send({
             message: "Caja registradora eliminada correctamente",
             data: result,
@@ -150,6 +153,7 @@ export const deleteCashRegister = async (req: any, res: any) => {
             });
         }
 
+        console.error("Error al eliminar caja registradora:", error);
         return res.status(500).send({
             status: "error",
             message: `Error interno del servidor: ${error.message}`,
@@ -162,6 +166,7 @@ export const getActiveCashRegisters = async (req: any, res: any) => {
         const cashRegisterService = getService() as any;
         const data = await cashRegisterService.getActiveCashRegisters();
 
+        console.log("Cajas registradoras activas obtenidas correctamente");
         return res.status(200).send({ body: data });
     } catch (error: any) {
         return res.status(500).send({
@@ -171,7 +176,7 @@ export const getActiveCashRegisters = async (req: any, res: any) => {
     }
 };
 
-export const getCashRegistersByNumber = async (req: any, res: any) => {
+export const getCashRegisterByNumber = async (req: any, res: any) => {
     try {
         const { number } = req.params;
         const cashRegisterService = getService() as any;
@@ -182,7 +187,7 @@ export const getCashRegistersByNumber = async (req: any, res: any) => {
     } catch (error: any) {
         return res.status(500).send({
             status: "error",
-            message: `Error al obtener las cajas registradoras por número: ${error.message}`,
+            message: `Error al obtener la caja registradora por número: ${error.message}`,
         });
     }
 };

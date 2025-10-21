@@ -1,15 +1,35 @@
 export interface SaveProductDTO {
-  productId: number;
-  name: string;
-  description: string;
-  price: number;
-  cost: Date;
+    name: string;
+    description: string;
+    price: number;
+    cost: number;
+    active?: boolean;
 }
 
 export interface ProductItemDTO {
-  productId: number;
-  name: string;
-  description: string;
-  price: number;
-  cost: Date;
+    productId: number;
+    name: string;
+    description: string;
+    price: number;
+    cost: number;
+    active: boolean;
+}
+
+export interface UpdateProductDTO {
+    productId?: number;
+    name?: string;
+    description?: string;
+    price?: number;
+    cost?: number;
+}
+
+export interface ProductWithIngredientsCostDTO {
+    productId: number;
+    name: string;
+    description: string;
+    price: number;
+    cost: number;
+    ingredientsCost: number;
+    profitMargin: number;
+    active: boolean;
 }

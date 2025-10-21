@@ -1,7 +1,18 @@
-import * as IngredientController from "../../controller/IngredientController";
 import { Router } from "express";
+import {
+    getIngredients,
+    getIngredientById,
+    saveIngredient,
+    updateIngredient,
+    deleteIngredient,
+    getIngredientsByProduct
+} from "../../controller/IngredientController";
 
 export const ingredientRouter = Router();
 
-ingredientRouter.post("/ingredient", IngredientController.saveIngredient);
-ingredientRouter.get("/ingredient", IngredientController.getIngredients);
+ingredientRouter.get("/ingredient", getIngredients);
+ingredientRouter.get("/ingredient/product/:productId", getIngredientsByProduct);
+ingredientRouter.get("/ingredient/:id", getIngredientById);
+ingredientRouter.post("/ingredient", saveIngredient);
+ingredientRouter.put("/ingredient/:id", updateIngredient);
+ingredientRouter.delete("/ingredient/:id", deleteIngredient);
