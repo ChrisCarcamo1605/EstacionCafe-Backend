@@ -38,8 +38,8 @@ export class ProductService implements IService {
   async delete(id: number): Promise<any> {
     const product = await this.getById(id);
     product.active = false;
-    const result = await this.productRepository.save(product);
 
+    await this.productRepository.save(product);
     return { message: "Producto desactivado correctamente", id };
   }
 

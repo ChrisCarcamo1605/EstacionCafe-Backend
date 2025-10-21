@@ -23,11 +23,11 @@ export class CashRegisterService implements IService {
     }
 
     async delete(id: number): Promise<any> {
-        const result = await this.cashRegisterRepository.delete(id);
-        if (result.affected === 0) {
-            throw new Error(`Caja registradora con ID ${id} no encontrada`);
-        }
-        return { message: "Caja registradora eliminada correctamente", id };
+        const cashRegister = await this.getById(id);
+        cashRegister.active = false;
+        
+        await this.cashRegisterRepository.save(cashRegister);
+        return { message: "Caja registradora desactivada correctamente", id };
     }
 
     async update(body: any): Promise<any> {

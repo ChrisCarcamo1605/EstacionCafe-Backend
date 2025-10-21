@@ -37,11 +37,11 @@ export class UserService implements IService {
   }
 
   async delete(id: number): Promise<any> {
-    const result = await this.userRepository.delete(id);
-    if (result.affected === 0) {
-      throw new Error(`Usuario con ID ${id} no encontrado`);
-    }
-    return { message: "Usuario eliminado correctamente", id };
+    const user = await this.getById(id);
+    user.active = false;
+    
+    await this.userRepository.save(user);
+    return { message: "Usuario desactivado correctamente", id };
   }
 
   async update(body: any): Promise<any> {

@@ -44,8 +44,8 @@ export class ConsumableService implements IService {
     const consumable = await this.getById(id);
     consumable.active = false;
 
-    this.consumableRepository.save(consumable);
-    return { message: "Consumible eliminado correctamente", id };
+    await this.consumableRepository.save(consumable);
+    return { message: "Consumible desactivado correctamente", id };
   }
 
   async update(body: UpdateConsumableDTO): Promise<Consumable> {
