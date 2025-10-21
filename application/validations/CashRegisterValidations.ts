@@ -27,8 +27,7 @@ export const updateCashRegisterSchema = z.object({
     .refine(
       (val) => !isNaN(val) && val > 0,
       "El ID debe ser un número positivo"
-    )
-    .optional(),
+    ),
   active: z.boolean().optional(),
 });
 
