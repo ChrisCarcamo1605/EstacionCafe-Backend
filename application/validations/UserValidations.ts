@@ -22,14 +22,12 @@ export const updateUserSchema = z.object({
     .string()
     .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
     .max(50, "El nombre de usuario es muy largo")
-    .trim()
-    .optional(),
+    .trim(),
 
   password: z
     .string()
     .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .max(100, "La contraseña es muy larga")
-    .optional(),
+    .max(100, "La contraseña es muy larga"),
 
   email: z.string().email("Debe ser un email válido").toLowerCase().optional(),
 

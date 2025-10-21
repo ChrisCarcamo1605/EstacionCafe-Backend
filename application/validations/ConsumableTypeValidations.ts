@@ -16,8 +16,7 @@ export const updateConsumableTypeSchema = z.object({
     .min(1, "El nombre es requerido")
     .max(255, "El nombre no puede exceder 255 caracteres")
     .trim()
-    .optional(),
-});
+,});
 
 export const consumableTypeIdSchema = z.object({
   id: z.union([

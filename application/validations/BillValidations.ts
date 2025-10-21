@@ -33,8 +33,7 @@ export const updateBillSchema = z.object({
     .number()
     .int("La caja registradora debe ser un número entero")
     .positive("La caja registradora debe ser un número positivo")
-    .optional(),
-
+,
   total: z
     .number()
     .positive("El total debe ser mayor a 0")
@@ -42,15 +41,12 @@ export const updateBillSchema = z.object({
       (val) => Number((val % 0.01).toFixed(2)) === 0,
       "El total debe tener máximo 2 decimales"
     )
-    .optional(),
-
+,
   customer: z
     .string()
     .min(1, "El nombre del cliente es requerido")
     .max(100, "El nombre del cliente es muy largo")
-    .trim()
-    .optional(),
-
+    .trim(),
   date: z
     .date()
     .or(z.string().transform((str) => new Date(str)))
