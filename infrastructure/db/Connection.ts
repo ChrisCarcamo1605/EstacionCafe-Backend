@@ -11,34 +11,29 @@ import { Purchase } from "../../core/entities/Purchase";
 import { Ingredient } from "../../core/entities/Ingredient";
 import { historyLog } from "../../core/entities/HistoryLog";
 import { CashRegister } from "../../core/entities/CashRegister";
+import { join } from "path";
+
+export const AppDataSource = new DataSource({
+  type: "postgres",
+  host: "localhost",
+  port: 5555,
+  username: "admin",
+  password: "estacionPass2025",
+  database: "estacioncafedb",
+  synchronize: true,
+  logging: false,
+  entities: [join(__dirname,'../../core/entities/*{.ts,.js}')
+  ],
+  migrations: [join(__dirname,'./migrations/*{.ts,.js}')],
+  subscribers: [],
+});
 
 export const getDataSource = () => {
-  return new DataSource({
-    type: "postgres",
-    host: "localhost",
-    port: 5555,
-    username: "admin",
-    password: "estacionPass2025",
-    database: "estacioncafedb",
-    synchronize: true,
-    logging: false,
-    entities: [
-      Bill,
-      Product,
-      BillDetails,
-      User,
-      UserType,
-      Consumable,
-      ConsumableType,
-      Supplier,
-      Purchase,
-      Ingredient,
-      historyLog,
-      CashRegister,
-    ],
-    migrations: [],
-    subscribers: [],
-  });
+  return AppDataSource;
 };
 
-module.exports = { getDataSource };
+export default AppDataSource;
+
+module.exports = { getDataSource, AppDataSource };
+
+
