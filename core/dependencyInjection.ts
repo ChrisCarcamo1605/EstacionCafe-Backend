@@ -1,12 +1,14 @@
 //Utilitys
-import { IService } from "../core/interfaces/IService";
+import { IService } from "./interfaces/IService";
+import { ITokenService } from "./interfaces/ITokenService";
+import { IUserService } from "./interfaces/IUserService";
 import { getDataSource } from "../infrastructure/db/Connection";
 
 //SetServices Methods
 import { setService as setBillService } from "../controller/BillController";
 import { setService as setProductService } from "../controller/ProductController";
 import { setService as setBillDetailsService } from "../controller/BillDetailsController";
-import { setService as setUserService } from "../controller/UserController";
+import { setServices as setUserServices } from "../controller/UserController";
 import { setService as setUserTypeService } from "../controller/UserTypeController";
 import { setService as setConsumableService } from "../controller/ConsumableController";
 import { setService as setConsumableTypeService } from "../controller/ConsumableTypeController";
@@ -16,30 +18,31 @@ import { setService as setPurchaseService } from "../controller/PurchaseControll
 import { setService as setCashRegisterService } from "../controller/CashRegisterController";
 
 //Services
-import { BillService } from "./services/BillService";
-import { ProductService } from "./services/ProductService";
-import { BillDetailsService } from "./services/BillDetailsService";
-import { UserService } from "./services/UserService";
-import { UserTypeService } from "./services/UserTypeService";
-import { ConsumableService } from "./services/ConsumableService";
-import { ConsumableTypeService } from "./services/ConsumableTypeService";
-import { SupplierService } from "./services/SupplierService";
-import { IngredientService } from "./services/IngredientService";
-import { PurchaseService } from "./services/PurchaseService";
-import { CashRegisterService } from "./services/CashRegisterService";
+import { BillService } from "../application/services/BillService";
+import { ProductService } from "../application/services/ProductService";
+import { BillDetailsService } from "../application/services/BillDetailsService";
+import { UserService } from "../application/services/UserService";
+import { UserTypeService } from "../application/services/UserTypeService";
+import { ConsumableService } from "../application/services/ConsumableService";
+import { ConsumableTypeService } from "../application/services/ConsumableTypeService";
+import { SupplierService } from "../application/services/SupplierService";
+import { IngredientService } from "../application/services/IngredientService";
+import { PurchaseService } from "../application/services/PurchaseService";
+import { CashRegisterService } from "../application/services/CashRegisterService";
+import { TokenService } from "../infrastructure/security/TokenService";
 
 //Entitys
-import { Bill } from "../core/entities/Bill";
-import { BillDetails } from "../core/entities/BillDetails";
-import { Product } from "../core/entities/Producto";
-import { User } from "../core/entities/User";
-import { UserType } from "../core/entities/UserType";
-import { Consumable } from "../core/entities/Consumable";
-import { ConsumableType } from "../core/entities/ConsumableType";
-import { Ingredient } from "../core/entities/Ingredient";
-import {Supplier} from "../core/entities/Supplier";
-import {Purchase} from "../core/entities/Purchase";
-import { CashRegister } from "../core/entities/CashRegister";
+import { Bill } from "./entities/Bill";
+import { BillDetails } from "./entities/BillDetails";
+import { Product } from "./entities/Producto";
+import { User } from "./entities/User";
+import { UserType } from "./entities/UserType";
+import { Consumable } from "./entities/Consumable";
+import { ConsumableType } from "./entities/ConsumableType";
+import { Ingredient } from "./entities/Ingredient";
+import { Supplier } from "./entities/Supplier";
+import { Purchase } from "./entities/Purchase";
+import { CashRegister } from "./entities/CashRegister";
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -55,21 +58,21 @@ export const initializeDependencies = async () => {
     const userRepositoy = AppDataSource.getRepository(User);
     const userTypeRepository = AppDataSource.getRepository(UserType);
     const consumableRepository = AppDataSource.getRepository(Consumable);
-    const consumableTypeRepository = AppDataSource.getRepository(ConsumableType);
+    const consumableTypeRepository =
+      AppDataSource.getRepository(ConsumableType);
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
     const cashRegisterRepository = AppDataSource.getRepository(CashRegister);
 
-
-      //Services
+    //Services
     const billService: IService = new BillService(billRepository);
     const productService: IService = new ProductService(productRepository);
     const billDetailsService: IService = new BillDetailsService(
       billDetailsRepository,
       billService
     );
-    const userService: IService = new UserService(userRepositoy);
+    const userService: IUserService = new UserService(userRepositoy);
     const userTypeService: IService = new UserTypeService(userTypeRepository);
     const consumableService: IService = new ConsumableService(
       consumableRepository
@@ -79,28 +82,34 @@ export const initializeDependencies = async () => {
     );
     const supplierService: IService = new SupplierService(supplierRepository);
     const purchaseService: IService = new PurchaseService(purchaseRepository);
-   const ingredientService: IService = new IngredientService(
+    const ingredientService: IService = new IngredientService(
       ingredientRepository
     );
-      const cashRegisterService: IService = new CashRegisterService(cashRegisterRepository);
-
+    const cashRegisterService: IService = new CashRegisterService(
+      cashRegisterRepository
+    );
+    const tokenService: ITokenService = new TokenService(userService);
+    
     //Set Services to Controllers
     setBillService(billService);
     setProductService(productService);
     setBillDetailsService(billDetailsService);
-    setUserService(userService);
+    setUserServices(userService,tokenService);
     setUserTypeService(userTypeService);
     setConsumableService(consumableService);
     setConsumableTypeService(consumableTypeService);
     setIngredientService(ingredientService);
     setSupplierService(supplierService);
     setPurchaseService(purchaseService);
-    setCashRegisterService(cashRegisterService)
+    setCashRegisterService(cashRegisterService);
 
     console.log("Dependencias inicializadas correctamente");
   } catch (error: any) {
+
     console.error("Error al inicializar la base de datos:", error.message);
     console.error("Detalles del error:", error);
+
+    throw new error;
   }
 };
 

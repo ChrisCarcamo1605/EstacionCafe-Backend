@@ -1,3 +1,13 @@
+export interface loginUser{
+    username:string;
+    password:string;
+}
+
+
+
+
+
+
 export interface SaveUserDTO {
     username: string;
     password: string;

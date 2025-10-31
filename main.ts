@@ -1,3 +1,6 @@
+//Cargamos variables de entorno PRIMERO
+require('dotenv').config({ path: './DB_CREDENTIALS.env' });
+
 //Cargamos dependencias
 const express = require("express");
 const cors = require("cors");
@@ -19,7 +22,7 @@ app.use('/api', routes);
 
 
 //Inyectamos dependencias
-const {initializeDependencies} = require('./application/dependencyInjection');
+const {initializeDependencies} = require('./core/dependencyInjection');
 
 
 

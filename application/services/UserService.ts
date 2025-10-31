@@ -4,22 +4,25 @@ import { UserType } from "../../core/entities/UserType";
 import { IService } from "../../core/interfaces/IService";
 import { SaveUserDTO } from "../DTOs/UserDTO";
 import * as bcrypt from "bcrypt";
+import { IUserService } from "../../core/interfaces/IUserService";
 
-export class UserService implements IService {
+export class UserService implements IUserService {
   private userRepository: Repository<User>;
   constructor(userRepo: Repository<User>) {
     this.userRepository = userRepo;
   }
 
   async saveAll(body: SaveUserDTO[]): Promise<User[]> {
-    const users = await Promise.all(body.map(async (userData) => {
-      const user = new User();
-      user.username = userData.username;
-      user.password = await this.encryptPassword(userData.password);
-      user.userTypeId = userData.typeId;
-      user.email = userData.email;
-      return user;
-    }));
+    const users = await Promise.all(
+      body.map(async (userData) => {
+        const user = new User();
+        user.username = userData.username;
+        user.password = await this.encryptPassword(userData.password);
+        user.userTypeId = userData.typeId;
+        user.email = userData.email;
+        return user;
+      })
+    );
 
     return await this.userRepository.save(users);
   }
@@ -39,7 +42,7 @@ export class UserService implements IService {
   async delete(id: number): Promise<any> {
     const user = await this.getById(id);
     user.active = false;
-    
+
     await this.userRepository.save(user);
     return { message: "Usuario desactivado correctamente", id };
   }
@@ -67,16 +70,16 @@ export class UserService implements IService {
 
   async getAll(): Promise<any[]> {
     console.log(`Obteniendo usuarios...`);
-    return this.userRepository.find({ 
+    return this.userRepository.find({
       relations: ["userType"],
-      order: { username: "ASC" }
+      order: { username: "ASC" },
     });
   }
 
   async getById(id: number): Promise<any> {
-    const user = await this.userRepository.findOne({ 
+    const user = await this.userRepository.findOne({
       where: { userId: id },
-      relations: ["userType"]
+      relations: ["userType"],
     });
     if (!user) {
       throw new Error(`Usuario con ID ${id} no encontrado`);
@@ -88,19 +91,27 @@ export class UserService implements IService {
     return await this.userRepository.find({
       where: { userTypeId: typeId },
       relations: ["userType"],
-      order: { username: "ASC" }
+      order: { username: "ASC" },
     });
   }
 
   async getUserByUsername(username: string): Promise<User | null> {
     return await this.userRepository.findOne({
       where: { username },
-      relations: ["userType"]
+      relations: ["userType"],
     });
   }
 
   private async encryptPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
+  }
+
+  async getPassword(username: string): Promise<string | null> {
+    const user = await this.userRepository.findOne({
+      select: { password: true },
+      where: { username},
+    });
+    return user?.password || null;
   }
 }

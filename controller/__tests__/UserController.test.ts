@@ -17,6 +17,7 @@ const { createUserSchema, updateUserSchema, userIdSchema } = require("../../appl
 
 describe("UserController", () => {
   let mockService: jest.Mocked<IService>;
+  let mockTokenService: any;
   let mockReq: any;
   let mockRes: any;
 
@@ -31,8 +32,14 @@ describe("UserController", () => {
       update: jest.fn(),
     } as any;
 
-    // Establecer el servicio mock
-    userController.setService(mockService);
+    // Crear el mock del token service
+    mockTokenService = {
+      generateToken: jest.fn(),
+      verifyToken: jest.fn(),
+    };
+
+    // Establecer los servicios mock
+    userController.setServices(mockService, mockTokenService);
 
     mockReq = {
       body: {},
@@ -602,8 +609,8 @@ describe("UserController", () => {
     });
   });
 
-  describe("setService", () => {
-    it("debería establecer el servicio correctamente", async () => {
+  describe("setServices", () => {
+    it("debería establecer los servicios correctamente", async () => {
       const nuevoServicio = {
         getAll: jest.fn(),
         getById: jest.fn(),
@@ -613,7 +620,12 @@ describe("UserController", () => {
         update: jest.fn(),
       } as any;
 
-      expect(() => userController.setService(nuevoServicio)).not.toThrow();
+      const nuevoTokenService = {
+        generateToken: jest.fn(),
+        verifyToken: jest.fn(),
+      };
+
+      expect(() => userController.setServices(nuevoServicio, nuevoTokenService)).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
       nuevoServicio.getAll.mockResolvedValue([]);
