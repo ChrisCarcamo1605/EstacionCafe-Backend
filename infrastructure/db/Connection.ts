@@ -1,7 +1,7 @@
 //Las variables de entorno ya están cargadas en main.ts
+import "./loadEnv";
 import { DataSource } from "typeorm";
 import { join } from "path";
-
 
 const db_host = process.env.DB_HOST;
 const db_port = parseInt(process.env.DB_PORT || "5555");
@@ -18,9 +18,8 @@ export const AppDataSource = new DataSource({
   database: db_name,
   synchronize: true,
   logging: false,
-  entities: [join(__dirname,'../../core/entities/*{.ts,.js}')
-  ],
-  migrations: [join(__dirname,'./migrations/*{.ts,.js}')],
+  entities: [join(__dirname, "../../core/entities/*{.ts,.js}")],
+  migrations: [join(__dirname, "./migrations/*{.ts,.js}")],
   subscribers: [],
 });
 
@@ -31,5 +30,3 @@ export const getDataSource = () => {
 export default AppDataSource;
 
 module.exports = { getDataSource, AppDataSource };
-
-

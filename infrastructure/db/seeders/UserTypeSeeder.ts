@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource, In } from "typeorm";
 import { BaseSeeder } from "./BaseSeeder";
 import { UserType } from "../../../core/entities/UserType";
 
@@ -9,11 +9,11 @@ export class UserTypeSeeder extends BaseSeeder {
 
   async run(): Promise<void> {
     const userTypeRepo = this.dataSource.getRepository(UserType);
-    
+
     const userTypes = [
-      { name: "Super Administrador", permissionLevel: 10 },
-      { name: "Administrador", permissionLevel: 9 },
-      { name: "Gerente", permissionLevel: 8 },
+      { name: "admin", permissionLevel: 10 },
+      { name: "cajeror", permissionLevel: 9 },
+      { name: "mesero", permissionLevel: 8 },
       { name: "Supervisor", permissionLevel: 7 },
       { name: "Cajero Senior", permissionLevel: 6 },
       { name: "Cajero", permissionLevel: 5 },
@@ -22,17 +22,19 @@ export class UserTypeSeeder extends BaseSeeder {
       { name: "Asistente", permissionLevel: 2 },
       { name: "Trainee", permissionLevel: 1 },
       { name: "Auditor", permissionLevel: 6 },
-      { name: "Inventario", permissionLevel: 4 }
+      { name: "Inventario", permissionLevel: 4 },
     ];
 
     for (const userType of userTypes) {
-      const exists = await userTypeRepo.findOne({ 
-        where: { name: userType.name } 
+      const exists = await userTypeRepo.findOne({
+        where: { name: userType.name },
       });
-      
+
       if (!exists) {
         await userTypeRepo.save(userType);
-        console.log(`---SUCESS--- UserType created: ${userType.name} (Level: ${userType.permissionLevel})`);
+        console.log(
+          `---SUCESS--- UserType created: ${userType.name} (Level: ${userType.permissionLevel})`,
+        );
       } else {
         console.log(`---WARNING--- UserType already exists: ${userType.name}`);
       }
@@ -41,14 +43,23 @@ export class UserTypeSeeder extends BaseSeeder {
 
   async revert(): Promise<void> {
     const userTypeRepo = this.dataSource.getRepository(UserType);
-    
+
     const userTypeNames = [
-      "admin", "cajero", "mesero", "Supervisor",
-      "Cajero Senior", "Cajero", "Barista Jefe", "Barista", 
-      "Asistente", "Trainee", "Auditor", "Inventario"
+      "admin",
+      "cajero",
+      "mesero",
+      "Supervisor",
+      "Cajero Senior",
+      "Cajero",
+      "Barista Jefe",
+      "Barista",
+      "Asistente",
+      "Trainee",
+      "Auditor",
+      "Inventario",
     ];
 
-    await userTypeRepo.delete({ name: userTypeNames as any });
+    await userTypeRepo.delete({ name: In(userTypeNames) });
     console.log("---DELETED--- UserTypes seed data removed");
   }
 }

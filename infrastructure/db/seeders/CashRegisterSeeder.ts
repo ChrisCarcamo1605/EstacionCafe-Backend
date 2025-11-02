@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource, In } from "typeorm";
 import { BaseSeeder } from "./BaseSeeder";
 import { CashRegister } from "../../../core/entities/CashRegister";
 
@@ -9,7 +9,7 @@ export class CashRegisterSeeder extends BaseSeeder {
 
   async run(): Promise<void> {
     const cashRegisterRepo = this.dataSource.getRepository(CashRegister);
-    
+
     const cashRegisters = [
       { number: "CAJA-001", active: true },
       { number: "CAJA-002", active: true },
@@ -22,33 +22,46 @@ export class CashRegisterSeeder extends BaseSeeder {
       { number: "CAJA-VIP", active: true }, // Caja VIP
       { number: "CAJA-EXPRESS", active: true }, // Caja express
       { number: "CAJA-BACKUP", active: false }, // Caja de respaldo
-      { number: "CAJA-TRAINING", active: false } // Caja para entrenamiento
+      { number: "CAJA-TRAINING", active: false }, // Caja para entrenamiento
     ];
 
     for (const cashRegister of cashRegisters) {
-      const exists = await cashRegisterRepo.findOne({ 
-        where: { number: cashRegister.number } 
+      const exists = await cashRegisterRepo.findOne({
+        where: { number: cashRegister.number },
       });
-      
+
       if (!exists) {
         await cashRegisterRepo.save(cashRegister);
-        console.log(`---SUCESS---  CashRegister created: ${cashRegister.number} (Active: ${cashRegister.active})`);
+        console.log(
+          `---SUCESS---  CashRegister created: ${cashRegister.number} (Active: ${cashRegister.active})`,
+        );
       } else {
-        console.log(`---WARNING---  CashRegister already exists: ${cashRegister.number}`);
+        console.log(
+          `---WARNING---  CashRegister already exists: ${cashRegister.number}`,
+        );
       }
     }
   }
 
   async revert(): Promise<void> {
     const cashRegisterRepo = this.dataSource.getRepository(CashRegister);
-    
+
     const cashRegisterNumbers = [
-      "CAJA-001", "CAJA-002", "CAJA-003", "CAJA-004", "CAJA-005",
-      "CAJA-DRIVE", "CAJA-DELIVERY", "CAJA-EVENTOS", "CAJA-VIP", 
-      "CAJA-EXPRESS", "CAJA-BACKUP", "CAJA-TRAINING"
+      "CAJA-001",
+      "CAJA-002",
+      "CAJA-003",
+      "CAJA-004",
+      "CAJA-005",
+      "CAJA-DRIVE",
+      "CAJA-DELIVERY",
+      "CAJA-EVENTOS",
+      "CAJA-VIP",
+      "CAJA-EXPRESS",
+      "CAJA-BACKUP",
+      "CAJA-TRAINING",
     ];
 
-    await cashRegisterRepo.delete({ number: cashRegisterNumbers as any });
+    await cashRegisterRepo.delete({ number: In(cashRegisterNumbers) });
     console.log("---DELETED---  CashRegisters seed data removed");
   }
 }

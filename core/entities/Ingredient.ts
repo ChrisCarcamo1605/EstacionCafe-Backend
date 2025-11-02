@@ -13,7 +13,7 @@ export class Ingredient {
   @PrimaryGeneratedColumn("increment", { name: "ingredient_id" })
   ingredientId!: number;
 
-  @Column({ name: "consumible_id" })
+  @Column({ name: "consumable_id" })
   consumableId!: number;
 
   @Column()
@@ -26,7 +26,7 @@ export class Ingredient {
   productId!: number;
 
   @ManyToOne(() => Consumable, (consumable) => consumable.ingredients)
-  @JoinColumn({ name: "consumible_id" })
+  @JoinColumn({ name: "consumable_id" })
   consumable!: Consumable;
 
   @ManyToOne(() => Product, (product) => product.ingredients)
