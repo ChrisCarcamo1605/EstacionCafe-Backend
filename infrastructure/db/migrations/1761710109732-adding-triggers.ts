@@ -79,7 +79,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_update_consumables_on_sale
     AFTER INSERT ON bill_details
     FOR EACH ROW
-    EXECUTE FUNCTION update_consumables_on_sale();`
+    EXECUTE FUNCTION update_consumables_on_sale();`,
     );
   }
 
