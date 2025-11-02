@@ -15,7 +15,7 @@ export const setService = (billService: IService) => {
 const getService = () => {
   if (!service) {
     throw new Error(
-      "Bill service no está inicializado. Llama a setService primero."
+      "Bill service no está inicializado. Llama a setService primero.",
     );
   }
   return service;
@@ -26,7 +26,11 @@ export const getBills = async (req: any, res: any) => {
     const data = await service!.getAll();
     console.log("Facturas obtenidas correctamente");
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Facturas obtenidas correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",
@@ -43,7 +47,11 @@ export const getBillById = async (req: any, res: any) => {
     const data = await billService.getById(id);
     console.log("Factura obtenida correctamente");
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Factura obtenida correctamente",
+      data: data,
+    });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
@@ -73,6 +81,7 @@ export const saveBill = async (req: any, res: any) => {
 
     console.log("Factura creada correctamente");
     return res.status(201).send({
+      status: "success",
       message: "Factura creada correctamente",
       data: result,
     });
@@ -107,6 +116,7 @@ export const updateBill = async (req: any, res: any) => {
 
     console.log("Factura actualizada correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Factura actualizada correctamente",
       data: result,
     });
@@ -136,12 +146,12 @@ export const updateBill = async (req: any, res: any) => {
 
 export const deleteBill = async (req: any, res: any) => {
   try {
-
     const { id } = billIdSchema.parse(req.params);
     const result = await service!.delete(parseInt(String(id)));
 
     console.log("Factura eliminada correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Factura eliminada correctamente",
       data: result,
     });
@@ -182,10 +192,14 @@ export const getBillsByDateRange = async (req: any, res: any) => {
 
     const data = await billService.getByDateRange(
       new Date(startDate),
-      new Date(endDate)
+      new Date(endDate),
     );
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Facturas obtenidas por rango de fecha correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",
@@ -201,7 +215,11 @@ export const getBillsByCustomer = async (req: any, res: any) => {
 
     const data = await billService.getBillsByCustomer(customer);
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Facturas del cliente obtenidas correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",

@@ -43,7 +43,7 @@ export class UserTypeSeeder extends BaseSeeder {
     const userTypeRepo = this.dataSource.getRepository(UserType);
     
     const userTypeNames = [
-      "Super Administrador", "Administrador", "Gerente", "Supervisor",
+      "admin", "cajero", "mesero", "Supervisor",
       "Cajero Senior", "Cajero", "Barista Jefe", "Barista", 
       "Asistente", "Trainee", "Auditor", "Inventario"
     ];

@@ -1,11 +1,21 @@
 import * as ingredientController from "../IngredientController";
 import { IService } from "../../core/interfaces/IService";
-import { IngredientSchema, updateIngredientSchema, ingredientIdSchema } from "../../application/validations/IngredientValidations";
+import {
+  IngredientSchema,
+  updateIngredientSchema,
+  ingredientIdSchema,
+} from "../../application/validations/IngredientValidations";
 
 jest.mock("../../application/validations/IngredientValidations");
-const mockedIngredientSchema = IngredientSchema as jest.Mocked<typeof IngredientSchema>;
-const mockedUpdateIngredientSchema = updateIngredientSchema as jest.Mocked<typeof updateIngredientSchema>;
-const mockedIngredientIdSchema = ingredientIdSchema as jest.Mocked<typeof ingredientIdSchema>;
+const mockedIngredientSchema = IngredientSchema as jest.Mocked<
+  typeof IngredientSchema
+>;
+const mockedUpdateIngredientSchema = updateIngredientSchema as jest.Mocked<
+  typeof updateIngredientSchema
+>;
+const mockedIngredientIdSchema = ingredientIdSchema as jest.Mocked<
+  typeof ingredientIdSchema
+>;
 
 describe("IngredientController", () => {
   let mockService: jest.Mocked<IService>;
@@ -77,7 +87,9 @@ describe("IngredientController", () => {
         message: "Ingredientes obtenidos correctamente",
         data: ingredientesSimulados,
       });
-      expect(console.log).toHaveBeenCalledWith("Ingredientes obtenidos correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingredientes obtenidos correctamente",
+      );
     });
 
     it("debería manejar errores al obtener los ingredientes", async () => {
@@ -93,8 +105,13 @@ describe("IngredientController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al conseguir los ingredientes:", errorServidor);
-      expect(console.log).not.toHaveBeenCalledWith("Ingredientes obtenidos correctamente");
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al conseguir los ingredientes:",
+        errorServidor,
+      );
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Ingredientes obtenidos correctamente",
+      );
     });
 
     it("debería retornar un array vacío cuando no hay ingredientes", async () => {
@@ -111,7 +128,9 @@ describe("IngredientController", () => {
         message: "Ingredientes obtenidos correctamente",
         data: [],
       });
-      expect(console.log).toHaveBeenCalledWith("Ingredientes obtenidos correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingredientes obtenidos correctamente",
+      );
     });
   });
 
@@ -135,9 +154,13 @@ describe("IngredientController", () => {
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: ingrediente,
+        status: "success",
+        message: "Ingrediente obtenido correctamente",
+        data: ingrediente,
       });
-      expect(console.log).toHaveBeenCalledWith("Ingrediente obtenido correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingrediente obtenido correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -159,14 +182,18 @@ describe("IngredientController", () => {
 
       await ingredientController.getIngredientById(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.getById).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Ingrediente obtenido correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Ingrediente obtenido correctamente",
+      );
     });
 
     it("debería manejar error cuando el ingrediente no existe", async () => {
@@ -178,7 +205,9 @@ describe("IngredientController", () => {
 
       await ingredientController.getIngredientById(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: "999",
+      });
       expect(mockService.getById).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -233,7 +262,9 @@ describe("IngredientController", () => {
 
       await ingredientController.saveIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(datosIngrediente);
+      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(
+        datosIngrediente,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -241,7 +272,9 @@ describe("IngredientController", () => {
         message: "Ingrediente guardado correctamente",
         data: ingredienteGuardado,
       });
-      expect(console.log).toHaveBeenCalledWith("Ingrediente guardado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingrediente guardado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre vacío", async () => {
@@ -279,7 +312,9 @@ describe("IngredientController", () => {
         campo: ["name"],
         error: "too_small",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Ingrediente guardado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Ingrediente guardado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre muy largo", async () => {
@@ -388,7 +423,8 @@ describe("IngredientController", () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El ID del producto debe ser un número positivo",
+        message:
+          "Datos inválidos: El ID del producto debe ser un número positivo",
         campo: ["productId"],
         error: "custom",
       });
@@ -425,7 +461,8 @@ describe("IngredientController", () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El ID del consumible debe ser un número positivo",
+        message:
+          "Datos inválidos: El ID del consumible debe ser un número positivo",
         campo: ["consumableId"],
         error: "custom",
       });
@@ -454,15 +491,22 @@ describe("IngredientController", () => {
 
       await ingredientController.saveIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(datosIngrediente);
+      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(
+        datosIngrediente,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al guardar el ingrediente:", errorServidor);
-      expect(console.log).not.toHaveBeenCalledWith("Ingrediente guardado correctamente");
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al guardar el ingrediente:",
+        errorServidor,
+      );
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Ingrediente guardado correctamente",
+      );
     });
 
     it("debería manejar transformaciones de string a number correctamente", async () => {
@@ -491,7 +535,9 @@ describe("IngredientController", () => {
 
       await ingredientController.saveIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(datosIngrediente);
+      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(
+        datosIngrediente,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -527,7 +573,9 @@ describe("IngredientController", () => {
 
       await ingredientController.saveIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(datosConEspacios);
+      expect(mockedIngredientSchema.parse).toHaveBeenCalledWith(
+        datosConEspacios,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -563,17 +611,22 @@ describe("IngredientController", () => {
       await ingredientController.updateIngredient(mockReq, mockRes);
 
       expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateIngredientSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedUpdateIngredientSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect(mockService.update).toHaveBeenCalledWith({
         ingredientId: 1,
         ...datosValidados,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Ingrediente actualizado correctamente",
         data: ingredienteActualizado,
       });
-      expect(console.log).toHaveBeenCalledWith("Ingrediente actualizado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingrediente actualizado correctamente",
+      );
     });
 
     it("debería actualizar solo algunos campos", async () => {
@@ -624,7 +677,9 @@ describe("IngredientController", () => {
 
       await ingredientController.updateIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockedUpdateIngredientSchema.parse).not.toHaveBeenCalled();
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -662,7 +717,9 @@ describe("IngredientController", () => {
       await ingredientController.updateIngredient(mockReq, mockRes);
 
       expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateIngredientSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedUpdateIngredientSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -714,7 +771,10 @@ describe("IngredientController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al actualizar ingrediente:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al actualizar ingrediente:",
+        errorServidor,
+      );
     });
   });
 
@@ -738,10 +798,13 @@ describe("IngredientController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Ingrediente eliminado correctamente",
         data: ingredienteEliminado,
       });
-      expect(console.log).toHaveBeenCalledWith("Ingrediente eliminado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Ingrediente eliminado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -763,14 +826,18 @@ describe("IngredientController", () => {
 
       await ingredientController.deleteIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.delete).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Ingrediente eliminado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Ingrediente eliminado correctamente",
+      );
     });
 
     it("debería manejar error cuando el ingrediente no existe", async () => {
@@ -782,7 +849,9 @@ describe("IngredientController", () => {
 
       await ingredientController.deleteIngredient(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: "999",
+      });
       expect(mockService.delete).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -807,7 +876,10 @@ describe("IngredientController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al eliminar ingrediente:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al eliminar ingrediente:",
+        errorServidor,
+      );
     });
   });
 
@@ -838,7 +910,9 @@ describe("IngredientController", () => {
       expect((mockService as any).getByProduct).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: ingredientes,
+        status: "success",
+        message: "Ingredientes del producto obtenidos correctamente",
+        data: ingredientes,
       });
     });
 
@@ -869,7 +943,9 @@ describe("IngredientController", () => {
       expect((mockService as any).getByProduct).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Ingredientes del producto obtenidos correctamente",
+        data: [],
       });
     });
 
@@ -892,7 +968,9 @@ describe("IngredientController", () => {
       expect((mockService as any).getByProduct).toHaveBeenCalledWith(42);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: ingredientes,
+        status: "success",
+        message: "Ingredientes del producto obtenidos correctamente",
+        data: ingredientes,
       });
     });
   });
@@ -911,7 +989,9 @@ describe("IngredientController", () => {
       // Añadir métodos específicos del IngredientService
       nuevoServicio.getByProduct = jest.fn();
 
-      expect(() => ingredientController.setService(nuevoServicio)).not.toThrow();
+      expect(() =>
+        ingredientController.setService(nuevoServicio),
+      ).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
       nuevoServicio.getAll.mockResolvedValue([]);
@@ -923,12 +1003,32 @@ describe("IngredientController", () => {
 
   describe("Casos con nombres especiales", () => {
     const nombresEspeciales = [
-      { name: "Café 100% Arábica", quantity: 10, productId: 1, consumableId: 1 },
+      {
+        name: "Café 100% Arábica",
+        quantity: 10,
+        productId: 1,
+        consumableId: 1,
+      },
       { name: "Azúcar refinada", quantity: 10, productId: 1, consumableId: 1 },
-      { name: "Leche descremada 2%", quantity: 10, productId: 1, consumableId: 1 },
+      {
+        name: "Leche descremada 2%",
+        quantity: 10,
+        productId: 1,
+        consumableId: 1,
+      },
       { name: "Canela en polvo", quantity: 10, productId: 1, consumableId: 1 },
-      { name: "Jarabe de vainilla", quantity: 10, productId: 1, consumableId: 1 },
-      { name: "Chocolate semi-amargo", quantity: 10, productId: 1, consumableId: 1 },
+      {
+        name: "Jarabe de vainilla",
+        quantity: 10,
+        productId: 1,
+        consumableId: 1,
+      },
+      {
+        name: "Chocolate semi-amargo",
+        quantity: 10,
+        productId: 1,
+        consumableId: 1,
+      },
     ];
 
     nombresEspeciales.forEach((ingrediente) => {
@@ -1068,7 +1168,9 @@ describe("IngredientController", () => {
 
       await ingredientController.getIngredientById(mockReq, mockRes);
 
-      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({ id: idGrande.toString() });
+      expect(mockedIngredientIdSchema.parse).toHaveBeenCalledWith({
+        id: idGrande.toString(),
+      });
       expect(mockService.getById).toHaveBeenCalledWith(idGrande);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
