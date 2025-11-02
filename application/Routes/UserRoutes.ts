@@ -7,6 +7,7 @@ export const userRouter = Router();
 
 // Rutas públicas (sin protección)
 userRouter.post("/users/login", userController.login);
+userRouter.post("/users/logout", userController.logout);
 
 // Rutas protegidas (requieren token)
 

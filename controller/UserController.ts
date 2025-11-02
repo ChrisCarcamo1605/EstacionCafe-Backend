@@ -232,3 +232,18 @@ export const login = async (req: any, res: any) => {
     });
   }
 };
+
+export const logout = async (req: any, res: any) => {
+  try {
+    res.clearCookie("auth_token");
+    return res.status(200).send({
+      status: "success",
+      message: "Sesión cerrada",
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      status: "error",
+      message: `Error al cerrar sesión: ${error.message}`,
+    });
+  }
+};
