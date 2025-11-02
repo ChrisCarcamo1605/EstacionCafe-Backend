@@ -12,7 +12,7 @@ let tokenService: ITokenService | null = null;
 
 export const setServices = (
   userService: IService,
-  securityService: ITokenService
+  securityService: ITokenService,
 ) => {
   service = userService;
   tokenService = securityService;
@@ -21,7 +21,7 @@ export const setServices = (
 const getService = () => {
   if (!service) {
     throw new Error(
-      "User service no está inicializado. Llama a setService primero."
+      "User service no está inicializado. Llama a setService primero.",
     );
   }
   return service;
@@ -32,7 +32,11 @@ export const getUsers = async (req: any, res: any) => {
     const data = await service!.getAll();
     console.log("Usuarios obtenidos correctamente");
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Usuarios obtenidos correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",
@@ -49,7 +53,11 @@ export const getUserById = async (req: any, res: any) => {
     const data = await userService.getById(id);
     console.log("Usuario obtenido correctamente");
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Usuario obtenido correctamente",
+      data: data,
+    });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
@@ -79,6 +87,7 @@ export const saveUser = async (req: any, res: any) => {
 
     console.log("Usuario creado correctamente");
     return res.status(201).send({
+      status: "success",
       message: "Usuario creado correctamente",
       data: result,
     });
@@ -113,6 +122,7 @@ export const updateUser = async (req: any, res: any) => {
 
     console.log("Usuario actualizado correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Usuario actualizado correctamente",
       data: result,
     });
@@ -147,6 +157,7 @@ export const deleteUser = async (req: any, res: any) => {
 
     console.log("Usuario eliminado correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Usuario eliminado correctamente",
       data: result,
     });
@@ -180,7 +191,11 @@ export const getUsersByType = async (req: any, res: any) => {
 
     const data = await userService.getUsersByType(parseInt(typeId));
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Usuarios por tipo obtenidos correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",
@@ -194,14 +209,26 @@ export const login = async (req: any, res: any) => {
     const data: loginUser = req.body;
 
     const token = await tokenService?.generateToken(data);
-    return res.status(200).send({
-      status: "sucess",
-      data: token,
-    });
+    return res
+      .status(200)
+      .cookie("auth_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60,
+      })
+      .send({
+        status: "success",
+        message: "Inicio de sesión exitoso",
+        data: {
+          token: token,
+          expiresIn: "1 hora",
+        },
+      });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",
-      message: `Error al obtener los usuarios por tipo: ${error.message}`,
+      message: `Error al iniciar sesión: ${error.message}`,
     });
   }
 };

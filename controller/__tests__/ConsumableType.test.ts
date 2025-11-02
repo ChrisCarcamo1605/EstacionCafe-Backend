@@ -13,7 +13,11 @@ jest.mock("../../application/validations/ConsumableTypeValidations", () => ({
   },
 }));
 
-const { ConsumableTypeSchema, consumableTypeIdSchema, updateConsumableTypeSchema } = require("../../application/validations/ConsumableTypeValidations");
+const {
+  ConsumableTypeSchema,
+  consumableTypeIdSchema,
+  updateConsumableTypeSchema,
+} = require("../../application/validations/ConsumableTypeValidations");
 
 describe("ConsumableTypeController", () => {
   let mockService: jest.Mocked<IService>;
@@ -58,7 +62,10 @@ describe("ConsumableTypeController", () => {
         name: "Ingredientes secos",
       };
 
-      const tipoConsumibleGuardado = { consumableTypeId: 1, ...datosTipoConsumible };
+      const tipoConsumibleGuardado = {
+        consumableTypeId: 1,
+        ...datosTipoConsumible,
+      };
 
       mockReq.body = datosTipoConsumible;
       ConsumableTypeSchema.parse.mockReturnValue(datosTipoConsumible);
@@ -66,7 +73,9 @@ describe("ConsumableTypeController", () => {
 
       await consumableTypeController.saveConsumableType(mockReq, mockRes);
 
-      expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(datosTipoConsumible);
+      expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(
+        datosTipoConsumible,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosTipoConsumible);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -179,7 +188,9 @@ describe("ConsumableTypeController", () => {
 
       await consumableTypeController.saveConsumableType(mockReq, mockRes);
 
-      expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(datosTipoConsumible);
+      expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(
+        datosTipoConsumible,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosTipoConsumible);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -188,7 +199,7 @@ describe("ConsumableTypeController", () => {
       });
       expect(console.error).toHaveBeenCalledWith(
         "Error al guardar el tipo de consumible:",
-        errorServidor
+        errorServidor,
       );
     });
 
@@ -256,7 +267,7 @@ describe("ConsumableTypeController", () => {
       });
       expect(console.error).toHaveBeenCalledWith(
         "Error al obtener los tipos de consumibles:",
-        new Error(mensajeError)
+        new Error(mensajeError),
       );
     });
 
@@ -294,7 +305,9 @@ describe("ConsumableTypeController", () => {
   describe("updateConsumableType", () => {
     it("debería estar definido", () => {
       expect(consumableTypeController.updateConsumableType).toBeDefined();
-      expect(typeof consumableTypeController.updateConsumableType).toBe("function");
+      expect(typeof consumableTypeController.updateConsumableType).toBe(
+        "function",
+      );
     });
 
     it("debería actualizar un tipo de consumible exitosamente", async () => {
@@ -305,7 +318,7 @@ describe("ConsumableTypeController", () => {
 
       mockReq.params = { id: "1" };
       mockReq.body = updateData;
-      
+
       // Mock the schemas
       consumableTypeIdSchema.parse.mockReturnValue({ id: 1 });
       updateConsumableTypeSchema.parse.mockReturnValue(updateData);
@@ -317,10 +330,11 @@ describe("ConsumableTypeController", () => {
       expect(updateConsumableTypeSchema.parse).toHaveBeenCalledWith(updateData);
       expect(mockService.update).toHaveBeenCalledWith({
         consumableTypeId: 1,
-        ...updateData
+        ...updateData,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Tipo de consumible actualizado correctamente",
         data: updatedConsumableType,
       });
@@ -330,14 +344,16 @@ describe("ConsumableTypeController", () => {
   describe("deleteConsumableType", () => {
     it("debería estar definido", () => {
       expect(consumableTypeController.deleteConsumableType).toBeDefined();
-      expect(typeof consumableTypeController.deleteConsumableType).toBe("function");
+      expect(typeof consumableTypeController.deleteConsumableType).toBe(
+        "function",
+      );
     });
 
     it("debería eliminar un tipo de consumible exitosamente", async () => {
       const deletedConsumableType = { consumableTypeId: 1, deleted: true };
 
       mockReq.params = { id: "1" };
-      
+
       // Mock the schema
       consumableTypeIdSchema.parse.mockReturnValue({ id: 1 });
       mockService.delete.mockResolvedValue(deletedConsumableType);
@@ -348,6 +364,7 @@ describe("ConsumableTypeController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Tipo de consumible eliminado correctamente",
         data: deletedConsumableType,
       });
@@ -362,7 +379,7 @@ describe("ConsumableTypeController", () => {
       };
 
       mockReq.params = { id: "1" };
-      
+
       // Mock the schema
       consumableTypeIdSchema.parse.mockReturnValue({ id: 1 });
       mockService.getById.mockResolvedValue(tipoConsumible);
@@ -373,7 +390,9 @@ describe("ConsumableTypeController", () => {
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: tipoConsumible,
+        status: "success",
+        message: "Tipo de consumible obtenido correctamente",
+        data: tipoConsumible,
       });
     });
 
@@ -390,14 +409,16 @@ describe("ConsumableTypeController", () => {
       };
 
       mockReq.params = { id: "invalid" };
-      
+
       consumableTypeIdSchema.parse.mockImplementation(() => {
         throw errorZod;
       });
 
       await consumableTypeController.getConsumableTypeById(mockReq, mockRes);
 
-      expect(consumableTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(consumableTypeIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.getById).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -410,7 +431,7 @@ describe("ConsumableTypeController", () => {
       const errorNotFound = new Error("Tipo de consumible no encontrado");
 
       mockReq.params = { id: "999" };
-      
+
       consumableTypeIdSchema.parse.mockReturnValue({ id: 999 });
       mockService.getById.mockRejectedValue(errorNotFound);
 
@@ -435,7 +456,9 @@ describe("ConsumableTypeController", () => {
         update: jest.fn(),
       } as any;
 
-      expect(() => consumableTypeController.setService(nuevoServicio)).not.toThrow();
+      expect(() =>
+        consumableTypeController.setService(nuevoServicio),
+      ).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
       // ejecutando una función que lo use
@@ -450,14 +473,14 @@ describe("ConsumableTypeController", () => {
     const tiposDeNombres = [
       "Ingredientes secos",
       "Ingredientes líquidos",
-      "Especias y condimentos", 
+      "Especias y condimentos",
       "Productos lácteos",
       "Endulzantes artificiales",
       "Conservantes naturales",
       "Aditivos alimentarios",
       "Materiales de empaque",
       "Insumos de limpieza",
-      "Utensilios desechables"
+      "Utensilios desechables",
     ];
 
     tiposDeNombres.forEach((nombreTipo) => {
@@ -466,7 +489,10 @@ describe("ConsumableTypeController", () => {
           name: nombreTipo,
         };
 
-        const tipoConsumibleGuardado = { consumableTypeId: 1, ...datosTipoConsumible };
+        const tipoConsumibleGuardado = {
+          consumableTypeId: 1,
+          ...datosTipoConsumible,
+        };
 
         mockReq.body = datosTipoConsumible;
         ConsumableTypeSchema.parse.mockReturnValue(datosTipoConsumible);
@@ -474,7 +500,9 @@ describe("ConsumableTypeController", () => {
 
         await consumableTypeController.saveConsumableType(mockReq, mockRes);
 
-        expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(datosTipoConsumible);
+        expect(ConsumableTypeSchema.parse).toHaveBeenCalledWith(
+          datosTipoConsumible,
+        );
         expect(mockService.save).toHaveBeenCalledWith(datosTipoConsumible);
         expect(mockRes.status).toHaveBeenCalledWith(201);
         expect(mockRes.send).toHaveBeenCalledWith({

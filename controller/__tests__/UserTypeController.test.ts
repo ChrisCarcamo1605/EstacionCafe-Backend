@@ -1,11 +1,21 @@
 import * as userTypeController from "../UserTypeController";
 import { IService } from "../../core/interfaces/IService";
-import { createUserTypeSchema, updateUserTypeSchema, userTypeIdSchema } from "../../application/validations/UserTypeValidations";
+import {
+  createUserTypeSchema,
+  updateUserTypeSchema,
+  userTypeIdSchema,
+} from "../../application/validations/UserTypeValidations";
 
 jest.mock("../../application/validations/UserTypeValidations");
-const mockedCreateUserTypeSchema = createUserTypeSchema as jest.Mocked<typeof createUserTypeSchema>;
-const mockedUpdateUserTypeSchema = updateUserTypeSchema as jest.Mocked<typeof updateUserTypeSchema>;
-const mockedUserTypeIdSchema = userTypeIdSchema as jest.Mocked<typeof userTypeIdSchema>;
+const mockedCreateUserTypeSchema = createUserTypeSchema as jest.Mocked<
+  typeof createUserTypeSchema
+>;
+const mockedUpdateUserTypeSchema = updateUserTypeSchema as jest.Mocked<
+  typeof updateUserTypeSchema
+>;
+const mockedUserTypeIdSchema = userTypeIdSchema as jest.Mocked<
+  typeof userTypeIdSchema
+>;
 
 describe("UserTypeController", () => {
   let mockService: jest.Mocked<IService>;
@@ -66,9 +76,13 @@ describe("UserTypeController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: tiposUsuarioSimulados,
+        status: "success",
+        message: "Tipos de usuario obtenidos correctamente",
+        data: tiposUsuarioSimulados,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipos de usuario obtenidos correctamente",
+      );
     });
 
     it("debería manejar errores del servidor al obtener tipos de usuario", async () => {
@@ -84,7 +98,9 @@ describe("UserTypeController", () => {
         status: "error",
         message: `Error al obtener los tipos de usuario: ${errorServidor.message}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Tipos de usuario obtenidos correctamente",
+      );
     });
 
     it("debería retornar un array vacío cuando no hay tipos de usuario", async () => {
@@ -97,9 +113,13 @@ describe("UserTypeController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Tipos de usuario obtenidos correctamente",
+        data: tiposVacios,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipos de usuario obtenidos correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipos de usuario obtenidos correctamente",
+      );
     });
   });
 
@@ -121,9 +141,13 @@ describe("UserTypeController", () => {
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: tipoUsuario,
+        status: "success",
+        message: "Tipo de usuario obtenido correctamente",
+        data: tipoUsuario,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipo de usuario obtenido correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipo de usuario obtenido correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -145,14 +169,18 @@ describe("UserTypeController", () => {
 
       await userTypeController.getUserTypeById(mockReq, mockRes);
 
-      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.getById).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario obtenido correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Tipo de usuario obtenido correctamente",
+      );
     });
 
     it("debería manejar error cuando el tipo de usuario no existe", async () => {
@@ -210,14 +238,19 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosTipoUsuario);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosTipoUsuario,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosTipoUsuario);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Tipo de usuario creado correctamente",
         data: tipoUsuarioGuardado,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipo de usuario creado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipo de usuario creado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre vacío", async () => {
@@ -244,7 +277,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -253,7 +288,9 @@ describe("UserTypeController", () => {
         campo: ["name"],
         error: "too_small",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario creado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Tipo de usuario creado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre muy largo", async () => {
@@ -281,7 +318,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -316,12 +355,15 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El nivel de permisos no puede ser mayor a 10",
+        message:
+          "Datos inválidos: El nivel de permisos no puede ser mayor a 10",
         campo: ["permissionLevel"],
         error: "too_big",
       });
@@ -351,7 +393,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -386,12 +430,15 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El nivel de permisos debe ser un número entero",
+        message:
+          "Datos inválidos: El nivel de permisos debe ser un número entero",
         campo: ["permissionLevel"],
         error: "invalid_type",
       });
@@ -411,15 +458,22 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosTipoUsuario);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosTipoUsuario,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosTipoUsuario);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al crear tipo de usuario:", errorServidor);
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario creado correctamente");
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al crear tipo de usuario:",
+        errorServidor,
+      );
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Tipo de usuario creado correctamente",
+      );
     });
 
     it("debería manejar nombres con espacios (trim)", async () => {
@@ -444,7 +498,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosConEspacios);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosConEspacios,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -471,17 +527,22 @@ describe("UserTypeController", () => {
       await userTypeController.updateUserType(mockReq, mockRes);
 
       expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect(mockService.update).toHaveBeenCalledWith({
         userTypeId: 1,
         ...datosActualizacion,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Tipo de usuario actualizado correctamente",
         data: tipoUsuarioActualizado,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipo de usuario actualizado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipo de usuario actualizado correctamente",
+      );
     });
 
     it("debería actualizar solo el nombre", async () => {
@@ -556,7 +617,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.updateUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockedUpdateUserTypeSchema.parse).not.toHaveBeenCalled();
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -594,7 +657,9 @@ describe("UserTypeController", () => {
       await userTypeController.updateUserType(mockReq, mockRes);
 
       expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedUpdateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -646,7 +711,10 @@ describe("UserTypeController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al actualizar tipo de usuario:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al actualizar tipo de usuario:",
+        errorServidor,
+      );
     });
   });
 
@@ -668,10 +736,13 @@ describe("UserTypeController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Tipo de usuario eliminado correctamente",
         data: tipoUsuarioEliminado,
       });
-      expect(console.log).toHaveBeenCalledWith("Tipo de usuario eliminado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Tipo de usuario eliminado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -693,14 +764,18 @@ describe("UserTypeController", () => {
 
       await userTypeController.deleteUserType(mockReq, mockRes);
 
-      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.delete).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Tipo de usuario eliminado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Tipo de usuario eliminado correctamente",
+      );
     });
 
     it("debería manejar error cuando el tipo de usuario no existe", async () => {
@@ -737,7 +812,10 @@ describe("UserTypeController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al eliminar tipo de usuario:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al eliminar tipo de usuario:",
+        errorServidor,
+      );
     });
   });
 
@@ -786,7 +864,9 @@ describe("UserTypeController", () => {
 
         await userTypeController.saveUserType(mockReq, mockRes);
 
-        expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(tipoUsuario);
+        expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+          tipoUsuario,
+        );
         expect(mockService.save).toHaveBeenCalledWith(tipoUsuario);
         expect(mockRes.status).toHaveBeenCalledWith(201);
       });
@@ -811,7 +891,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosMinimos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosMinimos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosMinimos);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -834,7 +916,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosMaximos);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosMaximos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosMaximos);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -856,7 +940,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosLimiteInferior);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosLimiteInferior,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimiteInferior);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -878,7 +964,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.saveUserType(mockReq, mockRes);
 
-      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(datosLimiteSuperior);
+      expect(mockedCreateUserTypeSchema.parse).toHaveBeenCalledWith(
+        datosLimiteSuperior,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimiteSuperior);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -917,7 +1005,9 @@ describe("UserTypeController", () => {
 
       await userTypeController.getUserTypeById(mockReq, mockRes);
 
-      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({ id: idGrande.toString() });
+      expect(mockedUserTypeIdSchema.parse).toHaveBeenCalledWith({
+        id: idGrande.toString(),
+      });
       expect(mockService.getById).toHaveBeenCalledWith(idGrande);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });

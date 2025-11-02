@@ -2,7 +2,7 @@ import { Repository } from "typeorm";
 import { User } from "../../core/entities/User";
 import { UserType } from "../../core/entities/UserType";
 import { IService } from "../../core/interfaces/IService";
-import { SaveUserDTO } from "../DTOs/UserDTO";
+import { loginUser, SaveUserDTO } from "../DTOs/UserDTO";
 import * as bcrypt from "bcrypt";
 import { IUserService } from "../../core/interfaces/IUserService";
 
@@ -107,11 +107,24 @@ export class UserService implements IUserService {
     return await bcrypt.hash(password, saltRounds);
   }
 
-  async getPassword(username: string): Promise<string | null> {
-    const user = await this.userRepository.findOne({
-      select: { password: true },
-      where: { username},
-    });
-    return user?.password || null;
+  async getPasswordAndRole(username: string): Promise<loginUser | null> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.userType", "userType")
+      .select(["user.username", "user.password", "userType.name"])
+      .where("user.username = :username", { username })
+      .getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    const data: loginUser = {
+      username: user.username,
+      role: user.userType!.name,
+      password: user.password,
+    };
+
+    return data;
   }
 }

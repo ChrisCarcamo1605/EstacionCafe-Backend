@@ -1,15 +1,21 @@
 import * as purchaseController from "../PurchaseController";
 import { IService } from "../../core/interfaces/IService";
-import { 
-  createPurchaseSchema, 
-  updatePurchaseSchema, 
-  purchaseIdSchema 
+import {
+  createPurchaseSchema,
+  updatePurchaseSchema,
+  purchaseIdSchema,
 } from "../../application/validations/PurchaseValidations";
 
 jest.mock("../../application/validations/PurchaseValidations");
-const mockedCreatePurchaseSchema = createPurchaseSchema as jest.Mocked<typeof createPurchaseSchema>;
-const mockedUpdatePurchaseSchema = updatePurchaseSchema as jest.Mocked<typeof updatePurchaseSchema>;
-const mockedPurchaseIdSchema = purchaseIdSchema as jest.Mocked<typeof purchaseIdSchema>;
+const mockedCreatePurchaseSchema = createPurchaseSchema as jest.Mocked<
+  typeof createPurchaseSchema
+>;
+const mockedUpdatePurchaseSchema = updatePurchaseSchema as jest.Mocked<
+  typeof updatePurchaseSchema
+>;
+const mockedPurchaseIdSchema = purchaseIdSchema as jest.Mocked<
+  typeof purchaseIdSchema
+>;
 
 describe("PurchaseController", () => {
   let mockService: jest.Mocked<IService>;
@@ -61,7 +67,7 @@ describe("PurchaseController", () => {
           date: new Date("2023-01-15"),
           cashRegister: 1,
           supplierId: 1,
-          total: 150.50,
+          total: 150.5,
         },
         {
           purchaseId: 2,
@@ -78,7 +84,11 @@ describe("PurchaseController", () => {
 
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: comprasSimuladas });
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Compras obtenidas correctamente",
+        data: comprasSimuladas,
+      });
     });
 
     it("debería manejar errores al obtener las compras", async () => {
@@ -98,13 +108,15 @@ describe("PurchaseController", () => {
 
   describe("getPurchaseById", () => {
     it("debería retornar la compra por ID exitosamente", async () => {
-      const compraSimulada = [{
-        purchaseId: 1,
-        date: new Date("2023-01-15"),
-        cashRegister: 1,
-        supplierId: 1,
-        total: 150.50,
-      }];
+      const compraSimulada = [
+        {
+          purchaseId: 1,
+          date: new Date("2023-01-15"),
+          cashRegister: 1,
+          supplierId: 1,
+          total: 150.5,
+        },
+      ];
       const idParams = { id: "1" };
 
       mockReq.params = idParams;
@@ -116,7 +128,11 @@ describe("PurchaseController", () => {
       expect(mockedPurchaseIdSchema.parse).toHaveBeenCalledWith(idParams);
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: compraSimulada });
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Compra obtenida correctamente",
+        data: compraSimulada,
+      });
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -196,12 +212,12 @@ describe("PurchaseController", () => {
         date: new Date("2023-01-15"),
         cashRegister: 1,
         supplierId: 1,
-        total: 150.50,
+        total: 150.5,
       };
 
-      const compraGuardada = { 
-        purchaseId: 1, 
-        ...datosValidados 
+      const compraGuardada = {
+        purchaseId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosCompra;
@@ -210,10 +226,13 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosCompra);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosCompra,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Compra creada correctamente",
         data: compraGuardada,
       });
@@ -244,7 +263,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -280,12 +301,15 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: La caja registradora debe ser un número positivo",
+        message:
+          "Datos inválidos: La caja registradora debe ser un número positivo",
         campo: ["cashRegister"],
         error: "custom",
       });
@@ -316,7 +340,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -352,7 +378,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -375,7 +403,7 @@ describe("PurchaseController", () => {
         date: new Date("2023-01-15"),
         cashRegister: 1,
         supplierId: 1,
-        total: 150.50,
+        total: 150.5,
       };
 
       const errorServidor = new Error("Error interno del servidor");
@@ -386,7 +414,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosCompra);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosCompra,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -406,14 +436,14 @@ describe("PurchaseController", () => {
 
       const datosValidados = {
         date: new Date("2023-01-20"),
-        total: 200.00,
+        total: 200.0,
       };
 
-      const compraActualizada = { 
-        purchaseId: 1, 
+      const compraActualizada = {
+        purchaseId: 1,
         cashRegister: 1,
         supplierId: 1,
-        ...datosValidados 
+        ...datosValidados,
       };
 
       mockReq.params = idParams;
@@ -425,13 +455,16 @@ describe("PurchaseController", () => {
       await purchaseController.updatePurchase(mockReq, mockRes);
 
       expect(mockedPurchaseIdSchema.parse).toHaveBeenCalledWith(idParams);
-      expect(mockedUpdatePurchaseSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedUpdatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect((mockService as any).update).toHaveBeenCalledWith({
         purchaseId: 1,
         ...datosValidados,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Compra actualizada correctamente",
         data: compraActualizada,
       });
@@ -473,7 +506,7 @@ describe("PurchaseController", () => {
     it("debería manejar el caso cuando la compra no es encontrada", async () => {
       const idParams = { id: "999" };
       const datosActualizacion = { total: "200.00" };
-      const datosValidados = { total: 200.00 };
+      const datosValidados = { total: 200.0 };
       const errorNoEncontrada = new Error("Compra no encontrada");
 
       mockReq.params = idParams;
@@ -494,7 +527,7 @@ describe("PurchaseController", () => {
     it("debería manejar errores generales del servidor", async () => {
       const idParams = { id: "1" };
       const datosActualizacion = { total: "200.00" };
-      const datosValidados = { total: 200.00 };
+      const datosValidados = { total: 200.0 };
       const errorServidor = new Error("Error interno del servidor");
 
       mockReq.params = idParams;
@@ -528,6 +561,7 @@ describe("PurchaseController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Compra eliminada correctamente",
         data: resultadoEliminacion,
       });
@@ -589,7 +623,7 @@ describe("PurchaseController", () => {
           date: new Date("2023-01-15"),
           cashRegister: 1,
           supplierId: 1,
-          total: 150.50,
+          total: 150.5,
         },
         {
           purchaseId: 3,
@@ -607,7 +641,11 @@ describe("PurchaseController", () => {
 
       expect((mockService as any).getBySupplier).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: comprasDelProveedor });
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Compras del proveedor obtenidas correctamente",
+        data: comprasDelProveedor,
+      });
     });
 
     it("debería manejar errores al obtener las compras del proveedor", async () => {
@@ -615,7 +653,9 @@ describe("PurchaseController", () => {
       const mensajeError = "Error de conexión a la base de datos";
 
       mockReq.params = { supplierId };
-      (mockService as any).getBySupplier.mockRejectedValue(new Error(mensajeError));
+      (mockService as any).getBySupplier.mockRejectedValue(
+        new Error(mensajeError),
+      );
 
       await purchaseController.getPurchasesBySupplier(mockReq, mockRes);
 
@@ -638,7 +678,7 @@ describe("PurchaseController", () => {
           date: new Date("2023-01-15"),
           cashRegister: 1,
           supplierId: 1,
-          total: 150.50,
+          total: 150.5,
         },
         {
           purchaseId: 2,
@@ -656,10 +696,14 @@ describe("PurchaseController", () => {
 
       expect((mockService as any).getByDateRange).toHaveBeenCalledWith(
         new Date(startDate),
-        new Date(endDate)
+        new Date(endDate),
       );
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: comprasPorFecha });
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Compras por rango de fecha obtenidas correctamente",
+        data: comprasPorFecha,
+      });
     });
 
     it("debería manejar el caso cuando faltan parámetros de fecha", async () => {
@@ -694,13 +738,15 @@ describe("PurchaseController", () => {
       const mensajeError = "Error de conexión a la base de datos";
 
       mockReq.query = { startDate, endDate };
-      (mockService as any).getByDateRange.mockRejectedValue(new Error(mensajeError));
+      (mockService as any).getByDateRange.mockRejectedValue(
+        new Error(mensajeError),
+      );
 
       await purchaseController.getPurchasesByDateRange(mockReq, mockRes);
 
       expect((mockService as any).getByDateRange).toHaveBeenCalledWith(
         new Date(startDate),
-        new Date(endDate)
+        new Date(endDate),
       );
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -741,12 +787,12 @@ describe("PurchaseController", () => {
         date: new Date("2023-01-15"),
         cashRegister: 1,
         supplierId: 1,
-        total: 150.50,
+        total: 150.5,
       };
 
-      const compraGuardada = { 
-        purchaseId: 1, 
-        ...datosCompra 
+      const compraGuardada = {
+        purchaseId: 1,
+        ...datosCompra,
       };
 
       mockReq.body = datosCompra;
@@ -755,7 +801,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosCompra);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosCompra,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosCompra);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -764,20 +812,20 @@ describe("PurchaseController", () => {
       const datosCompra = {
         date: "2023-01-15",
         cashRegister: 1, // number
-        supplierId: 2,  // number
-        total: 150.50,  // number
+        supplierId: 2, // number
+        total: 150.5, // number
       };
 
       const datosValidados = {
         date: new Date("2023-01-15"),
         cashRegister: 1,
         supplierId: 2,
-        total: 150.50,
+        total: 150.5,
       };
 
-      const compraGuardada = { 
-        purchaseId: 1, 
-        ...datosValidados 
+      const compraGuardada = {
+        purchaseId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosCompra;
@@ -786,7 +834,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosCompra);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosCompra,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -806,9 +856,9 @@ describe("PurchaseController", () => {
         total: 150.99,
       };
 
-      const compraGuardada = { 
-        purchaseId: 1, 
-        ...datosValidados 
+      const compraGuardada = {
+        purchaseId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosCompra;
@@ -817,7 +867,9 @@ describe("PurchaseController", () => {
 
       await purchaseController.createPurchase(mockReq, mockRes);
 
-      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(datosCompra);
+      expect(mockedCreatePurchaseSchema.parse).toHaveBeenCalledWith(
+        datosCompra,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });

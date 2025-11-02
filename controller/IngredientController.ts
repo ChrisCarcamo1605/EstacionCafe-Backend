@@ -5,7 +5,10 @@ import {
   updateIngredientSchema,
   ingredientIdSchema,
 } from "../application/validations/IngredientValidations";
-import { SaveIngredientDTO, UpdateIngredientDTO } from "../application/DTOs/IngredientDTOs";
+import {
+  SaveIngredientDTO,
+  UpdateIngredientDTO,
+} from "../application/DTOs/IngredientDTOs";
 
 let service: IService | null = null;
 
@@ -15,7 +18,9 @@ export const setService = (ingredientService: IService) => {
 
 const getService = () => {
   if (!service) {
-    throw new Error("Ingredient service no está inicializado. Llama a setService primero.");
+    throw new Error(
+      "Ingredient service no está inicializado. Llama a setService primero.",
+    );
   }
   return service;
 };
@@ -46,7 +51,11 @@ export const getIngredientById = async (req: any, res: any) => {
     const data = await ingredientService.getById(id);
     console.log("Ingrediente obtenido correctamente");
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Ingrediente obtenido correctamente",
+      data: data,
+    });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).send({
@@ -113,6 +122,7 @@ export const updateIngredient = async (req: any, res: any) => {
 
     console.log("Ingrediente actualizado correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Ingrediente actualizado correctamente",
       data: result,
     });
@@ -148,6 +158,7 @@ export const deleteIngredient = async (req: any, res: any) => {
 
     console.log("Ingrediente eliminado correctamente");
     return res.status(200).send({
+      status: "success",
       message: "Ingrediente eliminado correctamente",
       data: result,
     });
@@ -181,7 +192,11 @@ export const getIngredientsByProduct = async (req: any, res: any) => {
 
     const data = await ingredientService.getByProduct(parseInt(productId));
 
-    return res.status(200).send({ body: data });
+    return res.status(200).send({
+      status: "success",
+      message: "Ingredientes del producto obtenidos correctamente",
+      data: data,
+    });
   } catch (error: any) {
     return res.status(500).send({
       status: "error",

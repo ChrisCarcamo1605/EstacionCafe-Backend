@@ -1,8 +1,12 @@
-import { AppDataSource } from "../Connection";
+// Cargar variables de entorno PRIMERO
+require("dotenv").config({ path: "./DB_CREDENTIALS.env" });
+
+import { getDataSource } from "../Connection";
 import { DatabaseSeeder } from "./DatabaseSeeder";
 
 async function seedDatabase() {
   try {
+    const AppDataSource = await getDataSource();
     // Inicializar conexión
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
@@ -21,6 +25,7 @@ async function seedDatabase() {
 
 async function revertSeeds() {
   try {
+    const AppDataSource = await getDataSource();
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }

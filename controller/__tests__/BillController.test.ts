@@ -1,10 +1,18 @@
 import * as billController from "../BillController";
 import { IService } from "../../core/interfaces/IService";
-import { createBillSchema, updateBillSchema, billIdSchema } from "../../application/validations/BillValidations";
+import {
+  createBillSchema,
+  updateBillSchema,
+  billIdSchema,
+} from "../../application/validations/BillValidations";
 
 jest.mock("../../application/validations/BillValidations");
-const mockedCreateBillSchema = createBillSchema as jest.Mocked<typeof createBillSchema>;
-const mockedUpdateBillSchema = updateBillSchema as jest.Mocked<typeof updateBillSchema>;
+const mockedCreateBillSchema = createBillSchema as jest.Mocked<
+  typeof createBillSchema
+>;
+const mockedUpdateBillSchema = updateBillSchema as jest.Mocked<
+  typeof updateBillSchema
+>;
 const mockedBillIdSchema = billIdSchema as jest.Mocked<typeof billIdSchema>;
 
 describe("BillController", () => {
@@ -62,9 +70,13 @@ describe("BillController", () => {
 
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: facturasSimuladas });
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Facturas obtenidas correctamente",
+        data: facturasSimuladas,
+      });
       expect(console.log).toHaveBeenCalledWith(
-        "Facturas obtenidas correctamente"
+        "Facturas obtenidas correctamente",
       );
     });
 
@@ -92,9 +104,13 @@ describe("BillController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Facturas obtenidas correctamente",
+        data: [],
       });
-      expect(console.log).toHaveBeenCalledWith("Facturas obtenidas correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Facturas obtenidas correctamente",
+      );
     });
   });
 
@@ -117,9 +133,13 @@ describe("BillController", () => {
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: factura,
+        status: "success",
+        message: "Factura obtenida correctamente",
+        data: factura,
       });
-      expect(console.log).toHaveBeenCalledWith("Factura obtenida correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Factura obtenida correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -148,7 +168,9 @@ describe("BillController", () => {
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Factura obtenida correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Factura obtenida correctamente",
+      );
     });
 
     it("debería manejar error cuando la factura no existe", async () => {
@@ -209,6 +231,7 @@ describe("BillController", () => {
       expect(mockService.save).toHaveBeenCalledWith(datosFactura);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Factura creada correctamente",
         data: facturaGuardada,
       });
@@ -275,7 +298,7 @@ describe("BillController", () => {
       });
       expect(console.error).toHaveBeenCalledWith(
         "Error al crear factura:",
-        errorServidor
+        errorServidor,
       );
     });
 
@@ -325,17 +348,22 @@ describe("BillController", () => {
       await billController.updateBill(mockReq, mockRes);
 
       expect(mockedBillIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateBillSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedUpdateBillSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect(mockService.update).toHaveBeenCalledWith({
         billId: 1,
         ...datosActualizacion,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Factura actualizada correctamente",
         data: facturaActualizada,
       });
-      expect(console.log).toHaveBeenCalledWith("Factura actualizada correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Factura actualizada correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -411,7 +439,10 @@ describe("BillController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al actualizar factura:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al actualizar factura:",
+        errorServidor,
+      );
     });
   });
 
@@ -433,10 +464,13 @@ describe("BillController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Factura eliminada correctamente",
         data: facturaEliminada,
       });
-      expect(console.log).toHaveBeenCalledWith("Factura eliminada correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Factura eliminada correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -465,7 +499,9 @@ describe("BillController", () => {
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Factura eliminada correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Factura eliminada correctamente",
+      );
     });
 
     it("debería manejar error cuando la factura no existe", async () => {
@@ -502,15 +538,28 @@ describe("BillController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al eliminar factura:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al eliminar factura:",
+        errorServidor,
+      );
     });
   });
 
   describe("getBillsByDateRange", () => {
     it("debería obtener facturas por rango de fechas exitosamente", async () => {
       const facturas = [
-        { billId: 1, customer: "Cliente 1", total: 100, date: new Date("2023-01-01") },
-        { billId: 2, customer: "Cliente 2", total: 200, date: new Date("2023-01-02") },
+        {
+          billId: 1,
+          customer: "Cliente 1",
+          total: 100,
+          date: new Date("2023-01-01"),
+        },
+        {
+          billId: 2,
+          customer: "Cliente 2",
+          total: 200,
+          date: new Date("2023-01-02"),
+        },
       ];
 
       mockReq.query = { startDate: "2023-01-01", endDate: "2023-01-31" };
@@ -520,11 +569,13 @@ describe("BillController", () => {
 
       expect((mockService as any).getByDateRange).toHaveBeenCalledWith(
         new Date("2023-01-01"),
-        new Date("2023-01-31")
+        new Date("2023-01-31"),
       );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: facturas,
+        status: "success",
+        message: "Facturas obtenidas por rango de fecha correctamente",
+        data: facturas,
       });
     });
 
@@ -551,7 +602,7 @@ describe("BillController", () => {
 
       expect((mockService as any).getByDateRange).toHaveBeenCalledWith(
         new Date("2023-01-01"),
-        new Date("2023-01-31")
+        new Date("2023-01-31"),
       );
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -573,10 +624,14 @@ describe("BillController", () => {
 
       await billController.getBillsByCustomer(mockReq, mockRes);
 
-      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith("Juan Pérez");
+      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith(
+        "Juan Pérez",
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: facturas,
+        status: "success",
+        message: "Facturas del cliente obtenidas correctamente",
+        data: facturas,
       });
     });
 
@@ -588,7 +643,9 @@ describe("BillController", () => {
 
       await billController.getBillsByCustomer(mockReq, mockRes);
 
-      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith("Juan Pérez");
+      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith(
+        "Juan Pérez",
+      );
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
@@ -604,10 +661,14 @@ describe("BillController", () => {
 
       await billController.getBillsByCustomer(mockReq, mockRes);
 
-      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith("Cliente Sin Facturas");
+      expect((mockService as any).getBillsByCustomer).toHaveBeenCalledWith(
+        "Cliente Sin Facturas",
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Facturas del cliente obtenidas correctamente",
+        data: [],
       });
     });
   });

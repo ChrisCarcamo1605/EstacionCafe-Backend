@@ -1,6 +1,12 @@
 export interface loginUser{
     username:string;
     password:string;
+    role:string;
+}
+
+export interface payloadUser{
+    username:string;
+    role:string;
 }
 
 

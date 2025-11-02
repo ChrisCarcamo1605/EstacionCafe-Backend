@@ -17,6 +17,9 @@ import { setService as setSupplierService } from "../controller/SupplierControll
 import { setService as setPurchaseService } from "../controller/PurchaseController";
 import { setService as setCashRegisterService } from "../controller/CashRegisterController";
 
+//Initialize Middleware
+import { initializeAuthMiddleware } from "../infrastructure/security/authMiddleware";
+
 //Services
 import { BillService } from "../application/services/BillService";
 import { ProductService } from "../application/services/ProductService";
@@ -102,6 +105,9 @@ export const initializeDependencies = async () => {
     setSupplierService(supplierService);
     setPurchaseService(purchaseService);
     setCashRegisterService(cashRegisterService);
+    
+    // Inicializar middleware con el servicio de tokens
+    initializeAuthMiddleware(tokenService);
 
     console.log("Dependencias inicializadas correctamente");
   } catch (error: any) {

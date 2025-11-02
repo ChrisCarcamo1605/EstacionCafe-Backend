@@ -1,5 +1,5 @@
 import * as jwt from "jsonwebtoken";
-import { loginUser } from "../../application/DTOs/UserDTO";
+import { loginUser, payloadUser } from "../../application/DTOs/UserDTO";
 import { ITokenService } from "../../core/interfaces/ITokenService";
 import { IService } from "../../core/interfaces/IService";
 import { IUserService } from "../../core/interfaces/IUserService";
@@ -14,49 +14,52 @@ export class TokenService implements ITokenService {
 
   generateToken = async (payload: loginUser): Promise<string | null> => {
     try {
-      const dbPassword = await this.userService.getPassword(payload.username);
-
-      const isMath: boolean = await bcrypt.compare(
-        payload.password,
-        dbPassword!
+      const dbData = await this.userService.getPasswordAndRole(
+        payload.username,
       );
 
-      if (!isMath) {
+      if (!dbData) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      const isMatch: boolean = await bcrypt.compare(
+        payload.password,
+        dbData.password,
+      );
+
+      if (!isMatch) {
         console.log("Las contraseñas no coincidieron");
         throw error("Contraseña o usarname incorrecto");
       }
-      console.log("Las contraseñas SI coincidieron");
 
       return jwt.sign(
         {
-          email: payload.username,
+          username: payload.username,
+          role: dbData?.role,
           timestamp: Date.now(),
         },
         this.secret,
         {
           expiresIn: "1h",
-        }
+        },
       );
     } catch (error: any) {
-      return null;
+      throw new Error(error.message);
     }
   };
 
-  verifyToken = async (token: string): Promise<loginUser | null> => {
+  verifyToken = async (token: string): Promise<payloadUser | null> => {
     try {
-      const decodedPayload = jwt.verify(token, this.secret) as loginUser;
-      console.log("\n--- Token Verificado Exitosamente ---");
+      const decodedPayload = jwt.verify(token, this.secret) as payloadUser;
       return decodedPayload;
     } catch (error: any) {
-      console.log("\n--- Error de Verificación del Token ---");
-
       if (error instanceof jwt.TokenExpiredError) {
         console.error("Error: El token ha expirado.");
         throw new Error("Token expired");
       } else {
         console.error(
           "Error: El token no es válido o ha sido alterado.",
-          error.message
+          error.message,
         );
         throw new Error("Invalid token");
       }

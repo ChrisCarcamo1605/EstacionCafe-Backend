@@ -1,5 +1,6 @@
+import { loginUser, payloadUser } from "../../application/DTOs/UserDTO";
 import { IService } from "./IService";
 
 export interface IUserService extends IService{
-    getPassword(username:string):Promise<string | null>;
+    getPasswordAndRole(username:string):Promise<loginUser | null>;
 }

@@ -7,9 +7,12 @@ import {
     deleteSupplier,
     getActiveSuppliers
 } from '../../controller/SupplierController';
+import { verifyToken } from '../../infrastructure/security/authMiddleware';
+import { authorize } from '../../infrastructure/security/rbacMiddleware';
 
 export const supplierRouter = Router();
 
+supplierRouter.all('/suppliers', verifyToken, authorize(['admin']))
 supplierRouter.get('/suppliers', getSuppliers);
 supplierRouter.get('/suppliers/active', getActiveSuppliers);
 supplierRouter.get('/suppliers/:id', getSupplierById);

@@ -1,7 +1,4 @@
-import { ca } from "zod/v4/locales";
-import { BillDetailsSchema } from "../application/validations/BillDetailsValidations";
 import { IService } from "../core/interfaces/IService";
-import { UpdateProductDTO } from "../application/DTOs/ProductDTO";
 
 let service: IService;
 export const setService = (detailsService: IService) => {
@@ -54,7 +51,7 @@ export const getDetails = async (req: any, res: any) => {
     return res.status(500).send({
       status: "error",
       message: "Hubo un error en el servidor",
-      errors: error.error,
+      errors: error.error || error,
     });
   }
 };
@@ -62,10 +59,10 @@ export const getDetails = async (req: any, res: any) => {
 export const deleteDetail = async (req: any, res: any) => {
   try {
     const { id } = req.params;
-    const result = await service.delete(id);
+    await service.delete(id);
     console.log("Detalle eliminado correctamente");
     return res.status(202).send({
-      status: "sucess",
+      status: "success",
       message: "Detalle eliminado correctamente",
     });
   } catch (error: any) {
