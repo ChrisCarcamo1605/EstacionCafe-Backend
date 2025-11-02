@@ -8,9 +8,11 @@ import {
     getActiveCashRegisters,
     getCashRegisterByNumber
 } from '../../controller/CashRegisterController';
+import { verifyToken } from '../../infrastructure/security/authMiddleware';
+import { authorize } from '../../infrastructure/security/rbacMiddleware';
 
 export const cashRegisterRouter = Router();
-
+cashRegisterRouter.all('/cash-registers',verifyToken,authorize(['cajero','admin']))
 cashRegisterRouter.get('/cash-registers', getCashRegisters);
 cashRegisterRouter.get('/cash-registers/active', getActiveCashRegisters);
 cashRegisterRouter.get('/cash-registers/number/:number', getCashRegisterByNumber);

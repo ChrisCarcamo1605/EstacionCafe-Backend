@@ -1,25 +1,21 @@
+//Las variables de entorno ya están cargadas en main.ts
 import { DataSource } from "typeorm";
-import { Bill } from "../../core/entities/Bill";
-import { Product } from "../../core/entities/Producto";
-import { BillDetails } from "../../core/entities/BillDetails";
-import { User } from "../../core/entities/User";
-import { UserType } from "../../core/entities/UserType";
-import { Consumable } from "../../core/entities/Consumable";
-import { ConsumableType } from "../../core/entities/ConsumableType";
-import { Supplier } from "../../core/entities/Supplier";
-import { Purchase } from "../../core/entities/Purchase";
-import { Ingredient } from "../../core/entities/Ingredient";
-import { historyLog } from "../../core/entities/HistoryLog";
-import { CashRegister } from "../../core/entities/CashRegister";
 import { join } from "path";
+
+
+const db_host = process.env.DB_HOST;
+const db_port = parseInt(process.env.DB_PORT || "5555");
+const db_username = process.env.DB_USERNAME;
+const db_password = process.env.DB_PASSWORD;
+const db_name = process.env.DB_NAME;
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
-  port: 5555,
-  username: "admin",
-  password: "estacionPass2025",
-  database: "estacioncafedb",
+  host: db_host,
+  port: db_port,
+  username: db_username,
+  password: db_password,
+  database: db_name,
   synchronize: true,
   logging: false,
   entities: [join(__dirname,'../../core/entities/*{.ts,.js}')

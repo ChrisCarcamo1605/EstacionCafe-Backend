@@ -27,7 +27,7 @@ export class BillService implements IService {
   async save(body: SaveBillDTO): Promise<any> {
     const data: SaveBillDTO = body;
     const bill: Bill = new Bill();
-    bill.cashRegisterId = data.cashRegister;
+    bill.cashRegisterId =  data.cashRegister;
     bill.total = data.total;
     bill.customer = data.customer;
     bill.date = data.date;

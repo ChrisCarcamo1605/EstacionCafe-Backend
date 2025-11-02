@@ -7,9 +7,12 @@ import {
     deleteIngredient,
     getIngredientsByProduct
 } from "../../controller/IngredientController";
+import { verifyToken } from "../../infrastructure/security/authMiddleware";
+import { authorize } from "../../infrastructure/security/rbacMiddleware";
 
 export const ingredientRouter = Router();
 
+ingredientRouter.all("/ingredient",verifyToken,authorize(['all']))
 ingredientRouter.get("/ingredient", getIngredients);
 ingredientRouter.get("/ingredient/product/:productId", getIngredientsByProduct);
 ingredientRouter.get("/ingredient/:id", getIngredientById);

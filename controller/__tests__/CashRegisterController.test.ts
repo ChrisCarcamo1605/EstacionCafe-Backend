@@ -1,11 +1,21 @@
 import * as cashRegisterController from "../CashRegisterController";
 import { IService } from "../../core/interfaces/IService";
-import { createCashRegisterSchema, updateCashRegisterSchema, cashRegisterIdSchema } from "../../application/validations/CashRegisterValidations";
+import {
+  createCashRegisterSchema,
+  updateCashRegisterSchema,
+  cashRegisterIdSchema,
+} from "../../application/validations/CashRegisterValidations";
 
 jest.mock("../../application/validations/CashRegisterValidations");
-const mockedCreateCashRegisterSchema = createCashRegisterSchema as jest.Mocked<typeof createCashRegisterSchema>;
-const mockedUpdateCashRegisterSchema = updateCashRegisterSchema as jest.Mocked<typeof updateCashRegisterSchema>;
-const mockedCashRegisterIdSchema = cashRegisterIdSchema as jest.Mocked<typeof cashRegisterIdSchema>;
+const mockedCreateCashRegisterSchema = createCashRegisterSchema as jest.Mocked<
+  typeof createCashRegisterSchema
+>;
+const mockedUpdateCashRegisterSchema = updateCashRegisterSchema as jest.Mocked<
+  typeof updateCashRegisterSchema
+>;
+const mockedCashRegisterIdSchema = cashRegisterIdSchema as jest.Mocked<
+  typeof cashRegisterIdSchema
+>;
 
 describe("CashRegisterController", () => {
   let mockService: jest.Mocked<IService>;
@@ -70,9 +80,13 @@ describe("CashRegisterController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: cajasRegistradorasSimuladas,
+        status: "success",
+        message: "Cajas registradoras obtenidas correctamente",
+        data: cajasRegistradorasSimuladas,
       });
-      expect(console.log).toHaveBeenCalledWith("Cajas registradoras obtenidas correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Cajas registradoras obtenidas correctamente",
+      );
     });
 
     it("debería manejar errores del servidor al obtener cajas registradoras", async () => {
@@ -88,7 +102,9 @@ describe("CashRegisterController", () => {
         status: "error",
         message: `Error al obtener las cajas registradoras: ${errorServidor.message}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Cajas registradoras obtenidas correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Cajas registradoras obtenidas correctamente",
+      );
     });
 
     it("debería retornar un array vacío cuando no hay cajas registradoras", async () => {
@@ -101,9 +117,13 @@ describe("CashRegisterController", () => {
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Cajas registradoras obtenidas correctamente",
+        data: cajasVacias,
       });
-      expect(console.log).toHaveBeenCalledWith("Cajas registradoras obtenidas correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Cajas registradoras obtenidas correctamente",
+      );
     });
   });
 
@@ -121,13 +141,19 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: cajaRegistradora,
+        status: "success",
+        message: "Caja registradora obtenida correctamente",
+        data: cajaRegistradora,
       });
-      expect(console.log).toHaveBeenCalledWith("Caja registradora obtenida correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Caja registradora obtenida correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -149,14 +175,18 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.getById).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Caja registradora obtenida correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Caja registradora obtenida correctamente",
+      );
     });
 
     it("debería manejar error cuando la caja registradora no existe", async () => {
@@ -168,7 +198,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "999",
+      });
       expect(mockService.getById).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -186,7 +218,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -220,14 +254,19 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosCajaRegistradora);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosCajaRegistradora,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Caja registradora creada correctamente",
         data: cajaRegistradoraGuardada,
       });
-      expect(console.log).toHaveBeenCalledWith("Caja registradora creada correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Caja registradora creada correctamente",
+      );
     });
 
     it("debería guardar una caja registradora con active por defecto (true)", async () => {
@@ -252,7 +291,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosCajaRegistradora);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosCajaRegistradora,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -281,7 +322,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -290,7 +333,9 @@ describe("CashRegisterController", () => {
         campo: ["number"],
         error: "too_small",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Caja registradora creada correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Caja registradora creada correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para número muy largo", async () => {
@@ -318,7 +363,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -353,7 +400,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -388,7 +437,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -418,15 +469,22 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosCajaRegistradora);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosCajaRegistradora,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al crear caja registradora:", errorServidor);
-      expect(console.log).not.toHaveBeenCalledWith("Caja registradora creada correctamente");
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al crear caja registradora:",
+        errorServidor,
+      );
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Caja registradora creada correctamente",
+      );
     });
 
     it("debería manejar números con espacios (trim)", async () => {
@@ -452,7 +510,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosConEspacios);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosConEspacios,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -484,18 +544,25 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.updateCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateCashRegisterSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
+      expect(mockedUpdateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect(mockService.update).toHaveBeenCalledWith({
         cashRegisterId: 1,
         ...datosValidados,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Caja registradora actualizada correctamente",
         data: cajaRegistradoraActualizada,
       });
-      expect(console.log).toHaveBeenCalledWith("Caja registradora actualizada correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Caja registradora actualizada correctamente",
+      );
     });
 
     it("debería actualizar solo el número", async () => {
@@ -579,7 +646,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.updateCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockedUpdateCashRegisterSchema.parse).not.toHaveBeenCalled();
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -616,8 +685,12 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.updateCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
-      expect(mockedUpdateCashRegisterSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
+      expect(mockedUpdateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.update).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -669,7 +742,10 @@ describe("CashRegisterController", () => {
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al actualizar caja registradora:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al actualizar caja registradora:",
+        errorServidor,
+      );
     });
   });
 
@@ -687,14 +763,19 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.deleteCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Caja registradora eliminada correctamente",
         data: cajaRegistradoraEliminada,
       });
-      expect(console.log).toHaveBeenCalledWith("Caja registradora eliminada correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Caja registradora eliminada correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -716,14 +797,18 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.deleteCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "invalid" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "invalid",
+      });
       expect(mockService.delete).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Caja registradora eliminada correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Caja registradora eliminada correctamente",
+      );
     });
 
     it("debería manejar error cuando la caja registradora no existe", async () => {
@@ -735,7 +820,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.deleteCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "999" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "999",
+      });
       expect(mockService.delete).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -753,14 +840,19 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.deleteCashRegister(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "1" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "1",
+      });
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: `Error interno del servidor: ${errorServidor.message}`,
       });
-      expect(console.error).toHaveBeenCalledWith("Error al eliminar caja registradora:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al eliminar caja registradora:",
+        errorServidor,
+      );
     });
   });
 
@@ -779,47 +871,69 @@ describe("CashRegisterController", () => {
         },
       ];
 
-      (mockService as any).getActiveCashRegisters.mockResolvedValue(cajasActivas);
+      (mockService as any).getActiveCashRegisters.mockResolvedValue(
+        cajasActivas,
+      );
 
       await cashRegisterController.getActiveCashRegisters(mockReq, mockRes);
 
-      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(1);
+      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: cajasActivas,
+        status: "success",
+        message: "Cajas registradoras activas obtenidas correctamente",
+        data: cajasActivas,
       });
-      expect(console.log).toHaveBeenCalledWith("Cajas registradoras activas obtenidas correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Cajas registradoras activas obtenidas correctamente",
+      );
     });
 
     it("debería retornar array vacío cuando no hay cajas activas", async () => {
       const cajasVacias: any[] = [];
 
-      (mockService as any).getActiveCashRegisters.mockResolvedValue(cajasVacias);
+      (mockService as any).getActiveCashRegisters.mockResolvedValue(
+        cajasVacias,
+      );
 
       await cashRegisterController.getActiveCashRegisters(mockReq, mockRes);
 
-      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(1);
+      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: [],
+        status: "success",
+        message: "Cajas registradoras activas obtenidas correctamente",
+        data: cajasVacias,
       });
-      expect(console.log).toHaveBeenCalledWith("Cajas registradoras activas obtenidas correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Cajas registradoras activas obtenidas correctamente",
+      );
     });
 
     it("debería manejar errores del servidor al obtener cajas activas", async () => {
       const errorServidor = new Error("Error de conexión a la base de datos");
 
-      (mockService as any).getActiveCashRegisters.mockRejectedValue(errorServidor);
+      (mockService as any).getActiveCashRegisters.mockRejectedValue(
+        errorServidor,
+      );
 
       await cashRegisterController.getActiveCashRegisters(mockReq, mockRes);
 
-      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(1);
+      expect((mockService as any).getActiveCashRegisters).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: `Error al obtener las cajas registradoras activas: ${errorServidor.message}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Cajas registradoras activas obtenidas correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Cajas registradoras activas obtenidas correctamente",
+      );
     });
   });
 
@@ -839,7 +953,9 @@ describe("CashRegisterController", () => {
       expect((mockService as any).getByNumber).toHaveBeenCalledWith("5");
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: cajaRegistradora,
+        status: "success",
+        message: "Caja registradora por número obtenida correctamente",
+        data: cajaRegistradora,
       });
     });
 
@@ -858,7 +974,9 @@ describe("CashRegisterController", () => {
       expect((mockService as any).getByNumber).toHaveBeenCalledWith("10");
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
-        body: cajaRegistradora,
+        status: "success",
+        message: "Caja registradora por número obtenida correctamente",
+        data: cajaRegistradora,
       });
     });
 
@@ -910,7 +1028,9 @@ describe("CashRegisterController", () => {
       nuevoServicio.getActiveCashRegisters = jest.fn();
       nuevoServicio.getByNumber = jest.fn();
 
-      expect(() => cashRegisterController.setService(nuevoServicio)).not.toThrow();
+      expect(() =>
+        cashRegisterController.setService(nuevoServicio),
+      ).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
       nuevoServicio.getAll.mockResolvedValue([]);
@@ -978,7 +1098,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosMinimos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosMinimos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -1006,7 +1128,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosMaximos);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosMaximos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -1033,7 +1157,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.saveCashRegister(mockReq, mockRes);
 
-      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(datosCaja);
+      expect(mockedCreateCashRegisterSchema.parse).toHaveBeenCalledWith(
+        datosCaja,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -1086,7 +1212,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: "42" });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: "42",
+      });
       expect(mockService.getById).toHaveBeenCalledWith(42);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
@@ -1105,7 +1233,9 @@ describe("CashRegisterController", () => {
 
       await cashRegisterController.getCashRegisterById(mockReq, mockRes);
 
-      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({ id: idGrande.toString() });
+      expect(mockedCashRegisterIdSchema.parse).toHaveBeenCalledWith({
+        id: idGrande.toString(),
+      });
       expect(mockService.getById).toHaveBeenCalledWith(idGrande);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });

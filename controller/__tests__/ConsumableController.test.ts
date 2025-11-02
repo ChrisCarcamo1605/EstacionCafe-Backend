@@ -14,7 +14,11 @@ jest.mock("../../application/validations/ConsumableValidations", () => ({
   },
 }));
 
-const { ConsumableSchema, consumableIdSchema, updateConsumableSchema } = require("../../application/validations/ConsumableValidations");
+const {
+  ConsumableSchema,
+  consumableIdSchema,
+  updateConsumableSchema,
+} = require("../../application/validations/ConsumableValidations");
 
 describe("ConsumableController", () => {
   let mockService: jest.Mocked<IService>;
@@ -61,7 +65,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
 
       const consumibleGuardado = { consumableId: 1, ...datosConsumible };
@@ -89,7 +93,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorZod = {
         name: "ZodError",
@@ -114,7 +118,8 @@ describe("ConsumableController", () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El ID del proveedor debe ser un número positivo",
+        message:
+          "Datos inválidos: El ID del proveedor debe ser un número positivo",
         campo: ["supplierId"],
         error: "too_small",
       });
@@ -127,7 +132,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorZod = {
         name: "ZodError",
@@ -165,7 +170,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: -10,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorZod = {
         name: "ZodError",
@@ -203,7 +208,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: -5.50,
+        cost: -5.5,
       };
       const errorZod = {
         name: "ZodError",
@@ -241,7 +246,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: "invalid_unit" as any,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorZod = {
         name: "ZodError",
@@ -279,7 +284,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorServidor = new Error("Error interno del servidor");
 
@@ -298,7 +303,7 @@ describe("ConsumableController", () => {
       });
       expect(console.error).toHaveBeenCalledWith(
         "Error al guardar el consumible:",
-        errorServidor
+        errorServidor,
       );
     });
 
@@ -309,7 +314,7 @@ describe("ConsumableController", () => {
         cosumableTypeId: 1,
         quantity: 100,
         unitMeasurement: UnitMeasurement.KILOGRAM,
-        cost: 25.50,
+        cost: 25.5,
       };
       const errorSinMensaje = {};
 
@@ -337,7 +342,7 @@ describe("ConsumableController", () => {
           cosumableTypeId: 1,
           quantity: 100,
           unitMeasurement: UnitMeasurement.KILOGRAM,
-          cost: 25.50,
+          cost: 25.5,
         },
         {
           consumableId: 2,
@@ -346,7 +351,7 @@ describe("ConsumableController", () => {
           cosumableTypeId: 2,
           quantity: 50,
           unitMeasurement: UnitMeasurement.KILOGRAM,
-          cost: 150.00,
+          cost: 150.0,
         },
       ];
 
@@ -377,7 +382,7 @@ describe("ConsumableController", () => {
       });
       expect(console.error).toHaveBeenCalledWith(
         "Error al obtener los consumibles:",
-        new Error(mensajeError)
+        new Error(mensajeError),
       );
     });
 
@@ -422,13 +427,13 @@ describe("ConsumableController", () => {
       const updateData = {
         name: "Azúcar actualizado",
         quantity: 200,
-        cost: 30.00,
+        cost: 30.0,
       };
       const updatedConsumable = { consumableId: 1, ...updateData };
 
       mockReq.params = { id: "1" };
       mockReq.body = updateData;
-      
+
       // Mock the schemas
       consumableIdSchema.parse.mockReturnValue({ id: 1 });
       updateConsumableSchema.parse.mockReturnValue(updateData);
@@ -440,10 +445,11 @@ describe("ConsumableController", () => {
       expect(updateConsumableSchema.parse).toHaveBeenCalledWith(updateData);
       expect(mockService.update).toHaveBeenCalledWith({
         consumableId: 1,
-        ...updateData
+        ...updateData,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Consumible actualizado correctamente",
         data: updatedConsumable,
       });
@@ -460,7 +466,7 @@ describe("ConsumableController", () => {
       const deletedConsumable = { consumableId: 1, deleted: true };
 
       mockReq.params = { id: "1" };
-      
+
       // Mock the schema
       consumableIdSchema.parse.mockReturnValue({ id: 1 });
       mockService.delete.mockResolvedValue(deletedConsumable);
@@ -471,6 +477,7 @@ describe("ConsumableController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Consumible eliminado correctamente",
         data: deletedConsumable,
       });
@@ -488,7 +495,9 @@ describe("ConsumableController", () => {
         update: jest.fn(),
       } as any;
 
-      expect(() => consumableController.setService(nuevoServicio)).not.toThrow();
+      expect(() =>
+        consumableController.setService(nuevoServicio),
+      ).not.toThrow();
 
       // Verificar que el servicio se estableció correctamente
       // ejecutando una función que lo use

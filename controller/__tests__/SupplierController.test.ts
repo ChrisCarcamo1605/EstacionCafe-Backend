@@ -1,15 +1,21 @@
 import * as supplierController from "../SupplierController";
 import { IService } from "../../core/interfaces/IService";
-import { 
-  createSupplierSchema, 
-  updateSupplierSchema, 
-  supplierIdSchema 
+import {
+  createSupplierSchema,
+  updateSupplierSchema,
+  supplierIdSchema,
 } from "../../application/validations/SupplierValidations";
 
 jest.mock("../../application/validations/SupplierValidations");
-const mockedCreateSupplierSchema = createSupplierSchema as jest.Mocked<typeof createSupplierSchema>;
-const mockedUpdateSupplierSchema = updateSupplierSchema as jest.Mocked<typeof updateSupplierSchema>;
-const mockedSupplierIdSchema = supplierIdSchema as jest.Mocked<typeof supplierIdSchema>;
+const mockedCreateSupplierSchema = createSupplierSchema as jest.Mocked<
+  typeof createSupplierSchema
+>;
+const mockedUpdateSupplierSchema = updateSupplierSchema as jest.Mocked<
+  typeof updateSupplierSchema
+>;
+const mockedSupplierIdSchema = supplierIdSchema as jest.Mocked<
+  typeof supplierIdSchema
+>;
 
 describe("SupplierController", () => {
   let mockService: jest.Mocked<IService>;
@@ -76,8 +82,14 @@ describe("SupplierController", () => {
 
       expect(mockService.getAll).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: proveedoresSimulados });
-      expect(console.log).toHaveBeenCalledWith("Proveedores obtenidos correctamente");
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Proveedores obtenidos correctamente",
+        data: proveedoresSimulados,
+      });
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedores obtenidos correctamente",
+      );
     });
 
     it("debería manejar errores al obtener los proveedores", async () => {
@@ -92,7 +104,9 @@ describe("SupplierController", () => {
         status: "error",
         message: `Error al obtener los proveedores: Error: ${mensajeError}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedores obtenidos correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedores obtenidos correctamente",
+      );
     });
 
     it("debería manejar errores sin mensaje específico", async () => {
@@ -111,13 +125,13 @@ describe("SupplierController", () => {
 
   describe("getSupplierById", () => {
     it("debería retornar el proveedor por ID exitosamente", async () => {
-      const proveedorSimulado = [{
+      const proveedorSimulado = {
         supplierId: 1,
         name: "Café del Valle",
         phone: "+50322334455",
         email: "contacto@cafedelvalle.com",
         active: true,
-      }];
+      };
       const idParams = { id: "1" };
 
       mockReq.params = idParams;
@@ -129,8 +143,14 @@ describe("SupplierController", () => {
       expect(mockedSupplierIdSchema.parse).toHaveBeenCalledWith(idParams);
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: proveedorSimulado });
-      expect(console.log).toHaveBeenCalledWith("Proveedor obtenido correctamente");
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Proveedor obtenido correctamente",
+        data: proveedorSimulado,
+      });
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedor obtenido correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -160,7 +180,9 @@ describe("SupplierController", () => {
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor obtenido correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor obtenido correctamente",
+      );
     });
 
     it("debería manejar el caso cuando el proveedor no es encontrado", async () => {
@@ -178,7 +200,9 @@ describe("SupplierController", () => {
         status: "error",
         message: "Proveedor no encontrado",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor obtenido correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor obtenido correctamente",
+      );
     });
 
     it("debería manejar errores generales del servidor", async () => {
@@ -215,9 +239,9 @@ describe("SupplierController", () => {
         active: true,
       };
 
-      const proveedorGuardado = { 
-        supplierId: 1, 
-        ...datosValidados 
+      const proveedorGuardado = {
+        supplierId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosProveedor;
@@ -226,14 +250,19 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosProveedor);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosProveedor,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Proveedor creado correctamente",
         data: proveedorGuardado,
       });
-      expect(console.log).toHaveBeenCalledWith("Proveedor creado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedor creado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre vacío", async () => {
@@ -261,7 +290,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -270,7 +301,9 @@ describe("SupplierController", () => {
         campo: ["name"],
         error: "too_small",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor creado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor creado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para nombre muy largo", async () => {
@@ -299,7 +332,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -335,12 +370,15 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: El teléfono debe tener formato válido (+503 XXXX-XXXX)",
+        message:
+          "Datos inválidos: El teléfono debe tener formato válido (+503 XXXX-XXXX)",
         campo: ["phone"],
         error: "custom",
       });
@@ -371,7 +409,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosInvalidos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosInvalidos,
+      );
       expect(mockService.save).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
@@ -405,15 +445,22 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosProveedor);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosProveedor,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "Error interno del servidor: Error interno del servidor",
       });
-      expect(console.error).toHaveBeenCalledWith("Error al crear proveedor:", errorServidor);
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor creado correctamente");
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al crear proveedor:",
+        errorServidor,
+      );
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor creado correctamente",
+      );
     });
 
     it("debería manejar el valor por defecto de active", async () => {
@@ -431,9 +478,9 @@ describe("SupplierController", () => {
         active: true, // Valor por defecto
       };
 
-      const proveedorGuardado = { 
-        supplierId: 1, 
-        ...datosValidados 
+      const proveedorGuardado = {
+        supplierId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosProveedor;
@@ -442,7 +489,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosProveedor);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosProveedor,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -461,11 +510,11 @@ describe("SupplierController", () => {
         email: "nuevo@cafedelvalle.com",
       };
 
-      const proveedorActualizado = { 
+      const proveedorActualizado = {
         supplierId: 1,
         phone: "+50322334455",
         active: true,
-        ...datosValidados 
+        ...datosValidados,
       };
 
       mockReq.params = idParams;
@@ -477,17 +526,22 @@ describe("SupplierController", () => {
       await supplierController.updateSupplier(mockReq, mockRes);
 
       expect(mockedSupplierIdSchema.parse).toHaveBeenCalledWith(idParams);
-      expect(mockedUpdateSupplierSchema.parse).toHaveBeenCalledWith(datosActualizacion);
+      expect(mockedUpdateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosActualizacion,
+      );
       expect((mockService as any).update).toHaveBeenCalledWith({
         supplierId: 1,
         ...datosValidados,
       });
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Proveedor actualizado correctamente",
         data: proveedorActualizado,
       });
-      expect(console.log).toHaveBeenCalledWith("Proveedor actualizado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedor actualizado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -542,7 +596,9 @@ describe("SupplierController", () => {
         status: "error",
         message: "Proveedor no encontrado",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor actualizado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor actualizado correctamente",
+      );
     });
 
     it("debería manejar errores generales del servidor", async () => {
@@ -564,7 +620,10 @@ describe("SupplierController", () => {
         status: "error",
         message: "Error interno del servidor: Error interno del servidor",
       });
-      expect(console.error).toHaveBeenCalledWith("Error al actualizar proveedor:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al actualizar proveedor:",
+        errorServidor,
+      );
     });
   });
 
@@ -583,10 +642,13 @@ describe("SupplierController", () => {
       expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
         message: "Proveedor eliminado correctamente",
         data: resultadoEliminacion,
       });
-      expect(console.log).toHaveBeenCalledWith("Proveedor eliminado correctamente");
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedor eliminado correctamente",
+      );
     });
 
     it("debería manejar errores de validación ZodError para ID inválido", async () => {
@@ -616,7 +678,9 @@ describe("SupplierController", () => {
         status: "error",
         message: "ID inválido: El ID debe ser un número positivo",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor eliminado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor eliminado correctamente",
+      );
     });
 
     it("debería manejar el caso cuando el proveedor no es encontrado", async () => {
@@ -634,7 +698,9 @@ describe("SupplierController", () => {
         status: "error",
         message: "Proveedor no encontrado",
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedor eliminado correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedor eliminado correctamente",
+      );
     });
 
     it("debería manejar errores generales del servidor", async () => {
@@ -652,7 +718,10 @@ describe("SupplierController", () => {
         status: "error",
         message: "Error interno del servidor: Error interno del servidor",
       });
-      expect(console.error).toHaveBeenCalledWith("Error al eliminar proveedor:", errorServidor);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al eliminar proveedor:",
+        errorServidor,
+      );
     });
   });
 
@@ -675,19 +744,29 @@ describe("SupplierController", () => {
         },
       ];
 
-      (mockService as any).getActiveSuppliers.mockResolvedValue(proveedoresActivos);
+      (mockService as any).getActiveSuppliers.mockResolvedValue(
+        proveedoresActivos,
+      );
 
       await supplierController.getActiveSuppliers(mockReq, mockRes);
 
       expect((mockService as any).getActiveSuppliers).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.send).toHaveBeenCalledWith({ body: proveedoresActivos });
-      expect(console.log).toHaveBeenCalledWith("Proveedores activos obtenidos correctamente");
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Proveedores activos obtenidos correctamente",
+        data: proveedoresActivos,
+      });
+      expect(console.log).toHaveBeenCalledWith(
+        "Proveedores activos obtenidos correctamente",
+      );
     });
 
     it("debería manejar errores al obtener los proveedores activos", async () => {
       const mensajeError = "Error de conexión a la base de datos";
-      (mockService as any).getActiveSuppliers.mockRejectedValue(new Error(mensajeError));
+      (mockService as any).getActiveSuppliers.mockRejectedValue(
+        new Error(mensajeError),
+      );
 
       await supplierController.getActiveSuppliers(mockReq, mockRes);
 
@@ -697,7 +776,9 @@ describe("SupplierController", () => {
         status: "error",
         message: `Error al obtener los proveedores activos: Error: ${mensajeError}`,
       });
-      expect(console.log).not.toHaveBeenCalledWith("Proveedores activos obtenidos correctamente");
+      expect(console.log).not.toHaveBeenCalledWith(
+        "Proveedores activos obtenidos correctamente",
+      );
     });
   });
 
@@ -750,9 +831,9 @@ describe("SupplierController", () => {
           active: true,
         };
 
-        const proveedorGuardado = { 
-          supplierId: 1, 
-          ...datosValidados 
+        const proveedorGuardado = {
+          supplierId: 1,
+          ...datosValidados,
         };
 
         mockReq.body = datosProveedor;
@@ -761,7 +842,9 @@ describe("SupplierController", () => {
 
         await supplierController.createSupplier(mockReq, mockRes);
 
-        expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosProveedor);
+        expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+          datosProveedor,
+        );
         expect(mockService.save).toHaveBeenCalledWith(datosValidados);
         expect(mockRes.status).toHaveBeenCalledWith(201);
       });
@@ -791,9 +874,9 @@ describe("SupplierController", () => {
           active: true,
         };
 
-        const proveedorGuardado = { 
-          supplierId: 1, 
-          ...datosValidados 
+        const proveedorGuardado = {
+          supplierId: 1,
+          ...datosValidados,
         };
 
         mockReq.body = datosProveedor;
@@ -802,7 +885,9 @@ describe("SupplierController", () => {
 
         await supplierController.createSupplier(mockReq, mockRes);
 
-        expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosProveedor);
+        expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+          datosProveedor,
+        );
         expect(mockService.save).toHaveBeenCalledWith(datosValidados);
         expect(mockRes.status).toHaveBeenCalledWith(201);
       });
@@ -825,9 +910,9 @@ describe("SupplierController", () => {
         active: true,
       };
 
-      const proveedorGuardado = { 
-        supplierId: 1, 
-        ...datosValidados 
+      const proveedorGuardado = {
+        supplierId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosMinimos;
@@ -836,7 +921,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosMinimos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosMinimos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -857,9 +944,9 @@ describe("SupplierController", () => {
         active: true,
       };
 
-      const proveedorGuardado = { 
-        supplierId: 1, 
-        ...datosValidados 
+      const proveedorGuardado = {
+        supplierId: 1,
+        ...datosValidados,
       };
 
       mockReq.body = datosMaximos;
@@ -868,7 +955,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosMaximos);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosMaximos,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosValidados);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
@@ -888,9 +977,9 @@ describe("SupplierController", () => {
         active: true,
       };
 
-      const proveedorGuardado = { 
-        supplierId: 1, 
-        ...datosLimpios 
+      const proveedorGuardado = {
+        supplierId: 1,
+        ...datosLimpios,
       };
 
       mockReq.body = datosConEspacios;
@@ -899,7 +988,9 @@ describe("SupplierController", () => {
 
       await supplierController.createSupplier(mockReq, mockRes);
 
-      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(datosConEspacios);
+      expect(mockedCreateSupplierSchema.parse).toHaveBeenCalledWith(
+        datosConEspacios,
+      );
       expect(mockService.save).toHaveBeenCalledWith(datosLimpios);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });

@@ -1,18 +1,24 @@
-import { Router } from 'express';
-import {
-    getUsers,
-    getUserById,
-    saveUser,
-    updateUser,
-    deleteUser,
-    getUsersByType
-} from '../../controller/UserController';
+import { Router } from "express";
+import * as userController from "../../controller/UserController";
+import { verifyToken } from "../../infrastructure/security/authMiddleware";
+import { authorize } from "../../infrastructure/security/rbacMiddleware";
 
 export const userRouter = Router();
 
-userRouter.get('/users', getUsers);
-userRouter.get('/users/type/:typeId', getUsersByType);
-userRouter.get('/users/:id', getUserById);
-userRouter.post('/users', saveUser);
-userRouter.put('/users/:id', updateUser);
-userRouter.delete('/users/:id', deleteUser);
+// Rutas públicas (sin protección)
+userRouter.post("/users/login", userController.login);
+userRouter.post("/users/logout", userController.logout);
+
+// Rutas protegidas (requieren token)
+
+userRouter.all("/users", verifyToken, authorize(["admin"]));
+userRouter.get("/users", verifyToken, userController.getUsers);
+userRouter.get(
+  "/users/type/:typeId",
+  verifyToken,
+  userController.getUsersByType,
+);
+userRouter.get("/users/:id", verifyToken, userController.getUserById);
+userRouter.post("/users", verifyToken, userController.saveUser);
+userRouter.put("/users/:id", verifyToken, userController.updateUser);
+userRouter.delete("/users/:id", verifyToken, userController.deleteUser);
