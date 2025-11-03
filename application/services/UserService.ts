@@ -1,7 +1,6 @@
 import { Repository } from "typeorm";
 import { User } from "../../core/entities/User";
-import { UserType } from "../../core/entities/UserType";
-import { IService } from "../../core/interfaces/IService";
+import { UpdateUserDTO } from "../DTOs/UserDTO";
 import { loginUser, SaveUserDTO } from "../DTOs/UserDTO";
 import * as bcrypt from "bcrypt";
 import { IUserService } from "../../core/interfaces/IUserService";
@@ -21,7 +20,7 @@ export class UserService implements IUserService {
         user.userTypeId = userData.typeId;
         user.email = userData.email;
         return user;
-      })
+      }),
     );
 
     return await this.userRepository.save(users);
@@ -47,7 +46,7 @@ export class UserService implements IUserService {
     return { message: "Usuario desactivado correctamente", id };
   }
 
-  async update(body: any): Promise<any> {
+  async update(body: UpdateUserDTO & { userId: number }): Promise<any> {
     const { userId, ...updateData } = body;
 
     if (!userId) {
@@ -59,9 +58,14 @@ export class UserService implements IUserService {
       throw new Error(`Usuario con ID ${userId} no encontrado`);
     }
 
-    // Si se está actualizando la contraseña, encriptarla
     if (updateData.password) {
       updateData.password = await this.encryptPassword(updateData.password);
+    }
+
+    // Mapear typeId a userTypeId
+    if (updateData.typeId) {
+      (updateData as any).userTypeId = updateData.typeId;
+      delete updateData.typeId;
     }
 
     Object.assign(user, updateData);
