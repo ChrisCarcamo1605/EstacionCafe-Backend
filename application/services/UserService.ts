@@ -1,6 +1,5 @@
 import { Repository } from "typeorm";
 import { User } from "../../core/entities/User";
-import { UpdateUserDTO } from "../DTOs/UserDTO";
 import { loginUser, SaveUserDTO } from "../DTOs/UserDTO";
 import * as bcrypt from "bcrypt";
 import { IUserService } from "../../core/interfaces/IUserService";
@@ -46,7 +45,7 @@ export class UserService implements IUserService {
     return { message: "Usuario desactivado correctamente", id };
   }
 
-  async update(body: UpdateUserDTO & { userId: number }): Promise<any> {
+  async update(body: any): Promise<any> {
     const { userId, ...updateData } = body;
 
     if (!userId) {
@@ -64,7 +63,7 @@ export class UserService implements IUserService {
 
     // Mapear typeId a userTypeId
     if (updateData.typeId) {
-      (updateData as any).userTypeId = updateData.typeId;
+      updateData.userTypeId = updateData.typeId;
       delete updateData.typeId;
     }
 
