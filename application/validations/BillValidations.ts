@@ -25,10 +25,14 @@ export const createBillSchema = z.object({
     .trim(),
 
   date: z
-    .date()
-    .or(z.string().transform((str) => new Date(str)))
-    .refine((date) => !isNaN(date.getTime()), "La fecha debe ser válida")
-    .refine((date) => date <= new Date(), "La fecha no puede ser futura"),
+    .string()
+    .or(z.date())
+    .transform((val) => {
+      const utcDate = typeof val === "string" ? new Date(val) : val;
+      const salvadorDate = new Date(utcDate.getTime() - 6 * 60 * 60 * 1000);
+      return salvadorDate;
+    })
+    .refine((date) => !isNaN(date.getTime()), "La fecha debe ser válida"),
 });
 
 export const updateBillSchema = z.object({
@@ -56,8 +60,14 @@ export const updateBillSchema = z.object({
     .optional(),
 
   date: z
-    .date()
-    .or(z.string().transform((str) => new Date(str)))
+    .string()
+    .or(z.date())
+    .transform((val) => {
+      const utcDate = typeof val === "string" ? new Date(val) : val;
+      const salvadorDate = new Date(utcDate.getTime() - 6 * 60 * 60 * 1000);
+      return salvadorDate;
+    })
+    .refine((date) => !isNaN(date.getTime()), "La fecha debe ser válida")
     .optional(),
 });
 
