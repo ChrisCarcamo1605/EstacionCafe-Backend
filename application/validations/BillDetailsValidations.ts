@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { CashRegister } from "../../core/entities/CashRegister";
 
 const billDetailsSchema = z.object({
   producId: z
@@ -7,14 +6,14 @@ const billDetailsSchema = z.object({
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "El ID del producto debe ser un número positivoo"
+      "El ID del producto debe ser un número positivoo",
     ),
   quantity: z
     .string()
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "El ID debe ser un número positivo"
+      "El ID debe ser un número positivo",
     ),
   subTotal: z
     .string()
@@ -28,7 +27,7 @@ export const BillDetailsSchema = z.object({
     .transform((val) => parseInt(val))
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "Ingrese un ID de cajero valido o existente"
+      "Ingrese un ID de cajero valido o existente",
     ),
   customer: z
     .string()

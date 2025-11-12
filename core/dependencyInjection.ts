@@ -31,7 +31,6 @@ import { ConsumableTypeService } from "../application/services/ConsumableTypeSer
 import { SupplierService } from "../application/services/SupplierService";
 import { IngredientService } from "../application/services/IngredientService";
 import { PurchaseService } from "../application/services/PurchaseService";
-import { CashRegisterService } from "../application/services/CashRegisterService";
 import { TokenService } from "../infrastructure/security/TokenService";
 
 //Entitys
@@ -45,7 +44,6 @@ import { ConsumableType } from "./entities/ConsumableType";
 import { Ingredient } from "./entities/Ingredient";
 import { Supplier } from "./entities/Supplier";
 import { Purchase } from "./entities/Purchase";
-import { CashRegister } from "./entities/CashRegister";
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -66,56 +64,50 @@ export const initializeDependencies = async () => {
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
-    const cashRegisterRepository = AppDataSource.getRepository(CashRegister);
 
     //Services
     const billService: IService = new BillService(billRepository);
     const productService: IService = new ProductService(productRepository);
     const billDetailsService: IService = new BillDetailsService(
       billDetailsRepository,
-      billService
+      billService,
     );
     const userService: IUserService = new UserService(userRepositoy);
     const userTypeService: IService = new UserTypeService(userTypeRepository);
     const consumableService: IService = new ConsumableService(
-      consumableRepository
+      consumableRepository,
     );
     const consumableTypeService: IService = new ConsumableTypeService(
-      consumableTypeRepository
+      consumableTypeRepository,
     );
     const supplierService: IService = new SupplierService(supplierRepository);
     const purchaseService: IService = new PurchaseService(purchaseRepository);
     const ingredientService: IService = new IngredientService(
-      ingredientRepository
-    );
-    const cashRegisterService: IService = new CashRegisterService(
-      cashRegisterRepository
+      ingredientRepository,
     );
     const tokenService: ITokenService = new TokenService(userService);
-    
+
     //Set Services to Controllers
     setBillService(billService);
     setProductService(productService);
     setBillDetailsService(billDetailsService);
-    setUserServices(userService,tokenService);
+    setUserServices(userService, tokenService);
     setUserTypeService(userTypeService);
     setConsumableService(consumableService);
     setConsumableTypeService(consumableTypeService);
     setIngredientService(ingredientService);
     setSupplierService(supplierService);
     setPurchaseService(purchaseService);
-    setCashRegisterService(cashRegisterService);
-    
+
     // Inicializar middleware con el servicio de tokens
     initializeAuthMiddleware(tokenService);
 
     console.log("Dependencias inicializadas correctamente");
   } catch (error: any) {
-
     console.error("Error al inicializar la base de datos:", error.message);
     console.error("Detalles del error:", error);
 
-    throw new error;
+    throw new error();
   }
 };
 

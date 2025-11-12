@@ -1,3 +1,5 @@
+import { Status } from "../../core/enums/Status";
+
 export interface SaveBillDTO {
   billId: number;
   customer: string;
@@ -11,6 +13,7 @@ export interface BillItemDTO {
   customer: string;
   cashRegisterId?: string;
   total: number;
+  status: Status;
   date?: Date;
 }
 
@@ -19,6 +22,7 @@ export interface UpdateBillDTO {
   customer?: string;
   cashRegisterId?: number;
   total?: number;
+  status?: Status;
   date?: Date;
 }
 
@@ -28,4 +32,3 @@ export interface SaveBillDetailDTO {
   date: Date;
   billDetails: any[];
 }
-

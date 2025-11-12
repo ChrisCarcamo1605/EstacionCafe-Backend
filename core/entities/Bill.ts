@@ -7,7 +7,8 @@ import {
   JoinColumn,
 } from "typeorm";
 import { BillDetails } from "./BillDetails";
-import { CashRegister } from "./CashRegister";
+import { User } from "./User";
+import { Status } from "../enums/Status";
 
 @Entity("bills")
 export class Bill {
@@ -20,16 +21,17 @@ export class Bill {
   customer: string = "";
   @Column()
   date: Date = new Date();
+
   @Column("decimal", { name: "total", precision: 10, scale: 2 })
   total!: number;
+
+  @Column({ default: Status.CLOSED })
+  status!: Status;
 
   @OneToMany(() => BillDetails, (billDet: BillDetails) => billDet.bill)
   billDetails!: BillDetails[];
 
-  @JoinColumn({name:"cash_register"})
-  @ManyToOne(
-    () => CashRegister,
-    (cashRegister: CashRegister) => cashRegister.bill
-  )
-  cashRegister!: CashRegister;
+  @JoinColumn({ name: "cash_register" })
+  @ManyToOne(() => User, (cashRegister: User) => cashRegister.bill)
+  cashRegister!: User;
 }

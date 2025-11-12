@@ -114,7 +114,12 @@ export class UserService implements IUserService {
     const user = await this.userRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.userType", "userType")
-      .select(["user.username", "user.password", "userType.name"])
+      .select([
+        "user.userId",
+        "user.username",
+        "user.password",
+        "userType.name",
+      ])
       .where("user.username = :username", { username })
       .getOne();
 
@@ -123,6 +128,7 @@ export class UserService implements IUserService {
     }
 
     const data: loginUser = {
+      userId: user.userId,
       username: user.username,
       role: user.userType!.name,
       password: user.password,

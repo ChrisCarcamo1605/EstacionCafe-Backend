@@ -3,12 +3,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { UserType } from "./UserType";
-import { email } from "zod";
-
+import { Bill } from "./Bill";
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("increment", { name: "user_id" })
@@ -32,5 +31,9 @@ export class User {
   @ManyToOne(() => UserType, (type) => type.userTypeId)
   @JoinColumn({ name: "type_id" })
   userType?: UserType;
+
+  @OneToMany(() => Bill, (bill: Bill) => bill.cashRegister)
+  bill!: Bill;
+
   constructor() {}
 }
