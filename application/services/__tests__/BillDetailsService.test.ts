@@ -4,6 +4,7 @@ import { BillDetails } from "../../../core/entities/BillDetails";
 import { SaveBillDetailDTO } from "../../DTOs/BillsDTO";
 import { IService } from "../../../core/interfaces/IService";
 import { Bill } from "../../../core/entities/Bill";
+import { Status } from "../../../core/enums/Status";
 
 describe("BillDetailsService", () => {
   let billDetailsService: BillDetailsService;
@@ -34,7 +35,7 @@ describe("BillDetailsService", () => {
     // Crear instancia del servicio con los mocks
     billDetailsService = new BillDetailsService(
       mockDetailRepo,
-      mockBillService
+      mockBillService,
     );
 
     // Limpiar console.log
@@ -79,7 +80,9 @@ describe("BillDetailsService", () => {
       });
       expect(result).toEqual(mockDetails);
       expect(result).toHaveLength(2);
-      expect(console.log).toHaveBeenCalledWith("Obteniendo detalles de la factura 1...");
+      expect(console.log).toHaveBeenCalledWith(
+        "Obteniendo detalles de la factura 1...",
+      );
     });
 
     it("debería retornar array vacío cuando no hay detalles", async () => {
@@ -93,7 +96,9 @@ describe("BillDetailsService", () => {
         relations: ["product", "bill"],
       });
       expect(result).toEqual([]);
-      expect(console.log).toHaveBeenCalledWith("Obteniendo detalles de la factura 999...");
+      expect(console.log).toHaveBeenCalledWith(
+        "Obteniendo detalles de la factura 999...",
+      );
     });
 
     it("debería manejar errores del repositorio", async () => {
@@ -102,7 +107,7 @@ describe("BillDetailsService", () => {
       mockDetailRepo.find.mockRejectedValue(repositoryError);
 
       await expect(billDetailsService.getById(billId)).rejects.toThrow(
-        "Error de base de datos"
+        "Error de base de datos",
       );
       expect(mockDetailRepo.find).toHaveBeenCalled();
     });
@@ -134,6 +139,7 @@ describe("BillDetailsService", () => {
         cashRegisterId: 1,
         total: 100.0,
         date: new Date("2025-10-20"),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -167,7 +173,7 @@ describe("BillDetailsService", () => {
           cashRegister: 1,
           total: 100.0, // Suma de subtotales
           date: new Date("2025-10-20"),
-        })
+        }),
       );
 
       // Verificar que se guardaron los detalles
@@ -185,13 +191,15 @@ describe("BillDetailsService", () => {
             quantity: 1,
             subTotal: 40.0,
           }),
-        ])
+        ]),
       );
 
       expect(result).toEqual(savedDetails);
       expect(console.log).toHaveBeenCalledWith("entrando al save all");
       expect(console.log).toHaveBeenCalledWith("Guardando factura...");
-      expect(console.log).toHaveBeenCalledWith("Guardando detalles de la factura...");
+      expect(console.log).toHaveBeenCalledWith(
+        "Guardando detalles de la factura...",
+      );
     });
 
     it("debería calcular el total correctamente", async () => {
@@ -206,7 +214,7 @@ describe("BillDetailsService", () => {
         ],
       };
 
-      const savedBill = { billId: 1 } as Bill;
+      const savedBill = { billId: 1, status: Status.CLOSED } as Bill;
       mockBillService.save.mockResolvedValue(savedBill);
       mockDetailRepo.save.mockResolvedValue([] as any);
 
@@ -215,7 +223,7 @@ describe("BillDetailsService", () => {
       expect(mockBillService.save).toHaveBeenCalledWith(
         expect.objectContaining({
           total: 161.25, // 75.50 + 60.00 + 25.75
-        })
+        }),
       );
     });
 
@@ -227,12 +235,13 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 5, quantity: 1, subTotal: 30.0 }],
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 10,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -261,12 +270,13 @@ describe("BillDetailsService", () => {
         billDetails: [],
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 1,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -278,7 +288,7 @@ describe("BillDetailsService", () => {
       expect(mockBillService.save).toHaveBeenCalledWith(
         expect.objectContaining({
           total: 0,
-        })
+        }),
       );
       expect(mockDetailRepo.save).toHaveBeenCalledWith([]);
       expect(result).toEqual([]);
@@ -296,7 +306,7 @@ describe("BillDetailsService", () => {
       mockBillService.save.mockRejectedValue(billError);
 
       await expect(billDetailsService.saveAll(billDetailData)).rejects.toThrow(
-        "Error al guardar factura"
+        "Error al guardar factura",
       );
       expect(mockDetailRepo.save).not.toHaveBeenCalled();
     });
@@ -309,12 +319,13 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 1, quantity: 1, subTotal: 10.0 }],
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 1,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -324,7 +335,7 @@ describe("BillDetailsService", () => {
       mockDetailRepo.save.mockRejectedValue(detailError);
 
       await expect(billDetailsService.saveAll(billDetailData)).rejects.toThrow(
-        "Error al guardar detalles"
+        "Error al guardar detalles",
       );
     });
   });
@@ -378,7 +389,7 @@ describe("BillDetailsService", () => {
       mockDetailRepo.find.mockRejectedValue(repositoryError);
 
       await expect(billDetailsService.getAll()).rejects.toThrow(
-        "Error de consulta"
+        "Error de consulta",
       );
     });
   });
@@ -406,7 +417,7 @@ describe("BillDetailsService", () => {
       mockDetailRepo.delete.mockResolvedValue(deleteResult as any);
 
       await expect(billDetailsService.delete(detailId)).rejects.toThrow(
-        `Detalle con ID ${detailId} no encontrado`
+        `Detalle con ID ${detailId} no encontrado`,
       );
       expect(mockDetailRepo.delete).toHaveBeenCalledWith(detailId);
     });
@@ -417,7 +428,9 @@ describe("BillDetailsService", () => {
 
       mockDetailRepo.delete.mockRejectedValue(repositoryError);
 
-      await expect(billDetailsService.delete(detailId)).rejects.toThrow("Error de eliminación");
+      await expect(billDetailsService.delete(detailId)).rejects.toThrow(
+        "Error de eliminación",
+      );
       expect(mockDetailRepo.delete).toHaveBeenCalledWith(detailId);
     });
   });
@@ -440,6 +453,7 @@ describe("BillDetailsService", () => {
         cashRegisterId: 2,
         total: 115.0,
         date: new Date("2025-10-20T10:30:00"),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -494,12 +508,13 @@ describe("BillDetailsService", () => {
         billDetails: productos,
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 1,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -510,7 +525,7 @@ describe("BillDetailsService", () => {
       expect(mockBillService.save).toHaveBeenCalledWith(
         expect.objectContaining({
           total: 420.5, // Suma de todos los subtotales
-        })
+        }),
       );
 
       expect(mockDetailRepo.save).toHaveBeenCalledWith(
@@ -521,9 +536,9 @@ describe("BillDetailsService", () => {
               productId: producto.productId,
               quantity: producto.quantity,
               subTotal: producto.subTotal,
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
     });
 
@@ -538,12 +553,13 @@ describe("BillDetailsService", () => {
         ],
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 1,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -555,7 +571,7 @@ describe("BillDetailsService", () => {
       expect(mockBillService.save).toHaveBeenCalledWith(
         expect.objectContaining({
           total: 100.0, // 33.33 + 66.67
-        })
+        }),
       );
     });
   });
@@ -569,12 +585,13 @@ describe("BillDetailsService", () => {
         billDetails: [{ productId: 1, quantity: 0, subTotal: 0.0 }],
       };
 
-      const savedBill = { 
+      const savedBill = {
         billId: 1,
         customer: "",
         cashRegisterId: 1,
         total: 0,
         date: new Date(),
+        status: Status.CLOSED,
         billDetails: [],
         cashRegister: {} as any,
       } as Bill;
@@ -586,7 +603,7 @@ describe("BillDetailsService", () => {
       expect(mockBillService.save).toHaveBeenCalledWith(
         expect.objectContaining({
           total: 0.0,
-        })
+        }),
       );
     });
 
@@ -601,12 +618,13 @@ describe("BillDetailsService", () => {
           billDetails: [{ productId: 1, quantity: 1, subTotal: 25.0 }],
         };
 
-        const savedBill = { 
+        const savedBill = {
           billId: 1,
           customer: "",
           cashRegisterId: 1,
           total: 0,
           date: new Date(),
+          status: Status.CLOSED,
           billDetails: [],
           cashRegister: {} as any,
         } as Bill;
@@ -617,7 +635,7 @@ describe("BillDetailsService", () => {
         expect(mockBillService.save).toHaveBeenCalledWith(
           expect.objectContaining({
             cashRegister: cajaId,
-          })
+          }),
         );
       }
     });
@@ -638,12 +656,13 @@ describe("BillDetailsService", () => {
           billDetails: [{ productId: 1, quantity: 1, subTotal: 10.0 }],
         };
 
-        const savedBill = { 
+        const savedBill = {
           billId: 1,
           customer: "",
           cashRegisterId: 1,
           total: 0,
           date: new Date(),
+          status: Status.CLOSED,
           billDetails: [],
           cashRegister: {} as any,
         } as Bill;
@@ -655,7 +674,7 @@ describe("BillDetailsService", () => {
         expect(mockBillService.save).toHaveBeenCalledWith(
           expect.objectContaining({
             customer: cliente,
-          })
+          }),
         );
       }
     });
