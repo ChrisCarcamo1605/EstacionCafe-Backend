@@ -1,10 +1,8 @@
-import { Repository } from "typeorm";
+import { Repository, In } from "typeorm";
 import { IService } from "../../core/interfaces/IService";
 import { Bill } from "../../core/entities/Bill";
 import { SaveBillDTO, UpdateBillDTO } from "../DTOs/BillsDTO";
-import { billSchema } from "../validations/BillValidations";
-import { error } from "console";
-import { any } from "zod";
+import { Status } from "../../core/enums/Status";
 
 export class BillService implements IService {
   public constructor(private billRepository: Repository<Bill>) {
@@ -15,6 +13,10 @@ export class BillService implements IService {
     const bills = body.map((data) => {
       const bill = new Bill();
       bill.cashRegisterId = data.cashRegister;
+      bill.tableId = data.tableId;
+      if ((data as any).status) {
+        bill.status = (data as any).status;
+      }
       bill.total = data.total;
       bill.customer = data.customer;
       bill.date = data.date;
@@ -27,6 +29,10 @@ export class BillService implements IService {
     const data: SaveBillDTO = body;
     const bill: Bill = new Bill();
     bill.cashRegisterId = data.cashRegister;
+    bill.tableId = data.tableId;
+    if ((data as any).status) {
+      bill.status = (data as any).status;
+    }
     bill.total = data.total;
     bill.customer = data.customer;
     bill.date = data.date;
@@ -59,8 +65,6 @@ export class BillService implements IService {
     }
 
     Object.assign(bill, updateData);
-    console.log(bill);
-
     return await this.billRepository.save(bill);
   }
 
@@ -68,7 +72,7 @@ export class BillService implements IService {
     console.log(`Obteniendo facturas...`);
     return this.billRepository
       .find({
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
         order: { date: "DESC" },
       })
       .catch((error: any) => {
@@ -80,7 +84,7 @@ export class BillService implements IService {
   async getById(id: number): Promise<any> {
     const bill = await this.billRepository.findOne({
       where: { billId: id },
-      relations: ["cashRegister"],
+      relations: ["cashRegister", "table"],
     });
     if (!bill) {
       throw new Error(`Factura con ID ${id} no encontrada`);
@@ -92,6 +96,7 @@ export class BillService implements IService {
     return await this.billRepository
       .createQueryBuilder("bill")
       .leftJoinAndSelect("bill.cashRegister", "cashRegister")
+      .leftJoinAndSelect("bill.table", "table")
       .where("bill.date >= :startDate", { startDate })
       .andWhere("bill.date <= :endDate", { endDate })
       .orderBy("bill.date", "DESC")
@@ -101,8 +106,41 @@ export class BillService implements IService {
   async getBillsByCustomer(customer: string): Promise<Bill[]> {
     return await this.billRepository.find({
       where: { customer },
-      relations: ["cashRegister"],
+      relations: ["cashRegister", "table"],
       order: { date: "DESC" },
     });
+  }
+
+  async getBillsByTable(tableId: string): Promise<Bill[]> {
+    return await this.billRepository.find({
+      where: { tableId },
+      relations: ["cashRegister", "table"],
+      order: { date: "DESC" },
+    });
+  }
+
+  /**
+   * Cierra (marca como CLOSED) todas las facturas con status OPEN o DRAFT que pertenezcan a la mesa indicada.
+   * Usa `save` para que los subscribers de TypeORM se disparen correctamente.
+   */
+  async closeBillsByTable(tableId: string): Promise<{ updated: number }> {
+    const openBills = await this.billRepository.find({
+      where: {
+        tableId,
+        status: In([Status.OPEN, Status.DRAFT]),
+      },
+    });
+
+    if (!openBills || openBills.length === 0) {
+      return { updated: 0 };
+    }
+
+    for (const b of openBills) {
+      b.status = Status.CLOSED;
+    }
+
+    const saved = await this.billRepository.save(openBills);
+
+    return { updated: Array.isArray(saved) ? saved.length : 1 };
   }
 }

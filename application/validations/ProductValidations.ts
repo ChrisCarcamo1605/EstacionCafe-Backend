@@ -23,6 +23,16 @@ export const createProductSchema = z
       .union([z.string().transform((val) => parseFloat(val)), z.number()])
       .refine((val) => !isNaN(val) && val > 0, "El costo debe ser mayor a 0")
       .transform((val) => parseFloat(val.toFixed(2))),
+
+    productTypeId: z
+      .union([
+        z.string().transform((val) => parseInt(val, 10)),
+        z.number().int("El productTypeId debe ser un número entero"),
+      ])
+      .refine(
+        (val) => !isNaN(val) && val > 0,
+        "El productTypeId debe ser un número positivo",
+      ),
   })
   .refine((data) => data.price > data.cost, {
     message: "El precio debe ser mayor al costo",
@@ -45,14 +55,27 @@ export const updateProductSchema = z.object({
     .optional(),
 
   price: z
-     .string()
+    .string()
     .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0") .optional(),
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0")
+    .optional(),
 
   cost: z
-     .string()
+    .string()
     .transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0") .optional(),
+    .refine((val) => !isNaN(val) && val > 0, "El total debe ser mayor a 0")
+    .optional(),
+
+  productTypeId: z
+    .union([
+      z.string().transform((val) => parseInt(val, 10)),
+      z.number().int("El productTypeId debe ser un número entero"),
+    ])
+    .refine(
+      (val) => !isNaN(val) && val > 0,
+      "El productTypeId debe ser un número positivo",
+    )
+    .optional(),
 });
 
 export const productIdSchema = z.object({
@@ -63,7 +86,7 @@ export const productIdSchema = z.object({
     ])
     .refine(
       (val) => !isNaN(val) && val > 0,
-      "El ID debe ser un número positivo"
+      "El ID debe ser un número positivo",
     ),
 });
 
@@ -73,14 +96,14 @@ export const productPriceRangeSchema = z
       .union([z.string().transform((val) => parseFloat(val)), z.number()])
       .refine(
         (val) => !isNaN(val) && val >= 0,
-        "El precio mínimo debe ser mayor o igual a 0"
+        "El precio mínimo debe ser mayor o igual a 0",
       ),
 
     maxPrice: z
       .union([z.string().transform((val) => parseFloat(val)), z.number()])
       .refine(
         (val) => !isNaN(val) && val >= 0,
-        "El precio máximo debe ser mayor o igual a 0"
+        "El precio máximo debe ser mayor o igual a 0",
       ),
   })
   .refine((data) => data.maxPrice >= data.minPrice, {

@@ -32,6 +32,7 @@ app.use("/api", routes);
 
 //Inyectamos dependencias
 const { initializeDependencies } = require("./core/dependencyInjection");
+const { startAllJobs } = require("./infrastructure/jobs");
 
 initializeDependencies()
   .then(() => {
@@ -40,6 +41,9 @@ initializeDependencies()
     //Poner a escuchar el servidor solo después de que las dependencias estén listas
     app.listen(port, () => {
       console.log(`Servidor corriendo en puerto ${port}`);
+
+      // Iniciar jobs programados después de que el servidor esté listo
+      startAllJobs();
     });
   })
   .catch((error: any) => {
