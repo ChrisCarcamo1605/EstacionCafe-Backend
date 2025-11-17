@@ -1,7 +1,6 @@
 import * as jwt from "jsonwebtoken";
 import { loginUser, payloadUser } from "../../application/DTOs/UserDTO";
 import { ITokenService } from "../../core/interfaces/ITokenService";
-import { IService } from "../../core/interfaces/IService";
 import { IUserService } from "../../core/interfaces/IUserService";
 import * as bcrypt from "bcrypt";
 import { error } from "console";
@@ -34,13 +33,14 @@ export class TokenService implements ITokenService {
 
       return jwt.sign(
         {
+          userId: dbData.userId,
           username: payload.username,
           role: dbData?.role,
           timestamp: Date.now(),
         },
         this.secret,
         {
-          expiresIn: "1h",
+          expiresIn: "3h",
         },
       );
     } catch (error: any) {

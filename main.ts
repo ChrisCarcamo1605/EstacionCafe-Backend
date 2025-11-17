@@ -12,7 +12,13 @@ const app = express();
 const port = 3484;
 
 //Configuramos CORS
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:4321",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 //Parsear cookies
 app.use(cookieParser());

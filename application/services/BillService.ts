@@ -11,7 +11,7 @@ export class BillService implements IService {
     this.billRepository = billRepository;
   }
 
-   async saveAll(body: SaveBillDTO[]): Promise<Bill[]> {
+  async saveAll(body: SaveBillDTO[]): Promise<Bill[]> {
     const bills = body.map((data) => {
       const bill = new Bill();
       bill.cashRegisterId = data.cashRegister;
@@ -22,17 +22,15 @@ export class BillService implements IService {
     });
     return await this.billRepository.save(bills);
   }
-  
 
   async save(body: SaveBillDTO): Promise<any> {
     const data: SaveBillDTO = body;
     const bill: Bill = new Bill();
-    bill.cashRegisterId =  data.cashRegister;
+    bill.cashRegisterId = data.cashRegister;
     bill.total = data.total;
     bill.customer = data.customer;
     bill.date = data.date;
     console.log("Guardando factura...");
-    console.log(bill);
     return await this.billRepository.save(bill);
   }
 
