@@ -34,6 +34,7 @@ describe("BillService", () => {
         billId: 1,
         cashRegister: 1,
         customer: "Juan Pérez",
+        tableId: "A1",
         total: 150.75,
         date: new Date("2025-10-20"),
       };
@@ -50,12 +51,14 @@ describe("BillService", () => {
       const result = await billService.save(saveBillDTO);
 
       expect(mockRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        cashRegisterId: saveBillDTO.cashRegister,
-        customer: saveBillDTO.customer,
-        total: saveBillDTO.total,
-        date: saveBillDTO.date,
-      }));
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cashRegisterId: saveBillDTO.cashRegister,
+          customer: saveBillDTO.customer,
+          total: saveBillDTO.total,
+          date: saveBillDTO.date,
+        }),
+      );
       expect(result).toEqual(expectedBill);
       expect(console.log).toHaveBeenCalledWith("Guardando factura...");
     });
@@ -65,6 +68,7 @@ describe("BillService", () => {
         billId: 1,
         cashRegister: 1,
         customer: "Juan Pérez",
+        tableId: "A1",
         total: 150.75,
         date: new Date("2025-10-20"),
       };
@@ -72,7 +76,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.save.mockRejectedValue(databaseError);
 
-      await expect(billService.save(saveBillDTO)).rejects.toThrow("Database connection failed");
+      await expect(billService.save(saveBillDTO)).rejects.toThrow(
+        "Database connection failed",
+      );
       expect(mockRepository.save).toHaveBeenCalledTimes(1);
     });
   });
@@ -84,6 +90,7 @@ describe("BillService", () => {
           billId: 1,
           cashRegister: 1,
           customer: "Juan Pérez",
+          tableId: "A1",
           total: 150.75,
           date: new Date("2025-10-20"),
         },
@@ -91,7 +98,8 @@ describe("BillService", () => {
           billId: 2,
           cashRegister: 2,
           customer: "María García",
-          total: 200.50,
+          tableId: "A1",
+          total: 200.5,
           date: new Date("2025-10-21"),
         },
       ];
@@ -110,20 +118,22 @@ describe("BillService", () => {
       const result = await billService.saveAll(saveBillDTOs);
 
       expect(mockRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockRepository.save).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({
-          cashRegisterId: saveBillDTOs[0].cashRegister,
-          customer: saveBillDTOs[0].customer,
-          total: saveBillDTOs[0].total,
-          date: saveBillDTOs[0].date,
-        }),
-        expect.objectContaining({
-          cashRegisterId: saveBillDTOs[1].cashRegister,
-          customer: saveBillDTOs[1].customer,
-          total: saveBillDTOs[1].total,
-          date: saveBillDTOs[1].date,
-        }),
-      ]));
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            cashRegisterId: saveBillDTOs[0].cashRegister,
+            customer: saveBillDTOs[0].customer,
+            total: saveBillDTOs[0].total,
+            date: saveBillDTOs[0].date,
+          }),
+          expect.objectContaining({
+            cashRegisterId: saveBillDTOs[1].cashRegister,
+            customer: saveBillDTOs[1].customer,
+            total: saveBillDTOs[1].total,
+            date: saveBillDTOs[1].date,
+          }),
+        ]),
+      );
       expect(result).toEqual(expectedBills);
     });
 
@@ -154,7 +164,7 @@ describe("BillService", () => {
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { billId },
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
       });
       expect(result).toEqual(expectedBill);
     });
@@ -163,10 +173,12 @@ describe("BillService", () => {
       const billId = 999;
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(billService.getById(billId)).rejects.toThrow(`Factura con ID ${billId} no encontrada`);
+      await expect(billService.getById(billId)).rejects.toThrow(
+        `Factura con ID ${billId} no encontrada`,
+      );
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { billId },
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
       });
     });
 
@@ -175,7 +187,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.findOne.mockRejectedValue(databaseError);
 
-      await expect(billService.getById(billId)).rejects.toThrow("Database connection failed");
+      await expect(billService.getById(billId)).rejects.toThrow(
+        "Database connection failed",
+      );
     });
   });
 
@@ -183,7 +197,7 @@ describe("BillService", () => {
     it("should get all bills successfully", async () => {
       const expectedBills = [
         { billId: 1, customer: "Juan Pérez", total: 150.75 },
-        { billId: 2, customer: "María García", total: 200.50 },
+        { billId: 2, customer: "María García", total: 200.5 },
       ] as Bill[];
 
       mockRepository.find.mockResolvedValue(expectedBills);
@@ -191,7 +205,7 @@ describe("BillService", () => {
       const result = await billService.getAll();
 
       expect(mockRepository.find).toHaveBeenCalledWith({
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
         order: { date: "DESC" },
       });
       expect(result).toEqual(expectedBills);
@@ -202,7 +216,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.find.mockRejectedValue(databaseError);
 
-      await expect(billService.getAll()).rejects.toThrow("Database connection failed");
+      await expect(billService.getAll()).rejects.toThrow(
+        "Database connection failed",
+      );
       expect(console.log).toHaveBeenCalledWith(databaseError);
     });
 
@@ -221,7 +237,7 @@ describe("BillService", () => {
       const updateBillDTO: UpdateBillDTO = {
         billId: 1,
         customer: "Juan Pérez Actualizado",
-        total: 175.00,
+        total: 175.0,
       };
 
       const existingBill = new Bill();
@@ -241,21 +257,25 @@ describe("BillService", () => {
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { billId: updateBillDTO.billId },
       });
-      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        billId: updateBillDTO.billId,
-        customer: updateBillDTO.customer,
-        total: updateBillDTO.total,
-      }));
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          billId: updateBillDTO.billId,
+          customer: updateBillDTO.customer,
+          total: updateBillDTO.total,
+        }),
+      );
       expect(result).toEqual(updatedBill);
     });
 
     it("should throw error when billId is not provided", async () => {
       const updateBillDTO: UpdateBillDTO = {
         customer: "Juan Pérez",
-        total: 175.00,
+        total: 175.0,
       };
 
-      await expect(billService.update(updateBillDTO)).rejects.toThrow("billId es requerido para actualizar");
+      await expect(billService.update(updateBillDTO)).rejects.toThrow(
+        "billId es requerido para actualizar",
+      );
       expect(mockRepository.findOne).not.toHaveBeenCalled();
       expect(mockRepository.save).not.toHaveBeenCalled();
     });
@@ -264,12 +284,14 @@ describe("BillService", () => {
       const updateBillDTO: UpdateBillDTO = {
         billId: 999,
         customer: "Juan Pérez",
-        total: 175.00,
+        total: 175.0,
       };
 
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(billService.update(updateBillDTO)).rejects.toThrow(`Factura con ID ${updateBillDTO.billId} no encontrada`);
+      await expect(billService.update(updateBillDTO)).rejects.toThrow(
+        `Factura con ID ${updateBillDTO.billId} no encontrada`,
+      );
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { billId: updateBillDTO.billId },
       });
@@ -285,7 +307,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.findOne.mockRejectedValue(databaseError);
 
-      await expect(billService.update(updateBillDTO)).rejects.toThrow("Database connection failed");
+      await expect(billService.update(updateBillDTO)).rejects.toThrow(
+        "Database connection failed",
+      );
     });
   });
 
@@ -311,7 +335,9 @@ describe("BillService", () => {
 
       mockRepository.delete.mockResolvedValue(deleteResult);
 
-      await expect(billService.delete(billId)).rejects.toThrow(`Factura con ID ${billId} no encontrada`);
+      await expect(billService.delete(billId)).rejects.toThrow(
+        `Factura con ID ${billId} no encontrada`,
+      );
       expect(mockRepository.delete).toHaveBeenCalledWith(billId);
     });
 
@@ -320,7 +346,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.delete.mockRejectedValue(databaseError);
 
-      await expect(billService.delete(billId)).rejects.toThrow("Database connection failed");
+      await expect(billService.delete(billId)).rejects.toThrow(
+        "Database connection failed",
+      );
     });
   });
 
@@ -341,15 +369,29 @@ describe("BillService", () => {
         getMany: jest.fn().mockResolvedValue(expectedBills),
       };
 
-      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      mockRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const result = await billService.getByDateRange(startDate, endDate);
 
       expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith("bill");
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("bill.cashRegister", "cashRegister");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("bill.date >= :startDate", { startDate });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("bill.date <= :endDate", { endDate });
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("bill.date", "DESC");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        "bill.cashRegister",
+        "cashRegister",
+      );
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        "bill.date >= :startDate",
+        { startDate },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        "bill.date <= :endDate",
+        { endDate },
+      );
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        "bill.date",
+        "DESC",
+      );
       expect(result).toEqual(expectedBills);
     });
 
@@ -365,7 +407,9 @@ describe("BillService", () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
 
-      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      mockRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const result = await billService.getByDateRange(startDate, endDate);
 
@@ -385,9 +429,13 @@ describe("BillService", () => {
         getMany: jest.fn().mockRejectedValue(databaseError),
       };
 
-      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      mockRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
-      await expect(billService.getByDateRange(startDate, endDate)).rejects.toThrow("Database connection failed");
+      await expect(
+        billService.getByDateRange(startDate, endDate),
+      ).rejects.toThrow("Database connection failed");
     });
   });
 
@@ -405,7 +453,7 @@ describe("BillService", () => {
 
       expect(mockRepository.find).toHaveBeenCalledWith({
         where: { customer: customerName },
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
         order: { date: "DESC" },
       });
       expect(result).toEqual(expectedBills);
@@ -420,7 +468,7 @@ describe("BillService", () => {
       expect(result).toEqual([]);
       expect(mockRepository.find).toHaveBeenCalledWith({
         where: { customer: customerName },
-        relations: ["cashRegister"],
+        relations: ["cashRegister", "table"],
         order: { date: "DESC" },
       });
     });
@@ -430,7 +478,9 @@ describe("BillService", () => {
       const databaseError = new Error("Database connection failed");
       mockRepository.find.mockRejectedValue(databaseError);
 
-      await expect(billService.getBillsByCustomer(customerName)).rejects.toThrow("Database connection failed");
+      await expect(
+        billService.getBillsByCustomer(customerName),
+      ).rejects.toThrow("Database connection failed");
     });
   });
 });

@@ -10,7 +10,8 @@ import { supplierRouter } from "./SupplierRoute";
 import { ingredientRouter } from "./IngredientRoute";
 import { purchaseRouter } from "./PurchaseRoute";
 import { cashRegisterRouter } from "./CashRegisterRoutes";
-
+import { tableRouter } from "./TableRoute";
+import { productTypeRouter } from "./ProductTypeRoute";
 
 const mainRouter = express.Router();
 
@@ -23,14 +24,10 @@ mainRouter.use("/", userTypeRouter);
 mainRouter.use("/", consumableRouter);
 mainRouter.use("/", consumableTypeRouter);
 mainRouter.use("/", supplierRouter);
-mainRouter.use("/",ingredientRouter);
+mainRouter.use("/", ingredientRouter);
 mainRouter.use("/", purchaseRouter);
 mainRouter.use("/", cashRegisterRouter);
-
+mainRouter.use("/", tableRouter);
+mainRouter.use("/", productTypeRouter);
 
 export default mainRouter;
-
-
-
-
-

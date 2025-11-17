@@ -36,6 +36,7 @@ export const getProducts = async (req: any, res: any) => {
       description: product.description,
       price: product.price,
       cost: product.cost,
+      productTypeId: product.productTypeId,
       active: product.active,
     }));
 

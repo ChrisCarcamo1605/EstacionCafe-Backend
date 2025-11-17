@@ -15,6 +15,7 @@ export class ProductService implements IService {
       product.description = data.description;
       product.price = data.price;
       product.cost = data.cost;
+      product.productTypeId = data.productTypeId;
       product.active = data.active !== undefined ? data.active : true;
       return product;
     });
@@ -29,6 +30,7 @@ export class ProductService implements IService {
     product.description = data.description;
     product.price = data.price;
     product.cost = data.cost;
+    product.productTypeId = data.productTypeId;
     product.active = data.active !== undefined ? data.active : true;
 
     console.log("Guardando producto...");
@@ -63,6 +65,8 @@ export class ProductService implements IService {
       product.description = updateData.description;
     if (updateData.price !== undefined) product.price = updateData.price;
     if (updateData.cost !== undefined) product.cost = updateData.cost;
+    if (updateData.productTypeId !== undefined)
+      product.productTypeId = updateData.productTypeId;
 
     return await this.productRepository.save(product);
   }
@@ -95,7 +99,7 @@ export class ProductService implements IService {
 
   async getProductsByPriceRange(
     minPrice: number,
-    maxPrice: number
+    maxPrice: number,
   ): Promise<Product[]> {
     return await this.productRepository
       .createQueryBuilder("product")

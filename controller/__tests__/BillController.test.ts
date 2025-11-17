@@ -4,6 +4,7 @@ import {
   createBillSchema,
   updateBillSchema,
   billIdSchema,
+  tableIdSchema,
 } from "../../application/validations/BillValidations";
 
 jest.mock("../../application/validations/BillValidations");
@@ -14,6 +15,7 @@ const mockedUpdateBillSchema = updateBillSchema as jest.Mocked<
   typeof updateBillSchema
 >;
 const mockedBillIdSchema = billIdSchema as jest.Mocked<typeof billIdSchema>;
+const mockedTableIdSchema = tableIdSchema as jest.Mocked<typeof tableIdSchema>;
 
 describe("BillController", () => {
   let mockService: jest.Mocked<IService>;
@@ -34,6 +36,8 @@ describe("BillController", () => {
     // Añadir métodos específicos del BillService
     (mockService as any).getByDateRange = jest.fn();
     (mockService as any).getBillsByCustomer = jest.fn();
+    (mockService as any).getBillsByTable = jest.fn();
+    (mockService as any).closeBillsByTable = jest.fn();
 
     // Establecer el servicio mock
     billController.setService(mockService);
@@ -687,6 +691,8 @@ describe("BillController", () => {
       // Añadir métodos específicos del BillService
       nuevoServicio.getByDateRange = jest.fn();
       nuevoServicio.getBillsByCustomer = jest.fn();
+      nuevoServicio.getBillsByTable = jest.fn();
+      nuevoServicio.closeBillsByTable = jest.fn();
 
       expect(() => billController.setService(nuevoServicio)).not.toThrow();
 
@@ -695,6 +701,151 @@ describe("BillController", () => {
       await billController.getBills(mockReq, mockRes);
 
       expect(nuevoServicio.getAll).toHaveBeenCalled();
+    });
+  });
+
+  describe("closeBillsByTable", () => {
+    it("debería cerrar todas las facturas de una mesa exitosamente", async () => {
+      const tableId = "A1";
+      const resultado = { updated: 3 };
+
+      mockReq.params = { tableId };
+      mockedTableIdSchema.parse.mockReturnValue({ tableId });
+      (mockService as any).closeBillsByTable.mockResolvedValue(resultado);
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect(mockedTableIdSchema.parse).toHaveBeenCalledWith({ tableId });
+      expect((mockService as any).closeBillsByTable).toHaveBeenCalledWith(
+        tableId,
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: `Se cerraron 3 facturas de la mesa ${tableId}`,
+        data: resultado,
+      });
+    });
+
+    it("debería manejar correctamente cuando no hay facturas para cerrar", async () => {
+      const tableId = "B3";
+      const resultado = { updated: 0 };
+
+      mockReq.params = { tableId };
+      mockedTableIdSchema.parse.mockReturnValue({ tableId });
+      (mockService as any).closeBillsByTable.mockResolvedValue(resultado);
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect(mockedTableIdSchema.parse).toHaveBeenCalledWith({ tableId });
+      expect((mockService as any).closeBillsByTable).toHaveBeenCalledWith(
+        tableId,
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: `Se cerraron 0 facturas de la mesa ${tableId}`,
+        data: resultado,
+      });
+    });
+
+    it("debería manejar errores de validación ZodError para tableId inválido", async () => {
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El ID de la mesa es requerido",
+            path: ["tableId"],
+          },
+        ],
+      };
+
+      mockReq.params = { tableId: "" };
+      mockedTableIdSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Datos inválidos: El ID de la mesa es requerido",
+        campo: ["tableId"],
+      });
+    });
+
+    it("debería manejar errores de validación para tableId muy largo", async () => {
+      const errorZod = {
+        name: "ZodError",
+        issues: [
+          {
+            message: "El ID de la mesa no puede tener más de 10 caracteres",
+            path: ["tableId"],
+          },
+        ],
+      };
+
+      mockReq.params = { tableId: "MESA_SUPER_LARGA_123456" };
+      mockedTableIdSchema.parse.mockImplementation(() => {
+        throw errorZod;
+      });
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message:
+          "Datos inválidos: El ID de la mesa no puede tener más de 10 caracteres",
+        campo: ["tableId"],
+      });
+    });
+
+    it("debería manejar errores del servidor al cerrar facturas", async () => {
+      const tableId = "VIP1";
+      const errorServidor = new Error("Error de conexión a la base de datos");
+
+      mockReq.params = { tableId };
+      mockedTableIdSchema.parse.mockReturnValue({ tableId });
+      (mockService as any).closeBillsByTable.mockRejectedValue(errorServidor);
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect((mockService as any).closeBillsByTable).toHaveBeenCalledWith(
+        tableId,
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: `Error al cerrar las facturas de la mesa: ${errorServidor.message}`,
+      });
+      expect(console.error).toHaveBeenCalledWith(
+        "Error al cerrar facturas por mesa:",
+        errorServidor,
+      );
+    });
+
+    it("debería cerrar una sola factura exitosamente", async () => {
+      const tableId = "C4";
+      const resultado = { updated: 1 };
+
+      mockReq.params = { tableId };
+      mockedTableIdSchema.parse.mockReturnValue({ tableId });
+      (mockService as any).closeBillsByTable.mockResolvedValue(resultado);
+
+      await billController.closeBillsByTable(mockReq, mockRes);
+
+      expect(mockedTableIdSchema.parse).toHaveBeenCalledWith({ tableId });
+      expect((mockService as any).closeBillsByTable).toHaveBeenCalledWith(
+        tableId,
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: `Se cerraron 1 facturas de la mesa ${tableId}`,
+        data: resultado,
+      });
     });
   });
 });

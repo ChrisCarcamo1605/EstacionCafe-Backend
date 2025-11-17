@@ -18,15 +18,23 @@ export class BillDetails {
   productId: number = 0;
   @Column("integer")
   quantity: number = 0;
-  @Column("decimal", { name: "sub_total", precision: 10, scale: 2 })
+  @Column("decimal", {
+    name: "sub_total",
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   subTotal: number = 0;
 
   @ManyToOne(() => Product, (product) => product.billDetails)
   @JoinColumn({ name: "product_id" })
   product?: Product;
 
-  @ManyToOne(() => Bill, (bill:Bill) => bill.billDetails)
-  @JoinColumn({name:"bill_id"})
+  @ManyToOne(() => Bill, (bill: Bill) => bill.billDetails)
+  @JoinColumn({ name: "bill_id" })
   bill?: Bill;
 
   constructor() {}
