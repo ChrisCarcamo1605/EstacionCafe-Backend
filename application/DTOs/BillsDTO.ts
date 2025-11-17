@@ -1,7 +1,6 @@
 import { Status } from "../../core/enums/Status";
 
 export interface SaveBillDTO {
-  billId: number;
   customer: string;
   cashRegister: number;
   tableId?: string;

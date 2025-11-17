@@ -145,7 +145,7 @@ export const getDetailsByBillId = async (req: any, res: any) => {
       };
     });
 
-    if (!data || data.length === 0) {
+    if (!data) {
       return res.status(404).send({
         status: "error",
         message: `No se encontraron detalles para la factura con ID ${parsedBillId}`,
