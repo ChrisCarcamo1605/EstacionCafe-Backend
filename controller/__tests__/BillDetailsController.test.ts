@@ -2,38 +2,56 @@ import {
   saveDetails,
   getDetails,
   deleteDetail,
+  getDetailsByBillId,
   setService,
 } from "../BillDetailsController";
 import { IService } from "../../core/interfaces/IService";
 
-// Mock service
-const mockService: IService = {
-  saveAll: jest.fn(),
-  getAll: jest.fn(),
-  save: jest.fn(),
-  getById: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-};
+// Mock del esquema de validación
+jest.mock("../../application/validations/BillDetailsValidations", () => ({
+  BillDetailsSchema: {
+    parse: jest.fn((data) => data),
+  },
+}));
 
-// Mock request and response objects
-const mockReq = {
-  body: {},
-};
-
-const mockRes = {
-  status: jest.fn().mockReturnThis(),
-  send: jest.fn(),
-};
+import { BillDetailsSchema } from "../../application/validations/BillDetailsValidations";
 
 describe("BillDetailsController", () => {
+  let mockService: jest.Mocked<IService>;
+  let mockReq: any;
+  let mockRes: any;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Mock service
+    mockService = {
+      saveAll: jest.fn(),
+      getAll: jest.fn(),
+      save: jest.fn(),
+      getById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
     setService(mockService);
+
+    // Mock request and response objects
+    mockReq = {
+      body: {},
+      params: {},
+    };
+
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
 
     // Mock console methods to avoid test output pollution
     jest.spyOn(console, "log").mockImplementation();
     jest.spyOn(console, "error").mockImplementation();
+
+    // Resetear el mock del esquema
+    (BillDetailsSchema.parse as jest.Mock).mockClear();
+    (BillDetailsSchema.parse as jest.Mock).mockImplementation((data) => data);
   });
 
   afterEach(() => {
@@ -41,49 +59,84 @@ describe("BillDetailsController", () => {
   });
 
   describe("saveDetails", () => {
-    it("should save details successfully", async () => {
-      const mockData = { billId: 1, productId: 1, quantity: 2 };
-      mockReq.body = mockData;
-      (mockService.saveAll as jest.Mock).mockResolvedValue(mockData);
+    it("should save details successfully with valid data", async () => {
+      const validData = {
+        billId: 1,
+        billDetails: [
+          {
+            productId: 1,
+            name: "Café Americano",
+            quantity: 2,
+            price: 30.0,
+            subTotal: 60.0,
+          },
+        ],
+      };
+      const savedDetails = [{ billDetailId: 1, billId: 1, productId: 1 }];
+
+      mockReq.body = validData;
+      mockService.saveAll.mockResolvedValue(savedDetails);
 
       await saveDetails(mockReq, mockRes);
 
-      expect(mockService.saveAll).toHaveBeenCalledWith(mockData);
+      expect(BillDetailsSchema.parse).toHaveBeenCalledWith(validData);
+      expect(mockService.saveAll).toHaveBeenCalledWith(validData);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "success",
         message: "Factura y detalles guardados correctamente",
-        data: mockData,
+        data: savedDetails,
       });
     });
 
     it("should handle ZodError validation", async () => {
+      const invalidData = { billId: -1, billDetails: [] };
       const zodError = {
         name: "ZodError",
         issues: [
           {
-            message: "Required field missing",
+            message: "El ID del bill debe ser un número positivo",
             path: ["billId"],
             code: "invalid_type",
           },
         ],
       };
-      (mockService.saveAll as jest.Mock).mockRejectedValue(zodError);
+
+      mockReq.body = invalidData;
+      (BillDetailsSchema.parse as jest.Mock).mockImplementation(() => {
+        throw zodError;
+      });
 
       await saveDetails(mockReq, mockRes);
 
+      expect(BillDetailsSchema.parse).toHaveBeenCalledWith(invalidData);
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Datos inválidos: Required field missing",
+        message: "Datos inválidos: El ID del bill debe ser un número positivo",
         campo: ["billId"],
         error: "invalid_type",
       });
+      expect(mockService.saveAll).not.toHaveBeenCalled();
     });
 
     it("should handle server error", async () => {
+      const validData = {
+        billId: 1,
+        billDetails: [
+          {
+            productId: 1,
+            name: "Café",
+            quantity: 1,
+            price: 10.0,
+            subTotal: 10.0,
+          },
+        ],
+      };
       const serverError = new Error("Database connection failed");
-      (mockService.saveAll as jest.Mock).mockRejectedValue(serverError);
+
+      mockReq.body = validData;
+      mockService.saveAll.mockRejectedValue(serverError);
 
       await saveDetails(mockReq, mockRes);
 
@@ -155,16 +208,15 @@ describe("BillDetailsController", () => {
 
   describe("deleteDetail", () => {
     it("should delete detail successfully", async () => {
-      const mockReqWithParams = {
-        ...mockReq,
-        params: { id: "1" },
-      };
-      const mockResult = { affected: 1 };
-      (mockService.delete as jest.Mock).mockResolvedValue(mockResult);
+      mockReq.params = { id: "1" };
+      mockService.delete.mockResolvedValue({
+        message: "Detalle eliminado correctamente",
+        id: 1,
+      });
 
-      await deleteDetail(mockReqWithParams, mockRes);
+      await deleteDetail(mockReq, mockRes);
 
-      expect(mockService.delete).toHaveBeenCalledWith("1");
+      expect(mockService.delete).toHaveBeenCalledWith(1);
       expect(mockRes.status).toHaveBeenCalledWith(202);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "success",
@@ -172,63 +224,159 @@ describe("BillDetailsController", () => {
       });
     });
 
-    it("should handle ZodError when deleting detail", async () => {
-      const mockReqWithParams = {
-        ...mockReq,
-        params: { id: "invalid" },
-      };
-      const zodError = {
-        name: "ZodError",
-        issues: [
-          {
-            message: "Invalid ID format",
-            path: ["id"],
-            code: "invalid_type",
-          },
-        ],
-      };
-      (mockService.delete as jest.Mock).mockRejectedValue(zodError);
+    it("should return error 400 when ID is not a number", async () => {
+      mockReq.params = { id: "abc" };
 
-      await deleteDetail(mockReqWithParams, mockRes);
+      await deleteDetail(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "ID inválido: Invalid ID format",
+        message: "ID inválido: debe ser un número",
       });
+      expect(mockService.delete).not.toHaveBeenCalled();
     });
 
     it("should handle not found error when deleting detail", async () => {
-      const mockReqWithParams = {
-        ...mockReq,
-        params: { id: "999" },
-      };
-      const notFoundError = new Error("Detalle no encontrada");
-      (mockService.delete as jest.Mock).mockRejectedValue(notFoundError);
+      mockReq.params = { id: "999" };
+      const notFoundError = new Error("Detalle con ID 999 no encontrado");
+      mockService.delete.mockRejectedValue(notFoundError);
 
-      await deleteDetail(mockReqWithParams, mockRes);
+      await deleteDetail(mockReq, mockRes);
 
+      expect(mockService.delete).toHaveBeenCalledWith(999);
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
-        message: "Detalle no encontrada",
+        message: "Detalle con ID 999 no encontrado",
       });
     });
 
     it("should handle server error when deleting detail", async () => {
-      const mockReqWithParams = {
-        ...mockReq,
-        params: { id: "1" },
-      };
+      mockReq.params = { id: "1" };
       const serverError = new Error("Database connection failed");
-      (mockService.delete as jest.Mock).mockRejectedValue(serverError);
+      mockService.delete.mockRejectedValue(serverError);
 
-      await deleteDetail(mockReqWithParams, mockRes);
+      await deleteDetail(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith({
         status: "error",
         message: "Error interno del servidor: Database connection failed",
+      });
+    });
+  });
+
+  describe("getDetailsByBillId", () => {
+    it("should get details by billId successfully", async () => {
+      mockReq.params = { billId: "1" };
+      const mockDetails = [
+        {
+          billDetailId: 1,
+          billId: 1,
+          productId: 1,
+          quantity: 2,
+          subTotal: 60.0,
+          product: { productId: 1, name: "Café Americano" },
+        },
+        {
+          billDetailId: 2,
+          billId: 1,
+          productId: 2,
+          quantity: 1,
+          subTotal: 45.0,
+          product: { productId: 2, name: "Capuccino" },
+        },
+      ];
+      mockService.getById.mockResolvedValue(mockDetails);
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockService.getById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "success",
+        message: "Detalles obtenidos correctamente",
+        data: mockDetails,
+      });
+    });
+
+    it("should return error 400 when billId is not a number", async () => {
+      mockReq.params = { billId: "abc" };
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "ID de factura inválido: debe ser un número",
+      });
+      expect(mockService.getById).not.toHaveBeenCalled();
+    });
+
+    it("should return error 404 when no details are found", async () => {
+      mockReq.params = { billId: "999" };
+      mockService.getById.mockResolvedValue([]);
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockService.getById).toHaveBeenCalledWith(999);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "No se encontraron detalles para la factura con ID 999",
+      });
+    });
+
+    it("should return error 404 when details is null", async () => {
+      mockReq.params = { billId: "10" };
+      mockService.getById.mockResolvedValue(null);
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockService.getById).toHaveBeenCalledWith(10);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "No se encontraron detalles para la factura con ID 10",
+      });
+    });
+
+    it("should handle server error when getting details by billId", async () => {
+      mockReq.params = { billId: "1" };
+      const serverError = new Error("Database connection failed");
+      mockService.getById.mockRejectedValue(serverError);
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Hubo un error en el servidor al obtener los detalles",
+        errors: serverError,
+      });
+    });
+
+    it("should handle error with nested error structure", async () => {
+      mockReq.params = { billId: "5" };
+      const nestedError = {
+        error: {
+          message: "Foreign key constraint",
+          code: "FK_ERROR",
+        },
+      };
+      mockService.getById.mockRejectedValue(nestedError);
+
+      await getDetailsByBillId(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        status: "error",
+        message: "Hubo un error en el servidor al obtener los detalles",
+        errors: {
+          message: "Foreign key constraint",
+          code: "FK_ERROR",
+        },
       });
     });
   });

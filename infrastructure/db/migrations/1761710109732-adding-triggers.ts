@@ -19,32 +19,7 @@ BEGIN
     
     product_quantity := NEW.quantity;
     
-    -- Verificar stock suficiente antes de realizar la venta
-    FOR rec IN 
-        SELECT 
-            i.ingredient_id,
-            i.quantity as quantity_per_product,
-            i.consumable_id,
-            c.name as consumable_name,
-            c.quantity as current_stock
-        FROM ingredients i
-        INNER JOIN "Consumable" c ON i.consumable_id = c.consumable_id
-        WHERE i.product_id = NEW.product_id
-    LOOP
-        ingredient_quantity := rec.quantity_per_product * product_quantity;
-        current_stock := rec.current_stock;
-        
-        -- Verificar si hay suficiente stock
-        IF current_stock < ingredient_quantity THEN
-            RAISE EXCEPTION 'Stock insuficiente para % (ID: %). Stock actual: %, Se necesita: %',
-                rec.consumable_name, 
-                rec.consumable_id,
-                current_stock,
-                ingredient_quantity;
-        END IF;
-    END LOOP;
-    
-    -- Si hay suficiente stock, proceder con la actualización
+    -- Proceder con la actualización sin validar stock (permite negativos)
     FOR rec IN 
         SELECT 
             i.ingredient_id,

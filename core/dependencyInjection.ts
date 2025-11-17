@@ -16,6 +16,8 @@ import { setService as setIngredientService } from "../controller/IngredientCont
 import { setService as setSupplierService } from "../controller/SupplierController";
 import { setService as setPurchaseService } from "../controller/PurchaseController";
 import { setService as setCashRegisterService } from "../controller/CashRegisterController";
+import { setService as setTableService } from "../controller/TableController";
+import { setService as setProductTypeService } from "../controller/ProductTypeController";
 
 //Initialize Middleware
 import { initializeAuthMiddleware } from "../infrastructure/security/authMiddleware";
@@ -32,6 +34,8 @@ import { SupplierService } from "../application/services/SupplierService";
 import { IngredientService } from "../application/services/IngredientService";
 import { PurchaseService } from "../application/services/PurchaseService";
 import { TokenService } from "../infrastructure/security/TokenService";
+import { TableService } from "../application/services/TableService";
+import { ProductTypeService } from "../application/services/ProductTypeService";
 
 //Entitys
 import { Bill } from "./entities/Bill";
@@ -44,6 +48,8 @@ import { ConsumableType } from "./entities/ConsumableType";
 import { Ingredient } from "./entities/Ingredient";
 import { Supplier } from "./entities/Supplier";
 import { Purchase } from "./entities/Purchase";
+import { Table } from "./entities/Table";
+import { ProductType } from "./entities/ProductType";
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -64,6 +70,8 @@ export const initializeDependencies = async () => {
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const ingredientRepository = AppDataSource.getRepository(Ingredient);
     const purchaseRepository = AppDataSource.getRepository(Purchase);
+    const tableRepository = AppDataSource.getRepository(Table);
+    const productTypeRepository = AppDataSource.getRepository(ProductType);
 
     //Services
     const billService: IService = new BillService(billRepository);
@@ -86,6 +94,10 @@ export const initializeDependencies = async () => {
       ingredientRepository,
     );
     const tokenService: ITokenService = new TokenService(userService);
+    const tableService: IService = new TableService(tableRepository);
+    const productTypeService: IService = new ProductTypeService(
+      productTypeRepository,
+    );
 
     //Set Services to Controllers
     setBillService(billService);
@@ -98,6 +110,8 @@ export const initializeDependencies = async () => {
     setIngredientService(ingredientService);
     setSupplierService(supplierService);
     setPurchaseService(purchaseService);
+    setTableService(tableService);
+    setProductTypeService(productTypeService);
 
     // Inicializar middleware con el servicio de tokens
     initializeAuthMiddleware(tokenService);
@@ -107,7 +121,7 @@ export const initializeDependencies = async () => {
     console.error("Error al inicializar la base de datos:", error.message);
     console.error("Detalles del error:", error);
 
-    throw new error();
+    throw error;
   }
 };
 

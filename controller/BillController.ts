@@ -3,6 +3,7 @@ import {
   createBillSchema,
   updateBillSchema,
   billIdSchema,
+  tableIdSchema,
 } from "../application/validations/BillValidations";
 import { SaveBillDTO } from "../application/DTOs/BillsDTO";
 
@@ -224,6 +225,55 @@ export const getBillsByCustomer = async (req: any, res: any) => {
     return res.status(500).send({
       status: "error",
       message: `Error al obtener las facturas del cliente: ${error.message}`,
+    });
+  }
+};
+
+export const getBillsByTable = async (req: any, res: any) => {
+  try {
+    const { tableId } = req.params;
+    const billService = getService() as any;
+
+    const data = await billService.getBillsByTable(tableId);
+
+    return res.status(200).send({
+      status: "success",
+      message: "Facturas de la mesa obtenidas correctamente",
+      data: data,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      status: "error",
+      message: `Error al obtener las facturas de la mesa: ${error.message}`,
+    });
+  }
+};
+
+export const closeBillsByTable = async (req: any, res: any) => {
+  try {
+    const { tableId } = tableIdSchema.parse(req.params);
+
+    const billService = getService() as any;
+    const result = await billService.closeBillsByTable(tableId);
+
+    return res.status(200).send({
+      status: "success",
+      message: `Se cerraron ${result.updated} facturas de la mesa ${tableId}`,
+      data: result,
+    });
+  } catch (error: any) {
+    if (error.name === "ZodError") {
+      return res.status(400).send({
+        status: "error",
+        message: "Datos inválidos: " + error.issues[0].message,
+        campo: error.issues[0].path,
+      });
+    }
+
+    console.error("Error al cerrar facturas por mesa:", error);
+    return res.status(500).send({
+      status: "error",
+      message: `Error al cerrar las facturas de la mesa: ${error.message}`,
     });
   }
 };

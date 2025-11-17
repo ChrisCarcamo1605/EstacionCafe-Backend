@@ -20,7 +20,7 @@ export const AppDataSource = new DataSource({
   logging: false,
   entities: [join(__dirname, "../../core/entities/*{.ts,.js}")],
   migrations: [join(__dirname, "./migrations/*{.ts,.js}")],
-  subscribers: [],
+  subscribers: [join(__dirname, "./subscribers/*{.ts,.js}")],
 });
 
 export const getDataSource = () => {
