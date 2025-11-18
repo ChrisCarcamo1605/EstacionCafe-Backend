@@ -16,8 +16,7 @@ export const AppDataSource = new DataSource({
   username: db_username,
   password: db_password,
   database: db_name,
-  // Usar synchronize solo en desarrollo, en producción usar migraciones
-  synchronize: process.env.NODE_ENV !== "production",
+  synchronize: true,
   logging: false,
   entities: [join(__dirname, "../../core/entities/*{.ts,.js}")],
   migrations: [join(__dirname, "./migrations/*{.ts,.js}")],

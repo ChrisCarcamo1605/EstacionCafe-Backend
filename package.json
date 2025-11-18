@@ -14,13 +14,7 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./infrastructure/db/Connection.ts",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d ./infrastructure/db/Connection.ts",
     "seed:run": "ts-node infrastructure/db/seeders/runSeeder.ts",
-    "seed:revert": "ts-node infrastructure/db/seeders/runSeeder.ts revert",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:restart": "docker-compose restart estacioncafe_api",
-    "docker:logs": "docker-compose logs -f estacioncafe_api",
-    "docker:clean": "docker-compose down -v"
+    "seed:revert": "ts-node infrastructure/db/seeders/runSeeder.ts revert"
   },
   "repository": {
     "type": "git",

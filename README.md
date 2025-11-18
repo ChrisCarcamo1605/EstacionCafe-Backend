@@ -8,7 +8,7 @@ Una API REST completa para la gestión de cafeterías construida con TypeScript,
 - **TypeScript**: Código fuertemente tipado con validaciones usando Zod
 - **PostgreSQL + TypeORM**: Base de datos robusta con ORM y migraciones automáticas
 - **Testing**: Suite completa de pruebas unitarias con Jest
-- **Docker**: Configuración completa de base de datos con Docker Compose
+- **Base de Datos**: PostgreSQL con TypeORM
 - **Inyección de Dependencias**: Sistema manual de DI para máximo control
 - **Validación de Datos**: Esquemas Zod con transformaciones personalizadas
 - **Seeders**: Sistema de población de datos inicial
