@@ -1,0 +1,38 @@
+# Node modules
+node_modules/
+npm-debug.log
+
+# Archivos compilados (se generarán en el build)
+src/compiled/
+
+# Tests y coverage
+coverage/
+*.test.ts
+*.test.js
+__tests__/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Documentación
+README.md
+*.md
+
+# Archivos temporales
+*.log
+*.tmp
+.DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment files específicos (se usarán los del contenedor)
+*.env.local
+*.env.development

@@ -13,7 +13,7 @@ export class User {
   @PrimaryGeneratedColumn("increment", { name: "user_id" })
   userId: number = 0;
 
-  @Column()
+  @Column({ unique: true })
   username: string = "";
 
   @Column({ name: "type_id" })

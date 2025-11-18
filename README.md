@@ -16,26 +16,31 @@ Una API REST completa para la gestión de cafeterías construida con TypeScript,
 ## 📋 Funcionalidades del Sistema
 
 ### Gestión de Productos
+
 - CRUD completo de productos con precios y costos
 - Filtrado de productos activos
 - Gestión de ingredientes por producto
 
 ### Sistema de Facturación
+
 - Creación y gestión de facturas
 - Detalles de factura con productos
 - Consultas por cliente y rangos de fecha
 
 ### Gestión de Usuarios
+
 - Sistema de usuarios con tipos/roles
 - Autenticación con bcrypt
 - Filtrado por tipo de usuario
 
 ### Inventario y Compras
+
 - Gestión de consumibles y tipos de consumibles
 - Sistema de proveedores
 - Registro de compras con relaciones
 
 ### Cajas Registradoras
+
 - Gestión de múltiples cajas
 - Estados activos/inactivos
 - Consultas por número de caja
@@ -72,6 +77,7 @@ EstacionCafé/
 ## 📦 Instalación y Configuración
 
 ### Prerrequisitos
+
 - Node.js (v16 o superior)
 - Docker y Docker Compose
 - Git
@@ -79,22 +85,26 @@ EstacionCafé/
 ### Instalación
 
 1. **Clonar el repositorio**
+
 ```bash
 git clone https://github.com/ChrisCarcamo1605/EstacionCaf-.git
 cd EstacionCafé
 ```
 
 2. **Instalar dependencias**
+
 ```bash
 npm install
 ```
 
 3. **Levantar la base de datos**
+
 ```bash
 docker-compose up -d
 ```
 
 4. **Compilar TypeScript** (automático al iniciar)
+
 ```bash
 npm start
 ```
@@ -102,11 +112,13 @@ npm start
 ## 🚀 Scripts Disponibles
 
 ### Desarrollo
+
 ```bash
 npm start              # Iniciar servidor en modo desarrollo
 ```
 
 ### Testing
+
 ```bash
 npm test              # Ejecutar todos los tests
 npm run test:watch    # Tests en modo watch
@@ -115,6 +127,7 @@ npm run test:verbose  # Tests con salida detallada
 ```
 
 ### Base de Datos
+
 ```bash
 # Migraciones
 npm run migration:run       # Ejecutar migraciones
@@ -132,6 +145,7 @@ npm run seed:revert   # Limpiar datos de prueba
 ### Base URL: `http://localhost:3484/api`
 
 ### Productos
+
 ```http
 GET    /products              # Obtener todos los productos
 GET    /products/active       # Obtener productos activos
@@ -142,6 +156,7 @@ DELETE /products/:id          # Eliminar producto
 ```
 
 ### Facturas
+
 ```http
 GET    /bills                         # Obtener todas las facturas
 GET    /bills/:id                     # Obtener factura por ID
@@ -153,6 +168,7 @@ DELETE /bills/:id                    # Eliminar factura
 ```
 
 ### Usuarios
+
 ```http
 GET    /users                 # Obtener todos los usuarios
 GET    /users/:id             # Obtener usuario por ID
@@ -163,6 +179,7 @@ DELETE /users/:id             # Eliminar usuario
 ```
 
 ### Proveedores
+
 ```http
 GET    /suppliers              # Obtener todos los proveedores
 GET    /suppliers/active       # Obtener proveedores activos
@@ -173,6 +190,7 @@ DELETE /suppliers/:id          # Eliminar proveedor
 ```
 
 ### Otros Endpoints
+
 - **Consumibles**: `/consumable`
 - **Tipos de Consumibles**: `/consumable-type`
 - **Ingredientes**: `/ingredient`
@@ -184,6 +202,7 @@ DELETE /suppliers/:id          # Eliminar proveedor
 ## 📊 Base de Datos
 
 ### Configuración
+
 - **Host**: localhost
 - **Puerto**: 5555
 - **Usuario**: admin
@@ -191,6 +210,7 @@ DELETE /suppliers/:id          # Eliminar proveedor
 - **Base de Datos**: estacioncafedb
 
 ### Principales Entidades
+
 - `products` - Productos del menú
 - `bills` - Facturas del sistema
 - `bill_details` - Detalles de cada factura
@@ -209,6 +229,7 @@ El proyecto incluye una suite completa de pruebas unitarias:
 - **Manejo de Errores**: Pruebas de casos de error
 
 Ejecutar tests:
+
 ```bash
 npm test                    # Ejecutar todos los tests
 npm run test:coverage      # Con reporte de cobertura
@@ -217,6 +238,7 @@ npm run test:coverage      # Con reporte de cobertura
 ## 🔧 Patrones de Desarrollo
 
 ### Inyección de Dependencias Manual
+
 ```typescript
 // Cada controlador expone un setService
 export const setService = (productService: IService) => {
@@ -228,15 +250,19 @@ setProductService(productService);
 ```
 
 ### Validación con Zod
+
 ```typescript
 // Transformaciones personalizadas
 const productSchema = z.object({
-  price: z.string().transform((val) => parseFloat(val))
-    .refine((val) => !isNaN(val) && val > 0, "El precio debe ser mayor a 0")
+  price: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((val) => !isNaN(val) && val > 0, "El precio debe ser mayor a 0"),
 });
 ```
 
 ### Manejo de Errores Consistente
+
 ```typescript
 // Respuesta estándar de error
 return res.status(400).send({
@@ -247,19 +273,50 @@ return res.status(400).send({
 });
 ```
 
-## 🚀 Despliegue
+## � Docker y Despliegue
 
-### Desarrollo Local
+### 🎯 Configuración Simple (Solo API + DB)
+
+```bash
+docker-compose up -d
+```
+
+Ver documentación completa en: [DOCKER_SETUP.md](DOCKER_SETUP.md)
+
+### 🏗️ Configuración Multi-Proyecto (API + Frontend + ML + DB)
+
+```bash
+# Usando el script helper (recomendado)
+.\docker-multi-helper.ps1 start
+
+# O manualmente
+docker-compose -f docker-compose.multi.yml up -d --build
+```
+
+**Servicios incluidos:**
+
+- **API**: http://localhost:3484/api
+- **Frontend (Astro)**: http://localhost:4321
+- **Frontend (Express)**: http://localhost:3000
+- **ML Service**: http://localhost:8000
+- **PostgreSQL**: localhost:5555
+
+Ver documentación completa en: [ARQUITECTURA_MULTI_PROYECTO.md](ARQUITECTURA_MULTI_PROYECTO.md)
+
+### Desarrollo Local (sin Docker)
+
 1. Clonar repositorio
 2. `npm install`
-3. `docker-compose up -d`
+3. `docker-compose up -d` (solo DB)
 4. `npm start`
 
 ### Producción
+
 - Configurar variables de entorno para base de datos
-- Establecer `synchronize: false` en producción
+- Establecer `synchronize: false` en producción (ya configurado)
 - Usar migraciones para cambios de esquema
 - Configurar logs apropiados
+- Cambiar credenciales por defecto
 
 ## 📝 Licencia
 
@@ -268,6 +325,7 @@ Este proyecto está bajo la Licencia ISC. Ver el archivo `LICENSE` para más det
 ## 👤 Autor
 
 **Christian Carcamo**
+
 - GitHub: [@ChrisCarcamo1605](https://github.com/ChrisCarcamo1605)
 - Proyecto: [EstacionCafé](https://github.com/ChrisCarcamo1605/EstacionCaf-)
 

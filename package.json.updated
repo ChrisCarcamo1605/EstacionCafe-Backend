@@ -1,9 +1,10 @@
+# Actualizar el package.json para incluir scripts de Docker
 {
   "name": "ec_api",
   "version": "1.0.0",
   "main": "src/compiled/main.js",
   "scripts": {
-    "start": "nodemon  ./src/compiled/main.js",
+    "start": "nodemon ./src/compiled/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
