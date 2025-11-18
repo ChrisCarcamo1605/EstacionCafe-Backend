@@ -42,14 +42,14 @@ export class UserSeeder extends BaseSeeder {
 
       // Gerentes
       {
-        username: "gerente.general",
-        userTypeId: 3,
+        username: "usuarioCajero",
+        userTypeId: 2,
         password: defaultPassword,
         email: "gerente@estacioncafe.com",
         active: true,
       },
       {
-        username: "gerente.turno1",
+        username: "usuarioMesero",
         userTypeId: 3,
         password: defaultPassword,
         email: "gerente.turno1@estacioncafe.com",

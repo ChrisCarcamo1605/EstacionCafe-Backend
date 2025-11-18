@@ -12,7 +12,7 @@ export class UserTypeSeeder extends BaseSeeder {
 
     const userTypes = [
       { name: "admin", permissionLevel: 10 },
-      { name: "cajeror", permissionLevel: 9 },
+      { name: "cajero", permissionLevel: 9 },
       { name: "mesero", permissionLevel: 8 },
       { name: "Supervisor", permissionLevel: 7 },
       { name: "Cajero Senior", permissionLevel: 6 },
