@@ -33,6 +33,22 @@ export const getDataSource = () => {
   return AppDataSource;
 };
 
+export const runMigrations = async () => {
+  if (!AppDataSource.isInitialized) {
+    throw new Error("DataSource must be initialized before running migrations");
+  }
+
+  const hasPending = await AppDataSource.showMigrations();
+  if (!hasPending) {
+    console.log("No hay migraciones pendientes");
+    return;
+  }
+
+  console.log("Ejecutando migraciones pendientes...");
+  await AppDataSource.runMigrations();
+  console.log("Migraciones ejecutadas correctamente");
+};
+
 export default AppDataSource;
 
-module.exports = { getDataSource, AppDataSource };
+module.exports = { getDataSource, AppDataSource, runMigrations };

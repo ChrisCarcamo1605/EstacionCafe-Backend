@@ -2,7 +2,7 @@
 import { IService } from "./interfaces/IService";
 import { ITokenService } from "./interfaces/ITokenService";
 import { IUserService } from "./interfaces/IUserService";
-import { getDataSource } from "../infrastructure/db/Connection";
+import { getDataSource, runMigrations } from "../infrastructure/db/Connection";
 
 //SetServices Methods
 import { setService as setBillService } from "../controller/BillController";
@@ -57,6 +57,9 @@ export const initializeDependencies = async () => {
   try {
     await AppDataSource.initialize();
     console.log("Conexión exitosa a la base de datos");
+
+    // Run pending migrations
+    await runMigrations();
 
     //Repositories
     const billRepository = AppDataSource.getRepository(Bill);
