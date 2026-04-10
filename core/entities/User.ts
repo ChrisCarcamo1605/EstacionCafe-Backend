@@ -11,7 +11,7 @@ import { Bill } from "./Bill";
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("increment", { name: "user_id" })
-  userId: number = 0;
+  userId!: number;
 
   @Column({ unique: true })
   username: string = "";

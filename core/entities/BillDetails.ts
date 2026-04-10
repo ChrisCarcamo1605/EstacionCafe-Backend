@@ -11,7 +11,7 @@ import { Bill } from "./Bill";
 @Entity("bill_details")
 export class BillDetails {
   @PrimaryGeneratedColumn("increment", { name: "bill_details_id" })
-  billDetailId: number = 0;
+  billDetailId!: number;
   @Column({ name: "bill_id" })
   billId: number = 0;
   @Column({ name: "product_id" })

@@ -5,7 +5,7 @@ import { Consumable } from "./Consumable";
 export class ConsumableType{
 
     @PrimaryGeneratedColumn('increment',{name:"consumable_type_id"})
-    consumableTypeId:number = 0;
+    consumableTypeId!: number;
     @Column()
     name:string ='';
 

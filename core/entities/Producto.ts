@@ -13,7 +13,7 @@ import { ProductType } from "./ProductType";
 @Entity("products")
 export class Product {
   @PrimaryGeneratedColumn({ name: "product_id" })
-  productId: number = 0;
+  productId!: number;
 
   @Column()
   name: string = "";

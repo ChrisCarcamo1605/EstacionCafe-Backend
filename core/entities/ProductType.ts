@@ -4,7 +4,7 @@ import { Product } from "./Producto";
 @Entity("product_types")
 export class ProductType {
   @PrimaryGeneratedColumn("increment", { name: "product_type_id" })
-  productTypeId: number = 0;
+  productTypeId!: number;
 
   @Column()
   name: string = "";
