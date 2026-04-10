@@ -25,5 +25,6 @@ coverage/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
-
 *.sqlite-journal
+*.db
+data/
