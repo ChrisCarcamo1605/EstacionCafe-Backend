@@ -41,12 +41,14 @@ COPY --from=builder /app/application ./application
 # Copy controller files
 COPY --from=builder /app/controller ./controller
 
-# Copy env files for database credentials
-COPY --from=builder /app/DB_CREDENTIALS.env ./DB_CREDENTIALS.env
-COPY --from=builder /app/SECURITY_CREDENTIALS.env ./SECURITY_CREDENTIALS.env
-
 # Create data directory for SQLite
 RUN mkdir -p /app/data
+
+# Environment variables should be provided at runtime via:
+# - Docker --env-file flag
+# - Docker Compose env_file directive
+# - Container environment variables
+# - Mounted .env file volume
 
 # Expose port
 EXPOSE 3484
