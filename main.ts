@@ -11,6 +11,9 @@ const { setupSwagger } = require("./infrastructure/swagger/swagger");
 //Creamos el servidor
 const app = express();
 const port = parseInt(process.env.PORT || "3484", 10);
+
+// Trust proxy - required for req.protocol to work correctly behind reverse proxies (Render, Heroku, etc.)
+app.set("trust proxy", 1);
 const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:4321")
   .split(",")
   .map((origin: string) => origin.trim())
