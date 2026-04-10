@@ -13,7 +13,7 @@ export const verifyToken = async (
   next: NextFunction,
 ) => {
   try {
-    if (process.env.SECURITY_MODE === "develop") {
+    if (process.env.SECURITY_MODE === "develop" && req.method !== "DELETE") {
       next();
       return;
     }

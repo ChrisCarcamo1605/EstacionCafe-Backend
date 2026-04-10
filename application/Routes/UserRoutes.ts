@@ -9,16 +9,14 @@ export const userRouter = Router();
 userRouter.post("/users/login", userController.login);
 userRouter.post("/users/logout", userController.logout);
 
-// Rutas protegidas (requieren token)
-
-userRouter.all("/users", verifyToken, authorize(["admin"]));
-userRouter.get("/users", verifyToken, userController.getUsers);
-userRouter.get(
-  "/users/type/:typeId",
+userRouter.get("/users", userController.getUsers);
+userRouter.get("/users/type/:typeId", userController.getUsersByType);
+userRouter.get("/users/:id", userController.getUserById);
+userRouter.post("/users", userController.saveUser);
+userRouter.put("/users/:id", userController.updateUser);
+userRouter.delete(
+  "/users/:id",
   verifyToken,
-  userController.getUsersByType,
+  authorize(["admin"]),
+  userController.deleteUser,
 );
-userRouter.get("/users/:id", verifyToken, userController.getUserById);
-userRouter.post("/users", verifyToken, userController.saveUser);
-userRouter.put("/users/:id", verifyToken, userController.updateUser);
-userRouter.delete("/users/:id", verifyToken, userController.deleteUser);

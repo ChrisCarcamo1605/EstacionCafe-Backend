@@ -22,5 +22,8 @@ logs/
 coverage/
 
 # Base de datos SQLite
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 *.sqlite-journal

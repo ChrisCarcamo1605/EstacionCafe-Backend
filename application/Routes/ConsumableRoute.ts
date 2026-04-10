@@ -12,7 +12,6 @@ import { verifyToken } from "../../infrastructure/security/authMiddleware";
 
 export const consumableRouter = Router();
 
-consumableRouter.all("/consumable",verifyToken, authorize(["all"]));
 consumableRouter.get("/consumable", getConsumables);
 consumableRouter.get(
   "/consumable/supplier/:supplierId",
@@ -21,4 +20,9 @@ consumableRouter.get(
 consumableRouter.get("/consumable/:id", getConsumableById);
 consumableRouter.post("/consumable", saveConsumable);
 consumableRouter.put("/consumable/:id", updateConsumable);
-consumableRouter.delete("/consumable/:id", deleteConsumable);
+consumableRouter.delete(
+  "/consumable/:id",
+  verifyToken,
+  authorize(["all"]),
+  deleteConsumable,
+);

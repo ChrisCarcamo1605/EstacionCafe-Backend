@@ -33,16 +33,13 @@ export const saveDetails = async (req: any, res: any) => {
       });
     }
 
-    // Capturar errores de triggers de PostgreSQL (stock insuficiente, etc.)
-    if (
-      error.code === "P0001" ||
-      error.message?.includes("Stock insuficiente")
-    ) {
+    // Error de negocio por stock insuficiente
+    if (error.message?.includes("Stock insuficiente")) {
       const errorMessage =
         error.message ||
         error.detail ||
         "Error de validación en la base de datos";
-      console.log("Error de trigger:", errorMessage);
+      console.log("Error de stock:", errorMessage);
       return res.status(400).send({
         status: "error",
         message: errorMessage,
@@ -51,7 +48,12 @@ export const saveDetails = async (req: any, res: any) => {
     }
 
     // Manejar errores de validación de negocio
-    if (error.message && !error.code) {
+    if (
+      error.message &&
+      (error.message.includes("no encontrado") ||
+        error.message.includes("no coincide") ||
+        error.message.includes("no es correcto"))
+    ) {
       console.log("Error de validación:", error.message);
       return res.status(400).send({
         status: "error",
@@ -134,7 +136,15 @@ export const getDetailsByBillId = async (req: any, res: any) => {
       });
     }
 
-    let data: BillDetailResponse[] = await service.getById(parsedBillId);
+    const details = await service.getById(parsedBillId);
+    if (!details || details.length === 0) {
+      return res.status(404).send({
+        status: "error",
+        message: `No se encontraron detalles para la factura con ID ${parsedBillId}`,
+      });
+    }
+
+    let data: BillDetailResponse[] = details;
     data = data.map((i: any) => {
       return {
         productId: i.productId,
@@ -144,13 +154,6 @@ export const getDetailsByBillId = async (req: any, res: any) => {
         subTotal: i.subTotal,
       };
     });
-
-    if (!data) {
-      return res.status(404).send({
-        status: "error",
-        message: `No se encontraron detalles para la factura con ID ${parsedBillId}`,
-      });
-    }
 
     console.log(
       `Detalles de la factura ${parsedBillId} obtenidos correctamente`,

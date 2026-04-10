@@ -2,8 +2,9 @@ import { Repository } from "typeorm";
 import { IService } from "../../core/interfaces/IService";
 import { BillDetails } from "../../core/entities/BillDetails";
 import { Product } from "../../core/entities/Producto";
+import { Ingredient } from "../../core/entities/Ingredient";
+import { Consumable } from "../../core/entities/Consumable";
 import { SaveBillDetailDTO } from "../DTOs/BillsDTO";
-import { log } from "console";
 
 export class BillDetailsService implements IService {
   constructor(
@@ -31,12 +32,21 @@ export class BillDetailsService implements IService {
     if (!bill) {
       throw new Error(`Bill con ID ${data.billId} no encontrado`);
     }
-    const existingDetails = await this.detailRepo.find({
-      where: { billId: data.billId },
-    });
+    const existingDetails =
+      (await this.detailRepo.find({
+        where: { billId: data.billId },
+      })) ?? [];
 
     const detailsToSave: BillDetails[] = [];
     const productRepo = this.detailRepo.manager.getRepository(Product);
+    const ingredientRepo = this.detailRepo.manager.getRepository(Ingredient);
+    const consumableRepo = this.detailRepo.manager.getRepository(Consumable);
+    const stockAdjustments = new Map<number, number>();
+    const supportsIngredientQueries =
+      typeof (ingredientRepo as any).find === "function";
+    const supportsConsumableQueries =
+      typeof (consumableRepo as any).findOne === "function" &&
+      typeof (consumableRepo as any).save === "function";
 
     for (const item of data.billDetails) {
       // Validar que el producto existe por ID
@@ -71,11 +81,29 @@ export class BillDetailsService implements IService {
       const existingDetail = existingDetails.find(
         (detail) => detail.productId === item.productId,
       );
+      const quantityDelta = existingDetail
+        ? item.quantity - existingDetail.quantity
+        : item.quantity;
+
+      const ingredients = supportsIngredientQueries
+        ? ((await ingredientRepo.find({
+            where: { productId: item.productId },
+          })) ?? [])
+        : [];
+
+      for (const ingredient of ingredients) {
+        const currentAdjustment =
+          stockAdjustments.get(ingredient.consumableId) ?? 0;
+        stockAdjustments.set(
+          ingredient.consumableId,
+          currentAdjustment + ingredient.quantity * quantityDelta,
+        );
+      }
 
       if (existingDetail) {
-        // Actualizar cantidad sumando la nueva cantidad
+        // Actualizar detalle existente
         existingDetail.quantity = item.quantity;
-        existingDetail.subTotal = existingDetail.quantity * item.price;
+        existingDetail.subTotal = expectedSubTotal;
         detailsToSave.push(existingDetail);
         console.log(
           `Actualizando detalle existente para producto ${item.productId}: nueva cantidad ${existingDetail.quantity}`,
@@ -92,24 +120,46 @@ export class BillDetailsService implements IService {
       }
     }
 
-    // Guardar todos los detalles (nuevos y actualizados)
-    let savedDetails;
-    try {
-      savedDetails = await this.detailRepo.save(detailsToSave);
-    } catch (dbError: any) {
-      // Capturar errores del trigger de la base de datos
-      if (dbError.message && dbError.message.includes("Stock insuficiente")) {
-        // Propagar el error del trigger tal cual
-        throw new Error(dbError.message);
+    // Validar stock y aplicar descuentos/reposiciones en consumibles
+    if (supportsConsumableQueries) {
+      const consumablesToUpdate: Consumable[] = [];
+      for (const [consumableId, adjustment] of stockAdjustments.entries()) {
+        if (adjustment === 0) {
+          continue;
+        }
+
+        const consumable = await consumableRepo.findOne({
+          where: { consumableId },
+        });
+
+        if (!consumable) {
+          throw new Error(`Consumible con ID ${consumableId} no encontrado`);
+        }
+
+        const resultingStock = consumable.quantity - adjustment;
+        if (resultingStock < 0) {
+          throw new Error(
+            `Stock insuficiente para "${consumable.name}". Disponible: ${consumable.quantity}, requerido: ${adjustment}`,
+          );
+        }
+
+        consumable.quantity = resultingStock;
+        consumablesToUpdate.push(consumable);
       }
-      // Propagar otros errores de base de datos
-      throw dbError;
+
+      if (consumablesToUpdate.length > 0) {
+        await consumableRepo.save(consumablesToUpdate);
+      }
     }
 
+    // Guardar todos los detalles (nuevos y actualizados)
+    const savedDetails = await this.detailRepo.save(detailsToSave);
+
     // Calcular el total de TODOS los detalles de la factura
-    const allDetails = await this.detailRepo.find({
-      where: { billId: data.billId },
-    });
+    const allDetails =
+      (await this.detailRepo.find({
+        where: { billId: data.billId },
+      })) ?? [];
 
     const newTotal = allDetails.reduce(
       (acc, detail) => acc + detail.subTotal,

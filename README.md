@@ -1,14 +1,14 @@
 # EstacionCafé API ☕
 
-Una API REST completa para la gestión de cafeterías construida con TypeScript, Express.js y PostgreSQL utilizando arquitectura limpia con inyección manual de dependencias.
+Una API REST completa para la gestión de cafeterías construida con TypeScript, Express.js y SQLite utilizando arquitectura limpia con inyección manual de dependencias.
 
 ## 🚀 Características Principales
 
 - **Arquitectura Limpia**: Separación clara entre capas de entidades, servicios, controladores y rutas
 - **TypeScript**: Código fuertemente tipado con validaciones usando Zod
-- **PostgreSQL + TypeORM**: Base de datos robusta con ORM y migraciones automáticas
+- **SQLite + TypeORM**: Base de datos embebida con ORM y migraciones automáticas
 - **Testing**: Suite completa de pruebas unitarias con Jest
-- **Base de Datos**: PostgreSQL con TypeORM
+- **Base de Datos**: SQLite con TypeORM
 - **Inyección de Dependencias**: Sistema manual de DI para máximo control
 - **Validación de Datos**: Esquemas Zod con transformaciones personalizadas
 - **Seeders**: Sistema de población de datos inicial
@@ -68,7 +68,7 @@ EstacionCafé/
 ## 🛠️ Tecnologías Utilizadas
 
 - **Backend**: Node.js, Express.js, TypeScript
-- **Base de Datos**: PostgreSQL, TypeORM
+- **Base de Datos**: SQLite, TypeORM
 - **Validación**: Zod (con transformaciones personalizadas)
 - **Testing**: Jest, ts-jest
 - **Contenedores**: Docker, Docker Compose
@@ -97,10 +97,10 @@ cd EstacionCafé
 npm install
 ```
 
-3. **Levantar la base de datos**
+3. **Base de datos local (SQLite)**
 
 ```bash
-docker-compose up -d
+# SQLite se crea automáticamente en ./estacioncafe.sqlite
 ```
 
 4. **Compilar TypeScript** (automático al iniciar)
@@ -143,6 +143,12 @@ npm run seed:revert   # Limpiar datos de prueba
 ## 🌐 API Endpoints
 
 ### Base URL: `http://localhost:3484/api`
+
+### Documentación interactiva (Swagger)
+
+- **URL**: `http://localhost:3484/api/docs`
+- En despliegue, reemplazar `localhost:3484` por el dominio público.
+- Los endpoints `DELETE` requieren token Bearer.
 
 ### Productos
 
@@ -203,11 +209,8 @@ DELETE /suppliers/:id          # Eliminar proveedor
 
 ### Configuración
 
-- **Host**: localhost
-- **Puerto**: 5555
-- **Usuario**: admin
-- **Contraseña**: estacionPass2025
-- **Base de Datos**: estacioncafedb
+- **Motor**: SQLite
+- **Archivo**: `estacioncafe.sqlite`
 
 ### Principales Entidades
 
@@ -299,7 +302,7 @@ docker-compose -f docker-compose.multi.yml up -d --build
 - **Frontend (Astro)**: http://localhost:4321
 - **Frontend (Express)**: http://localhost:3000
 - **ML Service**: http://localhost:8000
-- **PostgreSQL**: localhost:5555
+- **SQLite**: archivo local `./estacioncafe.sqlite`
 
 Ver documentación completa en: [ARQUITECTURA_MULTI_PROYECTO.md](ARQUITECTURA_MULTI_PROYECTO.md)
 
@@ -307,13 +310,25 @@ Ver documentación completa en: [ARQUITECTURA_MULTI_PROYECTO.md](ARQUITECTURA_MU
 
 1. Clonar repositorio
 2. `npm install`
-3. `docker-compose up -d` (solo DB)
+3. `npm run build`
 4. `npm start`
+
+### Despliegue en Railway
+
+1. Conectar el repositorio en Railway (usa `railway.json` del proyecto).
+2. Crear un volumen persistente y montar una ruta como `/data`.
+3. Definir variables de entorno:
+   - `PORT` (Railway la inyecta automáticamente)
+   - `CORS_ORIGIN` (ej. `https://tu-frontend.up.railway.app`)
+   - `DB_SQLITE_PATH=/data/estacioncafe.sqlite`
+   - `DB_SYNCHRONIZE=false` (recomendado en producción)
+   - `DB_LOGGING=false`
+4. Deploy: Railway ejecutará `npm run build` y luego `npm run start:prod`.
 
 ### Producción
 
-- Configurar variables de entorno para base de datos
-- Establecer `synchronize: false` en producción (ya configurado)
+- Configurar variables de entorno para base de datos y CORS
+- Establecer `DB_SYNCHRONIZE=false` en producción
 - Usar migraciones para cambios de esquema
 - Configurar logs apropiados
 - Cambiar credenciales por defecto

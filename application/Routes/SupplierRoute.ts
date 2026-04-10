@@ -12,10 +12,9 @@ import { authorize } from '../../infrastructure/security/rbacMiddleware';
 
 export const supplierRouter = Router();
 
-supplierRouter.all('/suppliers', verifyToken, authorize(['admin']))
 supplierRouter.get('/suppliers', getSuppliers);
 supplierRouter.get('/suppliers/active', getActiveSuppliers);
 supplierRouter.get('/suppliers/:id', getSupplierById);
 supplierRouter.post('/suppliers', createSupplier);
 supplierRouter.put('/suppliers/:id', updateSupplier);
-supplierRouter.delete('/suppliers/:id', deleteSupplier);
+supplierRouter.delete('/suppliers/:id', verifyToken, authorize(['admin']), deleteSupplier);

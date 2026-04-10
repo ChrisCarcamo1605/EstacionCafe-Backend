@@ -12,10 +12,14 @@ import { authorize } from "../../infrastructure/security/rbacMiddleware";
 
 export const productRouter = Router();
 
-productRouter.all("/products", verifyToken, authorize(["all"]));
 productRouter.get("/products", getProducts);
 productRouter.get("/products/active", getActiveProducts);
 productRouter.get("/products/:id", getProductById);
 productRouter.post("/products", saveProduct);
 productRouter.put("/products/:id", updateProduct);
-productRouter.delete("/products/:id", deleteProduct);
+productRouter.delete(
+  "/products/:id",
+  verifyToken,
+  authorize(["all"]),
+  deleteProduct,
+);

@@ -6,15 +6,40 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const routes = require("./application/Routes/routes").default;
+const { setupSwagger } = require("./infrastructure/swagger/swagger");
 
 //Creamos el servidor
 const app = express();
-const port = 3484;
+const port = parseInt(process.env.PORT || "3484", 10);
+const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:4321")
+  .split(",")
+  .map((origin: string) => origin.trim())
+  .filter(Boolean);
 
 //Configuramos CORS
 app.use(
   cors({
-    origin: "http://localhost:4321",
+    origin: (origin: string | undefined, callback: any) => {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      // Allow all origins in development or if wildcard is set
+      if (corsOrigins.includes("*") || process.env.NODE_ENV === "development") {
+        callback(null, true);
+        return;
+      }
+      
+      // Check if origin is in the allowed list
+      if (corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      
+      callback(new Error("Origen no permitido por CORS"));
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
@@ -26,6 +51,7 @@ app.use(cookieParser());
 //Covertimos datos del body a objetos
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+setupSwagger(app);
 
 // Usar las rutas del router
 app.use("/api", routes);

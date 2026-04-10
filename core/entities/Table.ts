@@ -16,7 +16,7 @@ export class Table {
   zone!: string;
 
   @Column({
-    type: "enum",
+    type: "simple-enum",
     enum: TableStatus,
     default: TableStatus.DISPONIBLE,
   })

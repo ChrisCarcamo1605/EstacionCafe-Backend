@@ -1,19 +1,29 @@
 //Las variables de entorno ya están cargadas en main.ts
 import "./loadEnv";
 import { DataSource } from "typeorm";
-import { join } from "path";
+import { dirname, isAbsolute, join, resolve } from "path";
+import { existsSync, mkdirSync } from "fs";
 
-const db_host = process.env.DB_HOST;
-const db_port = parseInt(process.env.DB_PORT || "5555");
-const db_username = process.env.DB_USERNAME;
-const db_password = process.env.DB_PASSWORD;
-const db_name = process.env.DB_NAME;
+const sqlitePathFromEnv = process.env.DB_SQLITE_PATH?.trim();
+const sqlitePath = sqlitePathFromEnv
+  ? isAbsolute(sqlitePathFromEnv)
+    ? sqlitePathFromEnv
+    : resolve(process.cwd(), sqlitePathFromEnv)
+  : join(process.cwd(), "estacioncafe.sqlite");
+
+const sqliteDirectory = dirname(sqlitePath);
+if (!existsSync(sqliteDirectory)) {
+  mkdirSync(sqliteDirectory, { recursive: true });
+}
+
+const synchronizeDb = (process.env.DB_SYNCHRONIZE || "true").toLowerCase() === "true";
+const enableDbLogging = (process.env.DB_LOGGING || "false").toLowerCase() === "true";
 
 export const AppDataSource = new DataSource({
   type: "sqlite",
-  database: join(__dirname, "../../estacioncafe.sqlite"),
-  synchronize: true,
-  logging: false,
+  database: sqlitePath,
+  synchronize: synchronizeDb,
+  logging: enableDbLogging,
   entities: [join(__dirname, "../../core/entities/*{.ts,.js}")],
   migrations: [join(__dirname, "./migrations/*{.ts,.js}")],
   subscribers: [join(__dirname, "./subscribers/*{.ts,.js}")],

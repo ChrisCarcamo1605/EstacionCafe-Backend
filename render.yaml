@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: estacioncafe-api
+    env: docker
+    rootDirectory: .
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /api/
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3484
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DB_SQLITE_PATH
+        value: /data/estacioncafe.db
+      - key: DB_SYNCHRONIZE
+        value: "false"
+      - key: DB_LOGGING
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
