@@ -1,5 +1,3 @@
-const swaggerUi = require("swagger-ui-express");
-
 const jsonContent = (schema: any) => ({
   "application/json": { schema },
 });
@@ -67,14 +65,7 @@ const swaggerDocument = {
     description:
       "Documentación completa de la API. Los endpoints DELETE requieren token Bearer.",
   },
-  servers: [
-    {
-      url:
-        process.env.SWAGGER_SERVER_URL ||
-        `http://localhost:${process.env.PORT || 3484}/api`,
-      description: "Servidor API",
-    },
-  ],
+  servers: [],
   components: {
     securitySchemes: {
       bearerAuth: {
@@ -1780,12 +1771,43 @@ const swaggerDocument = {
 };
 
 export const setupSwagger = (app: any) => {
-  app.use(
-    "/api/docs",
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerDocument, {
-      explorer: true,
-      customSiteTitle: "EstacionCafe API Docs",
-    }),
-  );
+  app.get("/api/docs", (req: any, res: any) => {
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const dynamicDoc = {
+      ...swaggerDocument,
+      servers: [
+        {
+          url: `${protocol}://${host}/api`,
+          description: "Servidor API",
+        },
+      ],
+    };
+
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EstacionCafe API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        spec: ${JSON.stringify(dynamicDoc)},
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis],
+      });
+    };
+  </script>
+</body>
+</html>
+    `.trim());
+  });
 };
