@@ -1,5 +1,5 @@
 // Cargar variables de entorno PRIMERO
-require("dotenv").config({ path: "./DB_CREDENTIALS.env" });
+require("dotenv").config();
 
 import { getDataSource } from "../Connection";
 import { DatabaseSeeder } from "./DatabaseSeeder";
