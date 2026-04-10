@@ -14,11 +14,13 @@ const port = parseInt(process.env.PORT || "3484", 10);
 
 // Trust proxy - required for req.protocol to work correctly behind reverse proxies (Render, Heroku, etc.)
 app.set("trust proxy", 1);
-const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:4321")
+const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3484/*")
   .split(",")
   .map((origin: string) => origin.trim())
   .filter(Boolean);
 
+
+  console.log(process.env.NODE_ENV, process.env.CORS_ORIGIN)
 //Configuramos CORS
 app.use(
   cors({
