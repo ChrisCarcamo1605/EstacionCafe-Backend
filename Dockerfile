@@ -41,6 +41,10 @@ COPY --from=builder /app/application ./application
 # Copy controller files
 COPY --from=builder /app/controller ./controller
 
+# Copy env files for database credentials
+COPY --from=builder /app/DB_CREDENTIALS.env ./DB_CREDENTIALS.env
+COPY --from=builder /app/SECURITY_CREDENTIALS.env ./SECURITY_CREDENTIALS.env
+
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
@@ -51,5 +55,5 @@ EXPOSE 3484
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3484/api/ || exit 1
 
-# Start the application
+# Start the application (migrations run automatically on startup via dependencyInjection.ts)
 CMD ["node", "./src/compiled/main.js"]

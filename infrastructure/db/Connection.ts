@@ -16,7 +16,10 @@ if (!existsSync(sqliteDirectory)) {
   mkdirSync(sqliteDirectory, { recursive: true });
 }
 
-const synchronizeDb = (process.env.DB_SYNCHRONIZE || "true").toLowerCase() === "true";
+// Production: always disable synchronize to allow migrations to manage schema
+// Development: can be overridden via env var
+const isDev = process.env.NODE_ENV === "development";
+const synchronizeDb = isDev && (process.env.DB_SYNCHRONIZE || "true").toLowerCase() === "true";
 const enableDbLogging = (process.env.DB_LOGGING || "false").toLowerCase() === "true";
 
 export const AppDataSource = new DataSource({
@@ -38,15 +41,17 @@ export const runMigrations = async () => {
     throw new Error("DataSource must be initialized before running migrations");
   }
 
+  console.log("Verificando migraciones pendientes...");
   const hasPending = await AppDataSource.showMigrations();
+  
   if (!hasPending) {
-    console.log("No hay migraciones pendientes");
+    console.log("No hay migraciones pendientes. Base de datos actualizada.");
     return;
   }
 
-  console.log("Ejecutando migraciones pendientes...");
+  console.log("Ejecutando migraciones pendientes para crear/actualizar tablas...");
   await AppDataSource.runMigrations();
-  console.log("Migraciones ejecutadas correctamente");
+  console.log("✅ Migraciones ejecutadas correctamente. Base de datos lista.");
 };
 
 export default AppDataSource;
