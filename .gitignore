@@ -20,3 +20,7 @@ logs/
 .tmp/
 .github/copilot-instructions.md
 coverage/
+
+# Base de datos SQLite
+
+*.sqlite-journal

@@ -10,12 +10,8 @@ const db_password = process.env.DB_PASSWORD;
 const db_name = process.env.DB_NAME;
 
 export const AppDataSource = new DataSource({
-  type: "postgres",
-  host: db_host,
-  port: db_port,
-  username: db_username,
-  password: db_password,
-  database: db_name,
+  type: "sqlite",
+  database: join(__dirname, "../../estacioncafe.sqlite"),
   synchronize: true,
   logging: false,
   entities: [join(__dirname, "../../core/entities/*{.ts,.js}")],
