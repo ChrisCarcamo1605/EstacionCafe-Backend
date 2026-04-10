@@ -3,6 +3,7 @@ import { IService } from "./interfaces/IService";
 import { ITokenService } from "./interfaces/ITokenService";
 import { IUserService } from "./interfaces/IUserService";
 import { getDataSource, runMigrations } from "../infrastructure/db/Connection";
+import { DatabaseSeeder } from "../infrastructure/db/seeders/DatabaseSeeder";
 
 //SetServices Methods
 import { setService as setBillService } from "../controller/BillController";
@@ -50,6 +51,35 @@ import { Supplier } from "./entities/Supplier";
 import { Purchase } from "./entities/Purchase";
 import { Table } from "./entities/Table";
 import { ProductType } from "./entities/ProductType";
+import { DataSource } from "typeorm";
+
+/**
+ * Check if the database is empty by counting records in key tables.
+ * Returns true if at least one of the lookup tables has no records.
+ */
+const shouldRunSeeds = async (ds: DataSource): Promise<boolean> => {
+  try {
+    const productTypeCount = await ds.getRepository(ProductType).count();
+    const userTypeCount = await ds.getRepository(UserType).count();
+    const supplierCount = await ds.getRepository(Supplier).count();
+    const tableCount = await ds.getRepository(Table).count();
+
+    const isEmpty =
+      productTypeCount === 0 ||
+      userTypeCount === 0 ||
+      supplierCount === 0 ||
+      tableCount === 0;
+
+    if (isEmpty) {
+      console.log(
+        `DB vacía: product_types=${productTypeCount}, user_types=${userTypeCount}, suppliers=${supplierCount}, tables=${tableCount}`,
+      );
+    }
+    return isEmpty;
+  } catch {
+    return true;
+  }
+};
 
 export const initializeDependencies = async () => {
   const AppDataSource = getDataSource();
@@ -60,6 +90,15 @@ export const initializeDependencies = async () => {
 
     // Run pending migrations
     await runMigrations();
+
+    // Run seeds if database is empty (only independent entities need to be checked)
+    const shouldSeed = await shouldRunSeeds(AppDataSource);
+    if (shouldSeed) {
+      console.log("🌱 Base de datos vacía, ejecutando seeds...");
+      const seeder = new DatabaseSeeder(AppDataSource);
+      await seeder.runAll();
+      console.log("✅ Base de datos poblada correctamente");
+    }
 
     //Repositories
     const billRepository = AppDataSource.getRepository(Bill);
